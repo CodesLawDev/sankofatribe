@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-primary: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: var(--font-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: theme('colors.brand.cream');
+    color: theme('colors.brand.dark');
+    font-size: 14px;
+    line-height: 1.6;
+    letter-spacing: 0.02em;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: theme('colors.neutral.50');
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: theme('colors.brand.primary');
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: theme('colors.neutral.700');
+  }
+}
+
+@layer components {
+  /* Calvin Klein inspired buttons */
+  .ck-btn {
+    @apply inline-flex items-center justify-center px-8 py-3 text-sm font-medium uppercase tracking-widest transition-all duration-300;
+  }
+
+  .ck-btn-primary {
+    @apply bg-[color:var(--tw-color-brand-primary)] bg-brand-primary text-white hover:bg-neutral-700;
+  }
+
+  .ck-btn-secondary {
+    @apply bg-brand-cream text-brand-dark border border-brand-primary hover:bg-neutral-100;
+  }
+
+  /* Typography */
+  .ck-heading {
+    @apply font-medium uppercase tracking-wider;
+  }
+
+  /* Smooth transitions */
+  .ck-transition {
+    @apply transition-all duration-300 ease-in-out;
+  }
+}

@@ -1,0 +1,214 @@
+# Sankofa - Premium Fashion E-Commerce
+
+A high-end fashion e-commerce website built with **Next.js 14**, **Sanity Studio v3**, and **Stripe**, featuring a minimalist Calvin Klein-inspired design.
+
+## 🌟 Features
+
+- **Modern E-Commerce**: Full-featured shopping cart, product variants (size, color), and checkout flow
+- **Headless CMS**: Sanity Studio v3 for easy content management
+- **Payment Integration**: Stripe checkout with webhook support
+- **Premium Design**: Calvin Klein-inspired minimalist aesthetic with smooth animations
+- **Fully Responsive**: Mobile-first design that works on all devices
+- **SEO Optimized**: Server-side rendering with Next.js App Router
+- **Type-Safe**: Built with TypeScript for reliability
+
+## 📋 Prerequisites
+
+Before you begin, ensure you have:
+
+- Node.js 18+ installed
+- A Sanity account ([create one at sanity.io](https://www.sanity.io))
+- A Stripe account ([create one at stripe.com](https://stripe.com))
+
+## 🚀 Quick Start
+
+### 1. Install Dependencies
+
+```bash
+npm install
+```
+
+### 2. Set Up Sanity
+
+Create a new Sanity project:
+
+```bash
+npm create sanity@latest
+```
+
+When prompted:
+- Choose "Yes" to use the default dataset configuration
+- Select "Clean project with no predefined schemas"
+- Note your **Project ID** and **Dataset name**
+
+### 3. Configure Environment Variables
+
+Create a `.env.local` file in the root directory:
+
+```bash
+# Sanity
+NEXT_PUBLIC_SANITY_PROJECT_ID=your_project_id_here
+NEXT_PUBLIC_SANITY_DATASET=production
+NEXT_PUBLIC_SANITY_API_VERSION=2024-01-01
+
+# Stripe
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_your_key_here
+STRIPE_SECRET_KEY=sk_test_your_key_here
+STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret_here
+
+# Site URL
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+```
+
+Get your Stripe keys from the [Stripe Dashboard](https://dashboard.stripe.com/test/apikeys).
+
+### 4. Run the Development Server
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) to view the website.
+
+Access Sanity Studio at [http://localhost:3000/studio](http://localhost:3000/studio).
+
+## 📝 Adding Content
+
+### 1. Access Sanity Studio
+
+Navigate to `http://localhost:3000/studio` and sign in with your Sanity account.
+
+### 2. Create Content
+
+**Site Settings** (do this first):
+- Add your site name, description, and navigation links
+- Upload a logo
+
+**Categories**:
+- Create categories (e.g., "Women", "Men", "Accessories")
+- Add category images and descriptions
+
+**Banners**:
+- Create hero banners for the homepage
+- Upload high-quality images (recommended: 1920x1080px)
+- Add title, subtitle, and CTA button
+
+**Products**:
+- Add products with images, descriptions, prices
+- Set available sizes and colors
+- Link to categories
+- Mark products as "featured" to show on homepage
+
+**Homepage**:
+- Select hero banners to display
+- Choose featured products
+- Select featured categories
+
+## 🎨 Design Customization
+
+The design uses a Calvin Klein-inspired color palette defined in `tailwind.config.ts`:
+
+```typescript
+colors: {
+  'ck-black': '#000000',
+  'ck-white': '#FFFFFF',
+  'ck-gray': { /* various shades */ },
+}
+```
+
+Modify these colors to match your brand identity.
+
+## 💳 Stripe Integration
+
+### Test Mode
+
+The current setup uses Stripe's test mode. Use these test cards:
+
+- **Success**: `4242 4242 4242 4242`
+- **Declined**: `4000 0000 0000 0002`
+
+Use any future expiry date and any 3-digit CVC.
+
+### Webhooks (Production)
+
+1. Install Stripe CLI: `stripe listen --forward-to localhost:3000/api/webhooks/stripe`
+2. Copy the webhook signing secret to `.env.local`
+3. For production, configure webhooks in Stripe Dashboard
+
+## 📦 Project Structure
+
+```
+sankofatribe/
+├── app/                      # Next.js App Router pages
+│   ├── page.tsx              # Homepage
+│   ├── products/             # Product pages
+│   ├── category/             # Category pages
+│   ├── cart/                 # Shopping cart
+│   ├── checkout/             # Checkout flow
+│   ├── studio/               # Sanity Studio
+│   └── api/                  # API routes
+├── components/               # React components
+│   ├── ui/                   # Base UI components
+│   ├── header.tsx            # Navigation
+│   ├── footer.tsx            # Footer
+│   └── ...
+├── lib/                      # Utilities
+│   ├── sanity.ts             # Sanity client & types
+│   ├── stripe.ts             # Stripe config
+│   └── cart-context.tsx      # Cart state management
+├── sanity/                   # CMS configuration
+│   └── schemas/              # Content schemas
+└── public/                   # Static assets
+```
+
+## 🚀 Deployment
+
+### Deploy to Vercel
+
+1. Push your code to GitHub
+2. Import your repository to [Vercel](https://vercel.com)
+3. Add environment variables in Vercel dashboard
+4. Deploy!
+
+### Deploy Sanity Studio
+
+Sanity Studio is automatically deployed with your Next.js app at `/studio`.
+
+For a standalone deployment:
+
+```bash
+cd sanity
+npx sanity deploy
+```
+
+## 🔧 Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint
+
+## 📚 Tech Stack
+
+- **Framework**: Next.js 14 (App Router)
+- **CMS**: Sanity Studio v3
+- **Styling**: TailwindCSS
+- **Payment**: Stripe
+- **Language**: TypeScript
+- **State Management**: React Context API
+- **Icons**: Lucide React
+
+## 🤝 Support
+
+For issues or questions:
+- Sanity: [Sanity Documentation](https://www.sanity.io/docs)
+- Next.js: [Next.js Documentation](https://nextjs.org/docs)
+- Stripe: [Stripe Documentation](https://stripe.com/docs)
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+---
+
+Built with ❤️ using Next.js, Sanity, and Stripe
