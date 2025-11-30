@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useCart } from '@/lib/cart-context'
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
@@ -15,6 +15,7 @@ export default function CheckoutPage() {
     const { items, totalPrice } = useCart()
     const router = useRouter()
     const [loading, setLoading] = useState(false)
+    const [mounted, setMounted] = useState(false)
     const [formData, setFormData] = useState({
         email: '',
         firstName: '',
@@ -24,6 +25,11 @@ export default function CheckoutPage() {
         postalCode: '',
         country: '',
     })
+
+    // Wait for client-side mount to avoid SSR hydration issues with Paystack
+    useEffect(() => {
+        setMounted(true)
+    }, [])
 
     // Calculate total with shipping
     const shippingCost = totalPrice > 100 ? 0 : 10
@@ -57,6 +63,17 @@ export default function CheckoutPage() {
     if (items.length === 0) {
         router.push('/cart')
         return null
+    }
+
+    // Show loading state until client-side mount
+    if (!mounted) {
+        return (
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                <div className="flex items-center justify-center min-h-[50vh]">
+                    <p className="text-gray-500">Loading checkout...</p>
+                </div>
+            </div>
+        )
     }
 
     const handlePaystackSuccess = async (reference: any) => {
