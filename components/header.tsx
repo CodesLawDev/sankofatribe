@@ -2,12 +2,14 @@
 
 import Link from 'next/link'
 import { useCart } from '@/lib/cart-context'
-import { ShoppingBag, Search, Menu, X, User } from 'lucide-react'
+import { ShoppingBag, Search, Menu, X, User, Heart } from 'lucide-react'
 import { useState } from 'react'
+import SearchModal from './search-modal'
 
 export default function Header() {
     const { totalItems } = useCart()
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+    const [searchOpen, setSearchOpen] = useState(false)
 
     const navigation = [
         { name: 'Women', href: '/category/women' },
@@ -56,12 +58,19 @@ export default function Header() {
 
                         {/* Right icons */}
                         <div className="flex items-center gap-6">
-                            <button className="hidden sm:block hover:opacity-60 transition-opacity" aria-label="Search">
+                            <button 
+                                onClick={() => setSearchOpen(true)}
+                                className="hidden sm:block hover:opacity-60 transition-opacity" 
+                                aria-label="Search"
+                            >
                                 <Search className="h-5 w-5" strokeWidth={1.5} />
                             </button>
-                            <button className="hidden sm:block hover:opacity-60 transition-opacity" aria-label="Account">
+                            <Link href="/wishlist" className="hidden sm:block hover:opacity-60 transition-opacity" aria-label="Wishlist">
+                                <Heart className="h-5 w-5" strokeWidth={1.5} />
+                            </Link>
+                            <Link href="/account" className="hidden sm:block hover:opacity-60 transition-opacity" aria-label="Account">
                                 <User className="h-5 w-5" strokeWidth={1.5} />
-                            </button>
+                            </Link>
                             <Link
                                 href="/cart"
                                 className="relative hover:opacity-60 transition-opacity"
@@ -111,6 +120,9 @@ export default function Header() {
                     </div>
                 )}
             </header>
+
+            {/* Search Modal */}
+            <SearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
         </>
     )
 }

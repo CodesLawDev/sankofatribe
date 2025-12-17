@@ -1,5 +1,5 @@
 import { client, Product } from '@/lib/sanity'
-import ProductGrid from '@/components/product-grid'
+import ProductsWithFilters from '@/components/products-with-filters'
 
 async function getAllProducts() {
     const query = `*[_type == "product"] | order(_createdAt desc) {
@@ -10,6 +10,8 @@ async function getAllProducts() {
     price,
     inStock,
     featured,
+    sizes,
+    colors,
     "category": category-> {
       _id,
       name,
@@ -21,32 +23,35 @@ async function getAllProducts() {
     return products
 }
 
+async function getCategories() {
+    const query = `*[_type == "category"] | order(name asc) {
+        name,
+        "slug": slug.current
+    }`
+    const categories = await client.fetch<{ name: string; slug: string }[]>(query, {}, { next: { revalidate: 60 } })
+    return categories
+}
+
 export const metadata = {
     title: 'All Products - SANKOFA',
     description: 'Browse all premium fashion products from SANKOFA',
 }
 
 export default async function ProductsPage() {
-    const products = await getAllProducts()
+    const [products, categories] = await Promise.all([
+        getAllProducts(),
+        getCategories()
+    ])
 
     return (
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12 py-12 md:py-20">
-            <div className="mb-16 text-center">
+            <div className="mb-12 text-center">
                 <h1 className="text-2xl md:text-3xl font-light tracking-wider uppercase mb-3">
                     All Products
                 </h1>
-                <p className="text-xs text-gray-600 tracking-wide">
-                    {products.length} {products.length === 1 ? 'Item' : 'Items'}
-                </p>
             </div>
 
-            {products.length > 0 ? (
-                <ProductGrid products={products} />
-            ) : (
-                <div className="text-center py-32">
-                    <p className="text-sm text-gray-600 tracking-wide">No products available at the moment</p>
-                </div>
-            )}
+            <ProductsWithFilters products={products} categories={categories} />
         </div>
     )
 }
