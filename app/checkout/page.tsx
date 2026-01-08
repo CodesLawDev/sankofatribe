@@ -1,15 +1,23 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import dynamicImport from 'next/dynamic'
 import { useCart } from '@/lib/cart-context'
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
-import { usePaystackPayment } from 'react-paystack'
 import { paystackConfig, convertToKobo, generateReference } from '@/lib/paystack'
 
-// Disable prerendering since this page requires client-only APIs
+// Import Paystack button dynamically to avoid SSR issues
+const PaystackButton = dynamicImport(() => import('@/components/paystack-button'), { 
+    ssr: false,
+    loading: () => <Button disabled className="w-full">Loading payment...</Button>
+})
+
+// Completely disable static generation for this page
 export const dynamic = 'force-dynamic'
 export const fetchCache = 'force-no-store'
+export const runtime = 'nodejs'
+export const revalidate = 0
 
 export default function CheckoutPage() {
     const { cart, cartTotal } = useCart()
@@ -57,10 +65,8 @@ export default function CheckoutPage() {
         },
     }
 
-    const initializePayment = usePaystackPayment(config)
-
     // Early return after all hooks
-    if (cart.length === 0) {
+    if (mounted && cart.length === 0) {
         router.push('/cart')
         return null
     }
@@ -119,13 +125,8 @@ export default function CheckoutPage() {
             return
         }
 
+        // Validation passed - payment button will handle the rest
         setLoading(true)
-
-        // Initialize Paystack payment
-        initializePayment({
-            onSuccess: handlePaystackSuccess,
-            onClose: handlePaystackClose,
-        })
     }
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -226,9 +227,15 @@ export default function CheckoutPage() {
                             </p>
                         </div>
 
-                        <Button type="submit" size="lg" className="w-full" disabled={loading}>
-                            {loading ? 'Processing...' : 'Pay with Paystack'}
-                        </Button>
+                        {mounted && (
+                            <PaystackButton
+                                config={config}
+                                onSuccess={handlePaystackSuccess}
+                                onClose={handlePaystackClose}
+                                disabled={loading || !formData.email}
+                                text={loading ? 'Processing...' : 'Pay with Paystack'}
+                            />
+                        )}
                     </form>
                 </div>
 
