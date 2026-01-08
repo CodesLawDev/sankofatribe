@@ -35,7 +35,7 @@ export default function WishlistPage() {
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
                 {items.map((product) => {
-                    const imageUrl = product.images?.[0]
+                    const imageUrl = product.images?.[0] && (product.images[0] as any).asset
                         ? urlFor(product.images[0]).width(600).height(800).url()
                         : '/placeholder-product.png'
 
@@ -91,7 +91,7 @@ export default function WishlistPage() {
                                 {product.inStock && (
                                     <button
                                         onClick={async () => {
-                                            const imageUrlForCart = product.images?.[0]
+                                            const imageUrlForCart = product.images?.[0] && (product.images[0] as any).asset
                                                 ? urlFor(product.images[0]).width(600).height(800).url()
                                                 : '/placeholder-product.png'
                                             await addToCart(

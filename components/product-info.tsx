@@ -44,7 +44,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
             return
         }
 
-        const imageUrl = product.images?.[0]
+        const imageUrl = product.images?.[0] && (product.images[0] as any).asset
             ? urlFor(product.images[0]).width(800).height(1000).url()
             : '/placeholder-product.png'
 
@@ -57,11 +57,12 @@ export default function ProductInfo({ product }: ProductInfoProps) {
                 selectedSize,
                 selectedColor,
             },
-            selectedSizeStock
+            selectedSizeStock,
+            quantity
         )
 
         if (success) {
-            showToast(`${product.name} added to cart!`, 'success')
+            showToast(`${quantity} × ${product.name} added to cart!`, 'success')
         } else {
             showToast(`Not enough stock in size ${selectedSize}.`, 'error')
         }

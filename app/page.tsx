@@ -15,6 +15,7 @@ async function getHomePageData() {
       title,
       subtitle,
       image,
+      videoUrl,
       ctaText,
       ctaLink,
       textColor
@@ -44,7 +45,7 @@ async function getHomePageData() {
     }
   }`
 
-    const homePage = await client.fetch<HomePage>(query, {}, { next: { revalidate: 60 } })
+    const homePage = await client.fetch<HomePage>(query, {}, { next: { revalidate: 0 } })
     return homePage
 }
 
@@ -56,7 +57,7 @@ async function getCategories() {
       image
     }`
 
-    const categories = await client.fetch<Category[]>(query, {}, { next: { revalidate: 60 } })
+    const categories = await client.fetch<Category[]>(query, {}, { next: { revalidate: 0 } })
     return categories
 }
 
@@ -78,7 +79,7 @@ async function getFeaturedProducts() {
     soldCount
   }`
 
-    const products = await client.fetch<Product[]>(query, {}, { next: { revalidate: 60 } })
+    const products = await client.fetch<Product[]>(query, {}, { next: { revalidate: 0 } })
     return products
 }
 
@@ -93,14 +94,14 @@ export default async function HomePage() {
     const cmsFeaturedCategories = (homePageData?.featuredCategories || []).map((cat) => ({
         id: cat._id,
         title: cat.name,
-        image: cat.image ? urlFor(cat.image).width(800).height(800).url() : '',
+        image: cat.image && (cat.image as any).asset ? urlFor(cat.image).width(800).height(800).url() : '',
         link: `/category/${cat.slug.current}`,
     }))
 
     const dynamicCategories = categories.map((cat) => ({
         id: cat._id,
         title: cat.name,
-        image: cat.image ? urlFor(cat.image).width(800).height(800).url() : '',
+        image: cat.image && (cat.image as any).asset ? urlFor(cat.image).width(800).height(800).url() : '',
         link: `/category/${cat.slug.current}`,
     }))
 
@@ -122,6 +123,7 @@ export default async function HomePage() {
             {homePageData?.heroBanners?.[0] ? (
                 <PremiumHeroBanner
                     image={homePageData.heroBanners[0].image}
+                    videoUrl={homePageData.heroBanners[0].videoUrl}
                     title={homePageData.heroBanners[0].title || "SANKOFA TRIBE"}
                     subtitle={homePageData.heroBanners[0].subtitle || "Premium African Heritage Fashion"}
                     ctaText={homePageData.heroBanners[0].ctaText || "Explore Collection"}
@@ -155,6 +157,7 @@ export default async function HomePage() {
             {homePageData?.heroBanners?.[1] && (
                 <PremiumHeroBanner
                     image={homePageData.heroBanners[1].image}
+                    videoUrl={homePageData.heroBanners[1].videoUrl}
                     title={homePageData.heroBanners[1].title || 'New Arrivals'}
                     subtitle={homePageData.heroBanners[1].subtitle}
                     ctaText={homePageData.heroBanners[1].ctaText || 'Shop Now'}

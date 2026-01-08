@@ -55,6 +55,7 @@ export interface Banner {
     title?: string
     subtitle?: string
     image: SanityImage
+    videoUrl?: string
     ctaText?: string
     ctaLink?: string
     textColor: 'white' | 'black'

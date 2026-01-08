@@ -8,6 +8,9 @@ import { navigation } from './navigation'
 import { footerSettings } from './footerSettings'
 import { contentPage } from './contentPage'
 import { announcement } from './announcement'
+import { order } from './order'
+import { user } from './user'
+import smsLog from './smsLog'
 
 export const schemaTypes = [
     product,
@@ -20,4 +23,7 @@ export const schemaTypes = [
     footerSettings,
     contentPage,
     announcement,
+    order,
+    user,
+    smsLog,
 ]

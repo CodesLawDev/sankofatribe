@@ -9,10 +9,16 @@ const JWT_SECRET = new TextEncoder().encode(
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow access to login page and auth APIs
+  // Allow access to login page and auth APIs (including password reset)
   if (
     pathname === '/admin/login' ||
-    pathname.startsWith('/api/auth/')
+    pathname === '/admin/reset-password' ||
+    pathname.startsWith('/api/auth/') ||
+    pathname === '/api/admin/auth/login' ||
+    pathname === '/api/admin/auth/forgot-password' ||
+    pathname === '/api/admin/auth/reset-password' ||
+    pathname === '/api/admin/auth/validate-reset-token' ||
+    pathname === '/api/admin/users/init'
   ) {
     return NextResponse.next();
   }

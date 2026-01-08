@@ -12,7 +12,7 @@ interface HeroBannerProps {
 
 export default function HeroBanner({ banner }: HeroBannerProps) {
     // Skip rendering if banner has no image
-    if (!banner.image) {
+    if (!banner.image || !(banner.image as any).asset) {
         return null
     }
 

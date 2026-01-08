@@ -1,282 +1,330 @@
-'use client'
+"use client";
+import { useState } from "react";
+import { motion } from "framer-motion";
+import Image from "next/image";
+import Link from "next/link";
+import { useCart } from "@/lib/cart-context";
+import { useRouter } from "next/navigation";
 
-import { useState, useEffect } from 'react'
-import dynamicImport from 'next/dynamic'
-import { useCart } from '@/lib/cart-context'
-import { Button } from '@/components/ui/button'
-import { useRouter } from 'next/navigation'
-import { paystackConfig, convertToKobo, generateReference } from '@/lib/paystack'
+export default function Checkout() {
+  const { cart, cartTotal, clearCart } = useCart();
+  const router = useRouter();
+  const [formData, setFormData] = useState({
+    email: "",
+    firstName: "",
+    lastName: "",
+    city: "",
+    landmark: "",
+    phone: "",
+  });
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [stockErrors, setStockErrors] = useState<string[]>([]);
 
-// Import Paystack button dynamically to avoid SSR issues
-const PaystackButton = dynamicImport(() => import('@/components/paystack-button'), { 
-    ssr: false,
-    loading: () => <Button disabled className="w-full">Loading payment...</Button>
-})
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
 
-// Completely disable static generation for this page
-export const dynamic = 'force-dynamic'
-export const fetchCache = 'force-no-store'
-export const runtime = 'nodejs'
-export const revalidate = 0
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsProcessing(true);
+    setStockErrors([]);
 
-export default function CheckoutPage() {
-    const { cart, cartTotal } = useCart()
-    const router = useRouter()
-    const [loading, setLoading] = useState(false)
-    const [mounted, setMounted] = useState(false)
-    const [formData, setFormData] = useState({
-        email: '',
-        firstName: '',
-        lastName: '',
-        address: '',
-        city: '',
-        postalCode: '',
-        country: '',
-    })
+    try {
+      // Generate order ID
+      const orderId = `ORD-${Date.now()}`;
 
-    // Wait for client-side mount to avoid SSR hydration issues with Paystack
-    useEffect(() => {
-        setMounted(true)
-    }, [])
+      // Create order in Sanity
+      const orderResponse = await fetch('/api/orders/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId,
+          orderDate: new Date().toISOString(),
+          status: 'pending_payment',
+          customer: {
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            email: formData.email,
+            phone: formData.phone,
+          },
+          shippingAddress: {
+            city: formData.city,
+            landmark: formData.landmark,
+          },
+          items: cart.map(item => ({
+            productId: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            image: item.image,
+          })),
+          subtotal: cartTotal,
+          shippingCost: 0,
+          tax: 0,
+          total: cartTotal,
+          paymentStatus: 'pending',
+        }),
+      });
 
-    // Calculate total with shipping
-    const shippingCost = cartTotal > 100 ? 0 : 10
-    const finalTotal = cartTotal + shippingCost
+      if (!orderResponse.ok) {
+        throw new Error('Failed to create order');
+      }
 
-    // Paystack configuration
-    const config = {
-        reference: generateReference(),
-        email: formData.email,
-        amount: convertToKobo(finalTotal), // Amount in kobo
-        publicKey: paystackConfig.publicKey,
-        metadata: {
-            custom_fields: [
-                {
-                    display_name: 'Customer Name',
-                    variable_name: 'customer_name',
-                    value: `${formData.firstName} ${formData.lastName}`,
-                },
-                {
-                    display_name: 'Shipping Address',
-                    variable_name: 'shipping_address',
-                    value: `${formData.address}, ${formData.city}, ${formData.postalCode}, ${formData.country}`,
-                },
-            ],
-        },
+      // Initialize payment
+      const paymentResponse = await fetch('/api/payment/initialize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          amount: cartTotal,
+          orderId,
+          customerName: `${formData.firstName} ${formData.lastName}`,
+          customerPhone: formData.phone,
+          items: cart.map(item => ({
+            name: item.name,
+            quantity: item.quantity,
+            price: item.price,
+          })),
+        }),
+      });
+
+      const paymentData = await paymentResponse.json();
+
+      if (!paymentData.success) {
+        throw new Error('Failed to initialize payment');
+      }
+
+      // Redirect to payment page (SMS will be sent after successful payment)
+      window.location.href = paymentData.authorization_url;
+    } catch (error) {
+      console.error('Order processing error:', error);
+      alert('There was an error processing your order. Please try again.');
+      setIsProcessing(false);
     }
+  };
 
-    // Early return after all hooks
-    if (mounted && cart.length === 0) {
-        router.push('/cart')
-        return null
-    }
-
-    // Show loading state until client-side mount
-    if (!mounted) {
-        return (
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                <div className="flex items-center justify-center min-h-[50vh]">
-                    <p className="text-gray-500">Loading checkout...</p>
-                </div>
-            </div>
-        )
-    }
-
-    const handlePaystackSuccess = async (reference: any) => {
-        setLoading(true)
-        try {
-            // Verify payment on server
-            const response = await fetch('/api/verify-payment', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    reference: reference.reference,
-                    customer: formData,
-                    items: cart,
-                }),
-            })
-
-            if (response.ok) {
-                router.push(`/success?reference=${reference.reference}`)
-            } else {
-                alert('Payment verification failed. Please contact support.')
-                setLoading(false)
-            }
-        } catch (error) {
-            console.error('Error verifying payment:', error)
-            alert('An error occurred. Please contact support.')
-            setLoading(false)
-        }
-    }
-
-    const handlePaystackClose = () => {
-        setLoading(false)
-        alert('Payment cancelled')
-    }
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault()
-
-        // Validate email
-        if (!formData.email || !formData.email.includes('@')) {
-            alert('Please enter a valid email address')
-            return
-        }
-
-        // Validation passed - payment button will handle the rest
-        setLoading(true)
-    }
-
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value,
-        })
-    }
-
+  if (cart.length === 0) {
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <h1 className="text-4xl font-bold tracking-tighter mb-8">Checkout</h1>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                {/* Checkout Form */}
-                <div>
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <div>
-                            <h2 className="text-xl font-bold tracking-tighter mb-4">Contact Information</h2>
-                            <input
-                                type="email"
-                                name="email"
-                                placeholder="Email"
-                                required
-                                value={formData.email}
-                                onChange={handleInputChange}
-                                className="w-full px-4 py-3 border border-ck-gray-300 focus:border-ck-black focus:outline-none"
-                            />
-                        </div>
-
-                        <div>
-                            <h2 className="text-xl font-bold tracking-tighter mb-4">Shipping Address</h2>
-                            <div className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <input
-                                        type="text"
-                                        name="firstName"
-                                        placeholder="First Name"
-                                        required
-                                        value={formData.firstName}
-                                        onChange={handleInputChange}
-                                        className="px-4 py-3 border border-ck-gray-300 focus:border-ck-black focus:outline-none"
-                                    />
-                                    <input
-                                        type="text"
-                                        name="lastName"
-                                        placeholder="Last Name"
-                                        required
-                                        value={formData.lastName}
-                                        onChange={handleInputChange}
-                                        className="px-4 py-3 border border-ck-gray-300 focus:border-ck-black focus:outline-none"
-                                    />
-                                </div>
-                                <input
-                                    type="text"
-                                    name="address"
-                                    placeholder="Address"
-                                    required
-                                    value={formData.address}
-                                    onChange={handleInputChange}
-                                    className="w-full px-4 py-3 border border-ck-gray-300 focus:border-ck-black focus:outline-none"
-                                />
-                                <div className="grid grid-cols-2 gap-4">
-                                    <input
-                                        type="text"
-                                        name="city"
-                                        placeholder="City"
-                                        required
-                                        value={formData.city}
-                                        onChange={handleInputChange}
-                                        className="px-4 py-3 border border-ck-gray-300 focus:border-ck-black focus:outline-none"
-                                    />
-                                    <input
-                                        type="text"
-                                        name="postalCode"
-                                        placeholder="Postal Code"
-                                        required
-                                        value={formData.postalCode}
-                                        onChange={handleInputChange}
-                                        className="px-4 py-3 border border-ck-gray-300 focus:border-ck-black focus:outline-none"
-                                    />
-                                </div>
-                                <input
-                                    type="text"
-                                    name="country"
-                                    placeholder="Country"
-                                    required
-                                    value={formData.country}
-                                    onChange={handleInputChange}
-                                    className="w-full px-4 py-3 border border-ck-gray-300 focus:border-ck-black focus:outline-none"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="bg-blue-50 border border-blue-200 rounded p-4">
-                            <p className="text-sm text-blue-900">
-                                💳 <strong>Payment via Paystack</strong> - Secure payment processing with cards, bank transfer, and mobile money
-                            </p>
-                        </div>
-
-                        {mounted && (
-                            <PaystackButton
-                                config={config}
-                                onSuccess={handlePaystackSuccess}
-                                onClose={handlePaystackClose}
-                                disabled={loading || !formData.email}
-                                text={loading ? 'Processing...' : 'Pay with Paystack'}
-                            />
-                        )}
-                    </form>
-                </div>
-
-                {/* Order Summary */}
-                <div>
-                    <div className="bg-ck-gray-100 p-6 sticky top-24">
-                        <h2 className="text-xl font-bold tracking-tighter mb-6">Order Summary</h2>
-
-                        <div className="space-y-4 mb-6">
-                            {cart.map((item) => (
-                                <div key={`${item.id}-${item.selectedSize}`} className="flex justify-between text-sm">
-                                    <div>
-                                        <p className="font-medium">{item.name}</p>
-                                        <p className="text-gray-600">Qty: {item.quantity}</p>
-                                        {item.selectedSize && <p className="text-gray-600">Size: {item.selectedSize}</p>}
-                                    </div>
-                                    <p className="font-medium">${(item.price * item.quantity).toFixed(2)}</p>
-                                </div>
-                            ))}
-                        </div>
-
-                        <div className="space-y-2 border-t border-gray-300 pt-4">
-                            <div className="flex justify-between">
-                                <span className="text-gray-600">Subtotal</span>
-                                <span>${cartTotal.toFixed(2)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-600">Shipping</span>
-                                <span>{shippingCost === 0 ? 'FREE' : `$${shippingCost.toFixed(2)}`}</span>
-                            </div>
-                            <div className="flex justify-between font-bold text-lg pt-2 border-t border-ck-gray-300">
-                                <span>Total</span>
-                                <span>${finalTotal.toFixed(2)}</span>
-                            </div>
-                            <p className="text-xs text-ck-gray-600 pt-2">
-                                Amount will be charged in NGN (Nigerian Naira) at current exchange rate
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+      <main className="min-h-screen pt-24 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-3xl font-light mb-4">Your cart is empty</h1>
+          <Link href="/products" className="text-sm uppercase tracking-wide hover:opacity-60 transition-opacity">
+            Continue Shopping
+          </Link>
         </div>
-    )
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-screen pt-24 pb-24">
+      <div className="max-w-7xl mx-auto px-6 md:px-8">
+        <h1 className="text-4xl md:text-5xl font-light mb-12">Checkout</h1>
+
+        {/* Stock Error Notification */}
+        {stockErrors.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8 p-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
+          >
+            <h3 className="text-lg font-medium text-red-800 dark:text-red-200 mb-3">
+              Stock Availability Issues
+            </h3>
+            <ul className="space-y-2">
+              {stockErrors.map((error, index) => (
+                <li key={index} className="text-sm text-red-700 dark:text-red-300 flex items-start">
+                  <span className="mr-2">•</span>
+                  <span>{error}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-4 text-sm text-red-800 dark:text-red-200">
+              Please update your cart quantities before proceeding with checkout.
+            </p>
+            <Link 
+              href="/products" 
+              className="inline-block mt-4 text-sm font-medium text-red-800 dark:text-red-200 hover:underline"
+            >
+              Return to Shopping
+            </Link>
+          </motion.div>
+        )}
+
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16">
+          {/* Checkout Form */}
+          <div>
+            <form onSubmit={handleSubmit} className="space-y-8">
+              {/* Contact Information */}
+              <div>
+                <h2 className="text-xl font-light mb-6 pb-3 border-b border-gray-200 dark:border-gray-800">
+                  Contact Information
+                </h2>
+                <div className="space-y-4">
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-light mb-2">
+                      Email *
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      required
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-black focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="phone" className="block text-sm font-light mb-2">
+                      Phone *
+                    </label>
+                    <input
+                      type="tel"
+                      id="phone"
+                      name="phone"
+                      required
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-black focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Shipping Information */}
+              <div>
+                <h2 className="text-xl font-light mb-6 pb-3 border-b border-gray-200 dark:border-gray-800">
+                  Shipping Address
+                </h2>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="firstName" className="block text-sm font-light mb-2">
+                        First Name *
+                      </label>
+                      <input
+                        type="text"
+                        id="firstName"
+                        name="firstName"
+                        required
+                        value={formData.firstName}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-black focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="lastName" className="block text-sm font-light mb-2">
+                        Last Name *
+                      </label>
+                      <input
+                        type="text"
+                        id="lastName"
+                        name="lastName"
+                        required
+                        value={formData.lastName}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-black focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label htmlFor="city" className="block text-sm font-light mb-2">
+                      City/Town (Specific Area) *
+                    </label>
+                    <input
+                      type="text"
+                      id="city"
+                      name="city"
+                      required
+                      value={formData.city}
+                      onChange={handleInputChange}
+                      placeholder="e.g., Accra - East Legon"
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-black focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="landmark" className="block text-sm font-light mb-2">
+                      Nearest Landmark *
+                    </label>
+                    <input
+                      type="text"
+                      id="landmark"
+                      name="landmark"
+                      required
+                      value={formData.landmark}
+                      onChange={handleInputChange}
+                      placeholder="e.g., Near A&C Mall"
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-black focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={isProcessing}
+                className="w-full py-4 bg-black dark:bg-white text-white dark:text-black font-light uppercase text-sm tracking-wide hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isProcessing ? "Processing..." : "Place Order"}
+              </button>
+            </form>
+          </div>
+
+          {/* Order Summary */}
+          <div>
+            <div className="sticky top-32">
+              <h2 className="text-xl font-light mb-6 pb-3 border-b border-gray-200 dark:border-gray-800">
+                Order Summary
+              </h2>
+              <div className="space-y-6 mb-8">
+                {cart.map((item) => (
+                  <div key={item.id} className="flex gap-4">
+                    <div className="relative w-20 h-20 flex-shrink-0 bg-gray-100 dark:bg-gray-900">
+                      {item.image && (
+                        <Image
+                          src={item.image}
+                          alt={item.name}
+                          fill
+                          className="object-cover"
+                        />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-light mb-1">{item.name}</h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Quantity: {item.quantity}
+                      </p>
+                      <p className="text-sm font-light mt-1">
+                        GH₵{(item.price * item.quantity).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="border-t border-gray-200 dark:border-gray-800 pt-6 space-y-3">
+                <div className="flex justify-between text-sm">
+                  <span className="font-light">Subtotal</span>
+                  <span className="font-light">GH₵{cartTotal.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="font-light">Shipping</span>
+                  <span className="font-light">Calculated at next step</span>
+                </div>
+                <div className="flex justify-between text-lg pt-3 border-t border-gray-200 dark:border-gray-800">
+                  <span className="font-light">Total</span>
+                  <span className="font-light">GH₵{cartTotal.toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  );
 }

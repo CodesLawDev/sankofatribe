@@ -5,6 +5,7 @@ import { ToastProvider } from '@/components/toast-container'
 import { CartProvider } from '@/lib/cart-context'
 import { WishlistProvider } from '@/lib/wishlist-context'
 import { RecentlyViewedProvider } from '@/lib/recently-viewed-context'
+import { CurrencyProvider } from '@/lib/currency-context'
 import type { ReactNode } from 'react'
 
 export function Providers({ children }: { children: ReactNode }) {
@@ -13,7 +14,11 @@ export function Providers({ children }: { children: ReactNode }) {
             <ToastProvider>
                 <CartProvider>
                     <WishlistProvider>
-                        <RecentlyViewedProvider>{children}</RecentlyViewedProvider>
+                        <RecentlyViewedProvider>
+                            <CurrencyProvider>
+                                {children}
+                            </CurrencyProvider>
+                        </RecentlyViewedProvider>
                     </WishlistProvider>
                 </CartProvider>
             </ToastProvider>

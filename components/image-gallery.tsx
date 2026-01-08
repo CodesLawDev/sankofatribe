@@ -22,13 +22,19 @@ export default function ImageGallery({ images, productName }: ImageGalleryProps)
                     className="relative aspect-[3/4] bg-ck-gray-100 overflow-hidden cursor-zoom-in"
                     onClick={() => setIsFullScreen(true)}
                 >
-                    <Image
-                        src={urlFor(images[selectedImage]).width(800).height(1067).url()}
-                        alt={`${productName} - Image ${selectedImage + 1}`}
-                        fill
-                        className="object-cover"
-                        priority
-                    />
+                    {(images[selectedImage] as any)?.asset ? (
+                        <Image
+                            src={urlFor(images[selectedImage]).width(800).height(1067).url()}
+                            alt={`${productName} - Image ${selectedImage + 1}`}
+                            fill
+                            className="object-cover"
+                            priority
+                        />
+                    ) : (
+                        <div className="flex items-center justify-center w-full h-full bg-gray-200">
+                            <span className="text-gray-400">No Image</span>
+                        </div>
+                    )}
                 </div>
 
                 {/* Thumbnails */}
@@ -41,12 +47,18 @@ export default function ImageGallery({ images, productName }: ImageGalleryProps)
                                 className={`relative aspect-square bg-ck-gray-100 overflow-hidden border-2 transition-all ${selectedImage === index ? 'border-ck-black' : 'border-transparent'
                                     }`}
                             >
-                                <Image
-                                    src={urlFor(image).width(200).height(200).url()}
-                                    alt={`${productName} thumbnail ${index + 1}`}
-                                    fill
-                                    className="object-cover"
-                                />
+                                {(image as any)?.asset ? (
+                                    <Image
+                                        src={urlFor(image).width(200).height(200).url()}
+                                        alt={`${productName} thumbnail ${index + 1}`}
+                                        fill
+                                        className="object-cover"
+                                    />
+                                ) : (
+                                    <div className="flex items-center justify-center w-full h-full bg-gray-200">
+                                        <span className="text-xs text-gray-400">No Image</span>
+                                    </div>
+                                )}
                             </button>
                         ))}
                     </div>

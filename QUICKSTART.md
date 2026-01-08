@@ -207,4 +207,36 @@ npm install
 
 ---
 
+### 🔐 First Admin Setup (No Login Yet)
+If this is your very first admin user and you cannot log in to reset passwords, use the bootstrap endpoint:
+
+1. Ensure environment variables are set:
+   - `SANITY_WRITE_TOKEN` (or `SANITY_API_TOKEN`) for server writes
+   - Optional: `ADMIN_INIT_SECRET` to protect subsequent runs
+2. Create a user in Studio with an email (or skip and create via API)
+3. Call the init endpoint to set the password:
+
+```bash
+# If no user has a password yet, no secret is required
+curl -X POST http://localhost:3000/api/admin/users/init \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@example.com",
+    "password": "YourStrongPassword123",
+    "firstName": "Admin",
+    "lastName": "User"
+  }'
+
+# If any user already has a passwordHash, include your secret
+curl -X POST http://localhost:3000/api/admin/users/init \
+  -H "Content-Type: application/json" \
+  -H "x-admin-init-secret: YOUR_SECRET" \
+  -d '{
+    "email": "admin@example.com",
+    "password": "YourStrongPassword123"
+  }'
+```
+
+After this, log in at `/admin/login` with the email and password you set.
+
 **Need help?** Check the `README.md` for detailed documentation!

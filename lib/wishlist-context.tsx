@@ -20,13 +20,15 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
 
     // Load wishlist from localStorage on mount
     useEffect(() => {
-        const savedWishlist = localStorage.getItem('sankofatribe-wishlist')
-        if (savedWishlist) {
-            try {
-                setItems(JSON.parse(savedWishlist))
-            } catch (error) {
-                console.error('Error parsing wishlist:', error)
+        try {
+            if (typeof window !== 'undefined' && window.localStorage) {
+                const savedWishlist = localStorage.getItem('sankofatribe-wishlist')
+                if (savedWishlist) {
+                    setItems(JSON.parse(savedWishlist))
+                }
             }
+        } catch (error) {
+            console.error('Error loading wishlist:', error)
         }
         setIsInitialized(true)
     }, [])
@@ -34,7 +36,13 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     // Save wishlist to localStorage whenever it changes
     useEffect(() => {
         if (isInitialized) {
-            localStorage.setItem('sankofatribe-wishlist', JSON.stringify(items))
+            try {
+                if (typeof window !== 'undefined' && window.localStorage) {
+                    localStorage.setItem('sankofatribe-wishlist', JSON.stringify(items))
+                }
+            } catch (error) {
+                console.error('Error saving wishlist:', error)
+            }
         }
     }, [items, isInitialized])
 

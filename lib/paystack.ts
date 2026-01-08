@@ -1,7 +1,16 @@
 // Paystack configuration and utilities
 
 export const paystackConfig = {
-    publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY!,
+    publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || '',
+}
+
+// Get the public key (for client-side usage)
+export const getPaystackPublicKey = (): string => {
+    if (typeof window !== 'undefined') {
+        // Client-side: access from window or env
+        return process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || 'pk_test_733efe0b808d97f06d6f52e26b84fec3bfd05901'
+    }
+    return process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || ''
 }
 
 export interface PaystackConfig {

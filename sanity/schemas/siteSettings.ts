@@ -41,15 +41,83 @@ export const siteSettings = defineType({
             title: 'Footer Text',
             type: 'text',
         }),
-        {
+        defineField({
             name: 'socialLinks',
             title: 'Social Media Links',
             type: 'object',
             fields: [
-                { name: 'instagram', title: 'Instagram', type: 'url' },
-                { name: 'facebook', title: 'Facebook', type: 'url' },
-                { name: 'twitter', title: 'Twitter', type: 'url' },
+                defineField({ name: 'instagram', title: 'Instagram', type: 'url' }),
+                defineField({ name: 'facebook', title: 'Facebook', type: 'url' }),
+                defineField({ name: 'twitter', title: 'Twitter', type: 'url' }),
             ],
-        },
+        } as any),
+        defineField({
+            name: 'adminPhone',
+            title: 'Admin Phone (SMS)',
+            type: 'string',
+            description: 'Used for order alerts via SMS',
+        }),
+        defineField({
+            name: 'senderId',
+            title: 'SMS Sender ID',
+            type: 'string',
+            description: 'Displayed sender ID for CodeslawBMS SMS',
+        }),
+        defineField({
+            name: 'currency',
+            title: 'Currency Settings',
+            type: 'object',
+            fields: [
+                defineField({
+                    name: 'defaultCurrency',
+                    title: 'Default Currency',
+                    type: 'string',
+                    options: {
+                        list: [
+                            { title: 'Ghana Cedis (GHS)', value: 'GHS' },
+                            { title: 'US Dollar (USD)', value: 'USD' },
+                        ],
+                    },
+                    initialValue: 'GHS',
+                    description: 'Currency for users in Ghana',
+                }),
+                defineField({
+                    name: 'exchangeRate',
+                    title: 'GHS to USD Exchange Rate',
+                    type: 'number',
+                    description: 'e.g., 1 GHS = 0.082 USD',
+                    validation: (Rule) => Rule.required().positive(),
+                    initialValue: 0.082,
+                }),
+                defineField({
+                    name: 'lastUpdated',
+                    title: 'Last Updated',
+                    type: 'datetime',
+                    readOnly: true,
+                }),
+            ],
+        } as any),
+        defineField({
+            name: 'geoLocation',
+            title: 'Geo Location Settings',
+            type: 'object',
+            fields: [
+                defineField({
+                    name: 'ghanaCurrencyCountries',
+                    title: 'Countries Using GHS',
+                    type: 'array',
+                    of: [{ type: 'string' }],
+                    initialValue: ['GH'],
+                    description: 'ISO country codes for GHS currency (e.g., GH for Ghana)',
+                }),
+                defineField({
+                    name: 'defaultCountry',
+                    title: 'Default Country Code',
+                    type: 'string',
+                    initialValue: 'GH',
+                    description: 'ISO country code when geolocation cannot be determined',
+                }),
+            ],
+        } as any),
     ],
 })

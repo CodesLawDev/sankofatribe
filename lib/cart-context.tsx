@@ -16,7 +16,7 @@ export interface CartItem {
 
 interface CartContextType {
     cart: CartItem[]
-    addToCart: (item: Omit<CartItem, 'quantity'>, maxStock: number) => Promise<boolean>
+    addToCart: (item: Omit<CartItem, 'quantity'>, maxStock: number, quantity?: number) => Promise<boolean>
     removeFromCart: (id: string) => void
     updateQuantity: (id: string, quantity: number, maxStock: number) => Promise<boolean>
     clearCart: () => void
@@ -32,20 +32,32 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     // Load cart from localStorage on mount
     useEffect(() => {
-        const savedCart = localStorage.getItem('sankofatribe-cart')
-        if (savedCart) {
-            setCart(JSON.parse(savedCart))
+        try {
+            if (typeof window !== 'undefined' && window.localStorage) {
+                const savedCart = localStorage.getItem('sankofatribe-cart')
+                if (savedCart) {
+                    setCart(JSON.parse(savedCart))
+                }
+            }
+        } catch (error) {
+            console.error('Failed to load cart from localStorage:', error)
         }
     }, [])
 
     // Save cart to localStorage whenever it changes
     useEffect(() => {
-        localStorage.setItem('sankofatribe-cart', JSON.stringify(cart))
+        try {
+            if (typeof window !== 'undefined' && window.localStorage) {
+                localStorage.setItem('sankofatribe-cart', JSON.stringify(cart))
+            }
+        } catch (error) {
+            console.error('Failed to save cart to localStorage:', error)
+        }
     }, [cart])
 
-    const addToCart = async (item: Omit<CartItem, 'quantity'>, maxStock: number) => {
-        const existingItem = cart.find((i) => i.id === item.id)
-        const requestedQuantity = existingItem ? existingItem.quantity + 1 : 1
+    const addToCart = async (item: Omit<CartItem, 'quantity'>, maxStock: number, quantity: number = 1) => {
+        const existingItem = cart.find((i) => i.id === item.id && i.selectedSize === item.selectedSize && i.selectedColor === item.selectedColor)
+        const requestedQuantity = existingItem ? existingItem.quantity + quantity : quantity
 
         // Check stock availability
         if (requestedQuantity > maxStock) {
@@ -53,13 +65,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
 
         setCart((prevCart) => {
-            const existingItem = prevCart.find((i) => i.id === item.id)
+            const existingItem = prevCart.find((i) => i.id === item.id && i.selectedSize === item.selectedSize && i.selectedColor === item.selectedColor)
             if (existingItem) {
                 return prevCart.map((i) =>
-                    i.id === item.id ? { ...i, quantity: i.quantity + 1, maxStock } : i
+                    i.id === item.id && i.selectedSize === item.selectedSize && i.selectedColor === item.selectedColor
+                        ? { ...i, quantity: i.quantity + quantity, maxStock }
+                        : i
                 )
             }
-            return [...prevCart, { ...item, quantity: 1, maxStock }]
+            return [...prevCart, { ...item, quantity, maxStock }]
         })
 
         return true // Successfully added

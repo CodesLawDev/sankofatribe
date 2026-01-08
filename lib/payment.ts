@@ -46,10 +46,35 @@ class PaymentService {
   }
 
   /**
+   * Convert GHS to pesewas (Paystack's smallest currency unit)
+   */
+  static toPesewas(amount: number): number {
+    return Math.round(amount * 100);
+  }
+
+  /**
+   * Convert pesewas to GHS
+   */
+  static toGHS(pesewas: number): number {
+    return pesewas / 100;
+  }
+
+  /**
    * Initialize payment transaction
    */
   async initializePayment(data: PaymentInitialization) {
     try {
+      if (!this.secretKey) {
+        throw new Error('Paystack secret key is not configured');
+      }
+
+      console.log('=== PAYSTACK API CALL ===')
+      console.log('Email:', data.email)
+      console.log('Amount (pesewas):', data.amount)
+      console.log('Channels:', data.channels)
+      console.log('Callback URL:', data.callback_url)
+      console.log('Metadata orderId:', data.metadata?.orderId)
+
       const response = await axios.post(
         `${PAYSTACK_BASE_URL}/transaction/initialize`,
         {
@@ -68,6 +93,15 @@ class PaymentService {
         }
       );
 
+      console.log('=== PAYSTACK RESPONSE ===')
+      console.log('Status:', response.data?.status)
+      console.log('Reference:', response.data?.data?.reference)
+      console.log('Auth URL exists:', !!response.data?.data?.authorization_url)
+
+      if (!response.data?.data?.authorization_url) {
+        throw new Error('No authorization URL returned from Paystack')
+      }
+
       return {
         success: true,
         data: response.data.data,
@@ -76,8 +110,18 @@ class PaymentService {
         reference: response.data.data.reference,
       };
     } catch (error: any) {
-      console.error('Payment initialization error:', error.response?.data || error);
-      throw new Error(error.response?.data?.message || 'Failed to initialize payment');
+      console.error('=== PAYSTACK ERROR ===')
+      console.error('Error status:', error.response?.status)
+      console.error('Error data:', JSON.stringify(error.response?.data, null, 2))
+      console.error('Error message:', error.message)
+      console.error('Full error:', error)
+      
+      throw new Error(
+        error.response?.data?.message || 
+        error.response?.data?.errors?.[0] ||
+        error.message || 
+        'Failed to initialize payment'
+      );
     }
   }
 
@@ -236,3 +280,4 @@ class PaymentService {
 
 // eslint-disable-next-line import/no-anonymous-default-export
 export default new PaymentService();
+export { PaymentService };

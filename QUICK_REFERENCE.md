@@ -1,310 +1,257 @@
-# Quick Reference - Nike Redesign Implementation
+# Sankofa Tribe - Admin System Quick Reference
 
-## 🎨 What Changed?
+## 🔗 Critical URLs
 
-### Visual Transformation
-```
-BEFORE: Warm brown (#8B5E3C) + cream color scheme, decorative elements
-AFTER:  Premium black/white/gray like Nike.com, minimal and clean
-```
+| Page | URL | Purpose |
+|------|-----|---------|
+| Admin Dashboard | `/admin` | Main control center |
+| Login | `/admin/login` | Authentication |
+| Settings | `/admin/settings` | Site config |
+| Team | `/admin/team` | User management |
+| Analytics | `/admin/analytics` | Metrics |
+| Sanity Studio | `/studio` | CMS |
 
-### Key Components Updated
-| Component | Before | After |
-|-----------|--------|-------|
-| Header | Centered logo, brown/cream | Nike-style black bar + white nav |
-| Hero | Brown overlay | Full-bleed image with text overlay |
-| Products | Color swatches, size chips | Minimal info, clean hover |
-| Footer | Brown bg, 4 columns | Black bg, 6 columns |
-| Home Page | Complex grids | Clean flow with spotlight |
+## 🚀 Quick Start (5 Minutes)
 
-## 🚀 What's New?
-
-### New Components Created
-1. **`header-new.tsx`** - Black announcement bar + centered nav
-2. **`premium-hero-banner.tsx`** - Flexible hero with positioning options
-3. **`featured-categories.tsx`** - 3-column category grid with hover
-4. **`spotlight.tsx`** - Featured products showcase
-
-### Updated Components
-1. **`product-card.tsx`** - Simplified, minimalist design
-2. **`footer.tsx`** - Complete Nike-style redesign
-3. **`app/page.tsx`** - New home page layout
-
-## 📦 Installation & Setup
-
-### No Additional Dependencies Needed ✅
-All changes use existing:
-- React 18
-- Next.js 14
-- Tailwind CSS 3
-- Lucide Icons
-
-### File Structure
-```
-components/
-  ├── header-new.tsx         ← NEW (live)
-  ├── header.tsx             ← OLD (deprecated, can delete)
-  ├── premium-hero-banner.tsx ← NEW (live)
-  ├── featured-categories.tsx ← NEW (live)
-  ├── spotlight.tsx          ← NEW (live)
-  └── product-card.tsx       ← REDESIGNED
-  └── footer.tsx             ← REDESIGNED
-
-app/
-  └── page.tsx               ← REDESIGNED
-  └── layout.tsx             ← UPDATED (new header import)
-```
-
-## 🎯 Quick Start
-
-### 1. The Header is Already Live
-✅ Automatically imported in `app/layout.tsx` as `header-new`
-- Black announcement bar at top
-- Centered navigation
-- White background
-- Sticky positioning
-
-### 2. Home Page is Redesigned
-✅ New layout with:
-- Premium hero banner
-- Featured categories grid
-- Spotlight products section
-- Category quick-access grid
-- Benefits section
-
-### 3. Product Cards are Minimalist
-✅ Clean design with:
-- No color/size badges
-- Subtle hover (5% scale)
-- Stock urgency indicator
-- Wishlist heart button
-
-### 4. Footer is Nike-Style
-✅ Black background with:
-- 6-column link structure
-- Newsletter signup
-- Social icons
-- Legal links
-
-## 🎨 Customization
-
-### Changing Hero Content
-```tsx
-<PremiumHeroBanner
-  image="/your-image.jpg"
-  title="Your Headline"
-  subtitle="Your subtitle"
-  ctaText="Shop Now"
-  ctaLink="/products"
-  textPosition="center" // left | center | right
-  textColor="white"     // white | black
-/>
-```
-
-### Changing Categories
-```tsx
-<FeaturedCategories
-  categories={[
-    { id: 'men', title: "Men's", image: '/men.jpg', link: '/category/men' },
-    // ... more categories
-  ]}
-/>
-```
-
-### Changing Products in Spotlight
-```tsx
-<Spotlight products={featuredProducts.slice(0, 8)} />
-```
-
-## 🎯 Troubleshooting
-
-### Issue: Old header still shows
-**Solution**: Check `app/layout.tsx` line 3 should be:
-```tsx
-import Header from '@/components/header-new'
-```
-
-### Issue: Components not found
-**Solution**: Run `npm install` or check import paths use `@/components/`
-
-### Issue: Styles look broken
-**Solution**: 
-1. Clear Next.js cache: `rm -rf .next`
-2. Rebuild: `npm run dev`
-3. Clear browser cache
-
-### Issue: Footer links going wrong
-**Solution**: Footer uses `/category/men` paths, ensure these routes exist
-
-## 📱 Responsive Breakpoints
-
-### Mobile First (< 640px)
-- Single column for products
-- Hamburger menu
-- Stacked footer
-- Full-width sections
-
-### Tablet (640px - 1024px)
-- 2-3 columns for products
-- Horizontal menu
-- 2-column footer
-- Balanced spacing
-
-### Desktop (1024px+)
-- 3-4 columns for products
-- Full navigation
-- 6-column footer
-- Max-width containers
-
-## 🔍 Component API Reference
-
-### PremiumHeroBanner Props
-```typescript
-interface PremiumHeroBannerProps {
-  image: string
-  title: string
-  subtitle?: string
-  ctaText?: string
-  ctaLink?: string
-  textPosition?: 'left' | 'center' | 'right'
-  textColor?: 'white' | 'black'
-}
-```
-
-### FeaturedCategories Props
-```typescript
-interface Category {
-  id: string
-  title: string
-  image: string
-  link: string
-}
-
-interface FeaturedCategoriesProps {
-  categories: Category[]
-}
-```
-
-### Spotlight Props
-```typescript
-interface SpotlightProps {
-  products: Product[]
-}
-```
-
-## 🎨 Color Reference
-
-### Essential Colors
-```
-#000000 - Black (header, footer, text)
-#FFFFFF - White (background, text on dark)
-#F3F4F6 - Light gray (sections)
-#4B5563 - Dark gray (secondary text)
-#DC2626 - Red (urgency, sale)
-#8B5E3C - Brand primary (accents only)
-```
-
-### Usage Guidelines
-- **Black/White**: Main color scheme
-- **Gray shades**: Text hierarchy
-- **Brand brown**: Reserved for highlights
-- **Red**: Only for urgency/sale badges
-
-## 📊 Performance Tips
-
-### Image Optimization
-1. Use WebP format with fallbacks
-2. Provide multiple sizes for responsive
-3. Set explicit width/height (prevents layout shift)
-4. Lazy load below-fold images
-
-### CSS Optimization
-- All Tailwind (no extra CSS files)
-- Purge unused styles automatically
-- Focus rings in globals.css
-- Custom animations in tailwind.config.ts
-
-### Loading States
-- Product cards have skeleton loaders
-- Category pages have loading states
-- Hero images preload via priority={true}
-
-## 🔗 Related Documentation
-
-📄 **NIKE_REDESIGN_SUMMARY.md** - Complete redesign overview
-📄 **DESIGN_SPECIFICATIONS.md** - Color palette & specs
-📄 **README.md** - Project setup instructions
-
-## ⚡ Key Features
-
-✅ Mobile-responsive design
-✅ No layout shifts (proper aspect ratios)
-✅ WCAG AA accessibility
-✅ Focus indicators on all interactive elements
-✅ Fast performance (no extra dependencies)
-✅ Clean, maintainable code
-✅ Sanity CMS integration ready
-✅ No breaking changes to existing features
-
-## 🚀 Deployment
-
-### Pre-deployment Checklist
-- [ ] Test on mobile device
-- [ ] Test on tablet
-- [ ] Test on desktop
-- [ ] Check console for errors
-- [ ] Test forms (newsletter, contact)
-- [ ] Test links to categories
-- [ ] Verify images load correctly
-- [ ] Check footer links work
-- [ ] Test wishlist functionality
-- [ ] Test add-to-cart
-
-### Build Command
+### 1. Create First Admin User
 ```bash
-npm run build
-npm start
+Go to: http://localhost:3000/studio
+Create new User document:
+- Email: admin@example.com
+- First Name: Admin
+- Last Name: User
+- Role: admin
+- Is Active: ON
+
+Generate password hash in Node.js:
+node
+const crypto = require('crypto');
+const password = 'YourPassword123';
+const iterations = 100000;
+const salt = crypto.randomBytes(32).toString('hex');
+const hash = crypto.pbkdf2Sync(password, salt, iterations, 64, 'sha512').toString('hex');
+console.log(`${salt}:${hash}`);
+
+Paste result into passwordHash field
+Click Publish
 ```
 
-### Environment Variables
-No new environment variables needed. Uses existing:
-- `SANITY_PROJECT_ID`
-- `SANITY_DATASET`
-- `NEXT_PUBLIC_SANITY_PROJECT_ID`
+### 2. Login to Admin Panel
+```
+http://localhost:3000/admin/login
+Email: admin@example.com
+Password: YourPassword123
+Click: Sign In
+```
 
-## 💡 Pro Tips
+### 3. Configure Settings
+```
+Go to: http://localhost:3000/admin/settings
+Update:
+- Site Name
+- Admin Phone
+- SMS Sender ID  
+- Exchange Rate
+Click: Save Changes
+```
 
-1. **Keep images consistent size** - Use Sanity image optimization
-2. **Test hero on different images** - Verify overlay works with yours
-3. **Customize category links** - Update URLs to match your routes
-4. **Newsletter signup** - Wire up backend in footer.tsx
-5. **Analytics tracking** - Add GTM/GA to button clicks
-6. **Newsletter forms** - Connect to email service
+## 🔑 User Roles & Permissions
 
-## 🎓 Learning Path
+### Admin Role
+- ✅ Full access (all permissions automatically)
+- ✅ Manage all users
+- ✅ Configure all settings
+- ✅ View all analytics
 
-1. Review `DESIGN_SPECIFICATIONS.md` for design system
-2. Check `NIKE_REDESIGN_SUMMARY.md` for architecture
-3. Look at `components/header-new.tsx` to understand component structure
-4. Examine `app/page.tsx` for page layout pattern
-5. Study hover effects in `components/product-card.tsx`
+### User Role (Custom)
+- Based on assigned permissions
+- 11 available permissions (see list below)
 
-## 📞 Need Help?
+### Available Permissions (11 Total)
+```
+view_orders              Viewing orders
+manage_orders           Creating/editing orders
+view_products           Viewing products
+manage_products         Creating/editing products
+view_customers          Viewing customers
+manage_customers        Editing customers
+view_settings           Viewing settings
+manage_settings         Editing settings (including exchange rate)
+view_analytics          Viewing analytics
+manage_users            Creating/managing users
+send_sms                Sending SMS notifications
+```
 
-### File Locations
-- Components: `components/`
-- Pages: `app/`
-- Styles: Inline Tailwind, see `app/globals.css`
-- Config: `tailwind.config.ts`
+## 🔌 API Endpoints
 
-### Common Edits
-- **Change announcement text**: `components/header-new.tsx` line ~15
-- **Change footer colors**: Use `bg-black` / `text-white` in `components/footer.tsx`
-- **Change hero image**: Pass `image` prop to `PremiumHeroBanner`
-- **Change product card hover**: Modify `scale-105` in `components/product-card.tsx`
+### Auth
+```bash
+POST /api/admin/auth/login
+POST /api/admin/auth/logout
+```
+
+### Users
+```bash
+GET  /api/admin/users
+POST /api/admin/users
+```
+
+### Settings
+```bash
+GET /api/admin/settings
+PUT /api/admin/settings
+```
+
+### Analytics
+```bash
+GET /api/admin/stats
+```
+
+## 🌍 Currency System
+
+### How It Works
+1. **Auto-Detection**: Browser locale → Country code
+2. **Mapping**: Ghana (GH) → GHS, Others → USD
+3. **Conversion**: Admin sets exchange rate (1 GHS = X USD)
+4. **Display**: Prices shown in user's currency
+
+### Usage in Components
+```javascript
+const { currency, exchangeRate, convertPrice, formatPrice } = useCurrency()
+
+// Convert price from GHS to user's currency
+const convertedPrice = convertPrice(100)  // e.g., 8.2 USD
+
+// Format for display with currency symbol
+const display = formatPrice(100)  // "₵100.00" or "$99.99"
+```
+
+## 🔐 Security
+
+| Feature | Details |
+|---------|---------|
+| Password Hash | PBKDF2-SHA512 (100,000 iterations) |
+| Salt | 32 bytes per password |
+| Session | 24-hour token expiry |
+| Storage | Browser localStorage |
+| Validation | Constant-time comparison |
+
+## 📊 Admin Dashboard Features
+
+### Overview
+- Site name display
+- Admin info
+- Current exchange rate
+- Quick links to all features
+
+### Settings
+- Site name & description
+- Admin phone & SMS sender ID
+- Exchange rate management
+- Real-time validation
+
+### Team Management
+- Create new users
+- Assign roles & permissions
+- View user list
+- Manage permissions
+
+### Analytics
+- Total orders & revenue
+- Average order value
+- Pending vs completed orders
+- Top products by revenue
+- 7-day revenue trend
+- Customer count
+
+## 🧪 Testing Checklist
+
+- [ ] Login with admin credentials
+- [ ] Create new user
+- [ ] Assign permissions
+- [ ] Update exchange rate
+- [ ] View analytics dashboard
+- [ ] Check currency conversion (switch countries)
+- [ ] Test logout
+- [ ] Verify session persistence
+- [ ] Check error messages
+
+## 🛠️ Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| Can't login | Verify user exists in Sanity, check isActive=ON |
+| Permission denied | Check user permissions in Sanity document |
+| Settings won't save | Check browser console, verify permission |
+| Currency not updating | Hard refresh (Ctrl+Shift+R), check exchange rate |
+| Analytics empty | Verify orders exist in Sanity, check permission |
+
+## 📚 Documentation
+
+- **ADMIN_QUICKSTART.md** - Detailed setup guide
+- **ADMIN_IMPLEMENTATION.md** - Complete API reference
+- **SYSTEM_SUMMARY.md** - Architecture overview
+- **DOCUMENTATION_INDEX.md** - All docs navigation
+- **COMPLETION_SUMMARY.md** - What was implemented
+
+## ⚙️ Environment Variables
+
+```bash
+NEXT_PUBLIC_SANITY_PROJECT_ID=u3ligoj7
+NEXT_PUBLIC_SANITY_DATASET=production
+SANITY_WRITE_TOKEN=your_token
+NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY=pk_test_xxx
+PAYSTACK_SECRET_KEY=sk_test_xxx
+```
+
+## 🚀 Common Commands
+
+```bash
+npm run dev              # Start dev server
+npm run build            # Build for production
+npm run sanity:dev       # Start Sanity Studio
+npm run lint             # Run linter
+```
+
+## 💾 Database Structure
+
+### User Schema
+```
+_id, email, firstName, lastName, passwordHash, role, permissions, 
+phone, isActive, lastLogin, createdAt
+```
+
+### Site Settings
+```
+siteName, description, adminPhone, senderId,
+currency { defaultCurrency, exchangeRate, lastUpdated },
+geoLocation { ghanaCurrencyCountries, defaultCountry }
+```
+
+## 🎯 Quick Tips
+
+1. **Create First User**: Via Sanity Studio (easier than API)
+2. **Change Password**: Edit user in Sanity, regenerate hash
+3. **View Logs**: Check terminal for API logs
+4. **Test Login**: Use admin/admin initially
+5. **Reset Session**: Clear localStorage["adminSession"]
+6. **Debug Permission**: Check browser console
+7. **Update Rate**: In Admin Settings page
+8. **Export Data**: Use Sanity export tool
+9. **Backup**: Regular Sanity backups
+10. **Monitor**: Check analytics daily
+
+## ✅ Status
+
+- ✅ Admin authentication
+- ✅ User management
+- ✅ Settings control
+- ✅ Analytics dashboard
+- ✅ Currency conversion
+- ✅ Cart quantities
+- ✅ Full documentation
+- ✅ Production ready
 
 ---
 
-**Version**: 1.0
-**Last Updated**: January 2025
-**Status**: ✅ Production Ready
+**Version**: 1.0.0 | **Updated**: December 2024 | **Status**: COMPLETE ✅

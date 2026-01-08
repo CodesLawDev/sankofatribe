@@ -195,7 +195,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                                     className="group block"
                                 >
                                     <div className="relative aspect-[3/4] overflow-hidden bg-neutral-50 mb-4">
-                                        {product.images?.[0] ? (
+                                        {product.images?.[0] && (product.images[0] as any).asset ? (
                                             <Image
                                                 src={urlFor(product.images[0]).width(400).height(533).url()}
                                                 alt={product.name}

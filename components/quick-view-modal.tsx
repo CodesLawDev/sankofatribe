@@ -20,6 +20,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
     const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist()
     const [selectedSize, setSelectedSize] = useState('')
     const [selectedColor, setSelectedColor] = useState('')
+    const [quantity, setQuantity] = useState(1)
     const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
     if (!isOpen || !product) return null
@@ -27,7 +28,11 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
     const inWishlist = isInWishlist(product._id)
 
     const handleAddToCart = async () => {
-        const imageUrl = product.images?.[0]
+        if (!selectedSize && product.sizes && product.sizes.length > 0) {
+            return
+        }
+
+        const imageUrl = product.images?.[0] && (product.images[0] as any).asset
             ? urlFor(product.images[0]).width(800).height(1067).url()
             : '/placeholder-product.png'
 
@@ -40,10 +45,12 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
                 selectedSize: selectedSize || product.sizes?.[0]?.size || '',
                 selectedColor: selectedColor || product.colors?.[0]?.name || '',
             },
-            product.sizes?.find((s: any) => s.size === selectedSize)?.stock || 0
+            product.sizes?.find((s: any) => s.size === selectedSize)?.stock || 0,
+            quantity
         )
         if (success) {
             onClose()
+            setQuantity(1)
         }
     }
 
@@ -89,7 +96,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
                 <div className="grid md:grid-cols-2">
                     {/* Image Section */}
                     <div className="relative aspect-[3/4] bg-neutral-50">
-                        {product.images?.[currentImageIndex] ? (
+                        {product.images?.[currentImageIndex] && (product.images[currentImageIndex] as any).asset ? (
                             <Image
                                 src={urlFor(product.images[currentImageIndex]).width(800).height(1067).url()}
                                 alt={product.name}
@@ -205,6 +212,30 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
                                 </div>
                             </div>
                         )}
+
+                        {/* Quantity Selection */}
+                        <div className="mb-8">
+                            <label className="block text-xs font-medium mb-3 uppercase tracking-[0.15em]">
+                                Quantity
+                            </label>
+                            <div className="flex items-center gap-3">
+                                <button
+                                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                                    className="w-10 h-10 border border-gray-300 hover:border-black transition-colors flex items-center justify-center text-sm"
+                                    aria-label="Decrease quantity"
+                                >
+                                    −
+                                </button>
+                                <span className="w-12 text-center text-sm">{quantity}</span>
+                                <button
+                                    onClick={() => setQuantity(quantity + 1)}
+                                    className="w-10 h-10 border border-gray-300 hover:border-black transition-colors flex items-center justify-center text-sm"
+                                    aria-label="Increase quantity"
+                                >
+                                    +
+                                </button>
+                            </div>
+                        </div>
 
                         {/* Actions */}
                         <div className="space-y-3">

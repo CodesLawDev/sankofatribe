@@ -20,7 +20,7 @@ export default function Spotlight({ products }: SpotlightProps) {
 
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                     {products.map((product) => {
-                        const imageUrl = product.images?.[0]
+                        const imageUrl = product.images?.[0] && (product.images[0] as any).asset
                             ? urlFor(product.images[0]).width(500).height(666).url()
                             : '/placeholder-product.png'
 

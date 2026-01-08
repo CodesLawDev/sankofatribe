@@ -20,9 +20,11 @@ export function RecentlyViewedProvider({ children }: { children: ReactNode }) {
     // Load from localStorage on mount
     useEffect(() => {
         try {
-            const stored = localStorage.getItem(STORAGE_KEY)
-            if (stored) {
-                setRecentlyViewed(JSON.parse(stored))
+            if (typeof window !== 'undefined' && window.localStorage) {
+                const stored = localStorage.getItem(STORAGE_KEY)
+                if (stored) {
+                    setRecentlyViewed(JSON.parse(stored))
+                }
             }
         } catch (error) {
             console.error('Failed to load recently viewed:', error)
@@ -38,7 +40,9 @@ export function RecentlyViewedProvider({ children }: { children: ReactNode }) {
             
             // Save to localStorage
             try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
+                if (typeof window !== 'undefined' && window.localStorage) {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
+                }
             } catch (error) {
                 console.error('Failed to save recently viewed:', error)
             }

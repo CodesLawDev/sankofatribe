@@ -22,7 +22,13 @@ export const banner = defineType({
             options: {
                 hotspot: true,
             },
-            validation: (Rule) => Rule.required(),
+            description: 'Use image for static banners',
+        }),
+        defineField({
+            name: 'videoUrl',
+            title: 'Video URL',
+            type: 'url',
+            description: 'Optional: Add a video URL (YouTube, Vimeo, or direct .mp4 link). Video will be used instead of image if provided.',
         }),
         defineField({
             name: 'ctaText',

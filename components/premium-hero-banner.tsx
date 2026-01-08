@@ -5,6 +5,7 @@ import { urlFor } from '@/lib/sanity'
 
 interface HeroBannerProps {
     image: any // Sanity image object or URL string
+    videoUrl?: string // Optional video URL
     title: string
     subtitle?: string
     ctaText?: string
@@ -15,6 +16,7 @@ interface HeroBannerProps {
 
 export default function PremiumHeroBanner({
     image,
+    videoUrl,
     title,
     subtitle,
     ctaText,
@@ -36,14 +38,24 @@ export default function PremiumHeroBanner({
     // Handle both Sanity image objects and URL strings
     const imageUrl = typeof image === 'string' 
         ? image 
-        : image 
+        : image && (image as any).asset
             ? urlFor(image).width(1920).height(1080).url()
             : null
 
     return (
         <div className="relative w-full h-[60vh] md:h-[75vh] lg:h-[85vh] overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900">
-            {/* Background Image */}
-            {imageUrl && (
+            {/* Background Video or Image */}
+            {videoUrl ? (
+                <video
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    className="absolute inset-0 w-full h-full object-cover"
+                >
+                    <source src={videoUrl} type="video/mp4" />
+                </video>
+            ) : imageUrl ? (
                 <Image
                     src={imageUrl}
                     alt={title}
@@ -52,7 +64,7 @@ export default function PremiumHeroBanner({
                     priority
                     quality={95}
                 />
-            )}
+            ) : null}
 
             {/* Overlay */}
             <div className="absolute inset-0 bg-black/20" />
