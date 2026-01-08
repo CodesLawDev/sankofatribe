@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react'
 import { Product } from '@/lib/sanity'
 import ProductGrid from './product-grid'
 import ProductFilters from './product-filters'
+import ActiveFilters from './active-filters'
 
 interface FilterState {
     category: string
@@ -22,6 +23,13 @@ export default function ProductsWithFilters({ products, categories }: ProductsWi
         priceRange: '',
         sortBy: 'newest',
     })
+
+    const clearFilter = (type: string, value: string) => {
+        if (type === 'category') setFilters((prev) => ({ ...prev, category: '' }))
+        if (type === 'priceRange') setFilters((prev) => ({ ...prev, priceRange: '' }))
+    }
+
+    const clearAll = () => setFilters({ category: '', priceRange: '', sortBy: 'newest' })
 
     const filteredProducts = useMemo(() => {
         let result = [...products]
@@ -76,6 +84,18 @@ export default function ProductsWithFilters({ products, categories }: ProductsWi
                 onFilterChange={setFilters}
                 totalProducts={filteredProducts.length}
             />
+            <ActiveFilters
+                filters={[
+                    ...(filters.category
+                        ? [{ label: categories.find(c => c.slug === filters.category)?.name || filters.category, value: filters.category, type: 'category' as const }]
+                        : []),
+                    ...(filters.priceRange
+                        ? [{ label: priceRangesLabel(filters.priceRange), value: filters.priceRange, type: 'priceRange' as const }]
+                        : []),
+                ]}
+                onRemove={clearFilter}
+                onClearAll={clearAll}
+            />
             
             {filteredProducts.length > 0 ? (
                 <ProductGrid products={filteredProducts} />
@@ -83,7 +103,7 @@ export default function ProductsWithFilters({ products, categories }: ProductsWi
                 <div className="text-center py-32">
                     <p className="text-sm text-gray-600 tracking-wide mb-4">No products match your filters</p>
                     <button
-                        onClick={() => setFilters({ category: '', priceRange: '', sortBy: 'newest' })}
+                        onClick={clearAll}
                         className="text-xs uppercase tracking-wider underline hover:no-underline"
                     >
                         Clear Filters
@@ -92,4 +112,19 @@ export default function ProductsWithFilters({ products, categories }: ProductsWi
             )}
         </>
     )
+}
+
+function priceRangesLabel(value: string) {
+    switch (value) {
+        case 'under-50':
+            return 'Under $50'
+        case '50-100':
+            return '$50 - $100'
+        case '100-200':
+            return '$100 - $200'
+        case 'over-200':
+            return 'Over $200'
+        default:
+            return 'All Prices'
+    }
 }

@@ -10,6 +10,8 @@ async function getAllProducts() {
     price,
     inStock,
     featured,
+        stockQuantity,
+        soldCount,
     sizes,
     colors,
     "category": category-> {

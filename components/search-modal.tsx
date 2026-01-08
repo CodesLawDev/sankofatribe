@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
@@ -25,6 +26,23 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
     const [results, setResults] = useState<SearchResult[]>([])
     const [loading, setLoading] = useState(false)
     const [searched, setSearched] = useState(false)
+        const [recentSearches, setRecentSearches] = useState<string[]>([])
+
+        // Load recent searches
+        useEffect(() => {
+            const stored = localStorage.getItem('sankofa_recent_searches')
+            if (stored) {
+                setRecentSearches(JSON.parse(stored))
+            }
+        }, [])
+
+        // Save to recent searches
+        const saveRecentSearch = (searchQuery: string) => {
+            if (!searchQuery.trim()) return
+            const updated = [searchQuery, ...recentSearches.filter(s => s !== searchQuery)].slice(0, 5)
+            setRecentSearches(updated)
+            localStorage.setItem('sankofa_recent_searches', JSON.stringify(updated))
+        }
 
     const searchProducts = useCallback(async (searchQuery: string) => {
         if (!searchQuery.trim()) {
@@ -86,7 +104,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
     if (!isOpen) return null
 
     return (
-        <div className="fixed inset-0 z-[100] bg-white">
+        <div className="fixed inset-0 z-[100] bg-white text-black">
             {/* Header */}
             <div className="border-b border-gray-100">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
@@ -96,7 +114,12 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                             <input
                                 type="text"
                                 value={query}
-                                onChange={(e) => setQuery(e.target.value)}
+                                    onChange={(e) => {
+                                        setQuery(e.target.value)
+                                        if (e.target.value.trim()) {
+                                            saveRecentSearch(e.target.value)
+                                        }
+                                    }}
                                 placeholder="Search products..."
                                 className="flex-1 text-lg bg-transparent outline-none placeholder:text-gray-400"
                                 autoFocus
@@ -115,6 +138,45 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
 
             {/* Results */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-8 overflow-y-auto max-h-[calc(100vh-80px)]">
+                {/* Recent & Trending */}
+                {!query.trim() && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+                        <div className="bg-white border border-gray-100 p-6 rounded-lg">
+                            <h3 className="text-xs uppercase tracking-[0.2em] font-medium mb-4">Recent Searches</h3>
+                            {recentSearches.length === 0 ? (
+                                <p className="text-sm text-gray-500">No recent searches yet</p>
+                            ) : (
+                                <div className="flex flex-wrap gap-2">
+                                    {recentSearches.map((item) => (
+                                        <button
+                                            key={item}
+                                            onClick={() => setQuery(item)}
+                                            className="px-3 py-1.5 bg-neutral-100 text-xs rounded-full hover:bg-neutral-200 transition-colors"
+                                        >
+                                            {item}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="bg-white border border-gray-100 p-6 rounded-lg">
+                            <h3 className="text-xs uppercase tracking-[0.2em] font-medium mb-4">Trending</h3>
+                            <div className="flex flex-wrap gap-2">
+                                {['Dresses', 'Linen', 'Men shirts', 'Accessories'].map((item) => (
+                                    <button
+                                        key={item}
+                                        onClick={() => setQuery(item)}
+                                        className="px-3 py-1.5 bg-neutral-100 text-xs rounded-full hover:bg-neutral-200 transition-colors"
+                                    >
+                                        {item}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {loading ? (
                     <div className="flex items-center justify-center py-16">
                         <Loader2 className="h-8 w-8 animate-spin text-gray-400" />

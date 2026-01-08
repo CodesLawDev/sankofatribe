@@ -7,7 +7,7 @@ import { useState } from 'react'
 import SearchModal from './search-modal'
 
 export default function Header() {
-    const { totalItems } = useCart()
+    const { cartCount } = useCart()
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
     const [searchOpen, setSearchOpen] = useState(false)
 
@@ -43,18 +43,8 @@ export default function Header() {
                             </Link>
                         </div>
 
-                        {/* Desktop Navigation - Hidden */}
-                        <div className="hidden lg:flex lg:gap-12 flex-1 justify-center items-center">
-                            {navigation.map((item) => (
-                                <Link
-                                    key={item.name}
-                                    href={item.href}
-                                    className="text-xs font-medium uppercase tracking-[0.2em] hover:opacity-60 transition-opacity"
-                                >
-                                    {item.name}
-                                </Link>
-                            ))}
-                        </div>
+                        {/* Spacer for centering logo */}
+                        <div className="flex-1" />
 
                         {/* Right icons */}
                         <div className="flex items-center gap-6">
@@ -77,9 +67,9 @@ export default function Header() {
                                 aria-label="Shopping bag"
                             >
                                 <ShoppingBag className="h-5 w-5" strokeWidth={1.5} />
-                                {totalItems > 0 && (
+                                {cartCount > 0 && (
                                     <span className="absolute -top-2 -right-2 bg-brand-primary text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center font-medium">
-                                        {totalItems}
+                                        {cartCount}
                                     </span>
                                 )}
                             </Link>

@@ -88,6 +88,20 @@ export const product = defineType({
             type: 'boolean',
             initialValue: true,
         }),
+            defineField({
+                name: 'stockQuantity',
+                title: 'Stock Quantity',
+                type: 'number',
+                description: 'Number of items in stock (for urgency messages)',
+                initialValue: 0,
+            }),
+            defineField({
+                name: 'soldCount',
+                title: 'Sold Count',
+                type: 'number',
+                description: 'Total number sold (for social proof)',
+                initialValue: 0,
+            }),
     ],
     preview: {
         select: {

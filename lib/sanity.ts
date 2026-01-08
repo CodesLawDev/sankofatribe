@@ -37,6 +37,8 @@ export interface Product {
     colors?: { name: string; hex: string }[]
     featured?: boolean
     inStock?: boolean
+        stockQuantity?: number
+        soldCount?: number
 }
 
 export interface Category {

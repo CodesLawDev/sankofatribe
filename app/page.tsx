@@ -1,6 +1,8 @@
 import { client } from '@/lib/sanity'
 import type { HomePage, Product } from '@/lib/sanity'
-import HeroBanner from '@/components/hero-banner'
+import PremiumHeroBanner from '@/components/premium-hero-banner'
+import FeaturedCategories from '@/components/featured-categories'
+import Spotlight from '@/components/spotlight'
 import ProductGrid from '@/components/product-grid'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -24,7 +26,9 @@ async function getHomePageData() {
       images,
       price,
       inStock,
-      featured
+            featured,
+            stockQuantity,
+            soldCount
     }
   }`
 
@@ -40,7 +44,9 @@ async function getFeaturedProducts() {
     images,
     price,
     inStock,
-    featured
+        featured,
+        stockQuantity,
+        soldCount
   }`
 
     const products = await client.fetch<Product[]>(query, {}, { next: { revalidate: 60 } })
@@ -52,187 +58,131 @@ export default async function HomePage() {
     const featuredProducts = homePageData?.featuredProducts || await getFeaturedProducts()
 
     return (
-        <div className="bg-white">
-            {/* Hero Banner 1 - Main promotional banner */}
-            {homePageData?.heroBanners && homePageData.heroBanners.length > 0 && (
-                <section>
-                    {homePageData.heroBanners[0] && (
-                        <HeroBanner banner={homePageData.heroBanners[0]} />
-                    )}
-                </section>
+        <div className="bg-white text-black">
+            {/* Main Hero Section - Premium Nike Style */}
+            {homePageData?.heroBanners?.[0] ? (
+                <PremiumHeroBanner
+                    image={homePageData.heroBanners[0].image}
+                    title={homePageData.heroBanners[0].title || "SANKOFA TRIBE"}
+                    subtitle={homePageData.heroBanners[0].subtitle || "Premium African Heritage Fashion"}
+                    ctaText={homePageData.heroBanners[0].ctaText || "Explore Collection"}
+                    ctaLink={homePageData.heroBanners[0].ctaLink || "/products"}
+                    textPosition="center"
+                    textColor="white"
+                />
+            ) : (
+                <PremiumHeroBanner
+                    image={null}
+                    title="SANKOFA TRIBE"
+                    subtitle="Premium African Heritage Fashion"
+                    ctaText="Explore Collection"
+                    ctaLink="/products"
+                    textPosition="center"
+                    textColor="white"
+                />
             )}
 
-            {/* Hero Banner 2 - Secondary campaign (if available) */}
-            {homePageData?.heroBanners && homePageData.heroBanners.length > 1 && (
-                <section>
-                    <HeroBanner banner={homePageData.heroBanners[1]} />
-                </section>
-            )}
+            {/* Featured Categories - Sports/Lifestyle */}
+            <FeaturedCategories
+                categories={[
+                    {
+                        id: 'men',
+                        title: "Men's Collection",
+                        image: '',
+                        link: '/category/men'
+                    },
+                    {
+                        id: 'women',
+                        title: "Women's Collection",
+                        image: '',
+                        link: '/category/women'
+                    },
+                    {
+                        id: 'sale',
+                        title: 'On Sale',
+                        image: '',
+                        link: '/products?filter=sale'
+                    }
+                ]}
+            />
 
-            {/* 4-Grid Category Section - "FOR HER", "FOR HIM", "TOP GIFTS", "UNDER $50" */}
-            <section className="grid grid-cols-2 lg:grid-cols-4">
-                <Link href="/category/women" className="group relative h-[50vh] lg:h-[60vh] overflow-hidden bg-gray-50">
-                    <div className="absolute inset-0 bg-gradient-to-t from-brand-dark/30 to-transparent" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <h3 className="text-3xl md:text-4xl lg:text-5xl font-light tracking-[0.2em] uppercase text-white group-hover:scale-105 transition-transform duration-500">
-                            FOR HER
-                        </h3>
-                    </div>
-                </Link>
-                <Link href="/category/men" className="group relative h-[50vh] lg:h-[60vh] overflow-hidden bg-neutral-100">
-                    <div className="absolute inset-0 bg-gradient-to-t from-brand-dark/30 to-transparent" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <h3 className="text-3xl md:text-4xl lg:text-5xl font-light tracking-[0.2em] uppercase text-white group-hover:scale-105 transition-transform duration-500">
-                            FOR HIM
-                        </h3>
-                    </div>
-                </Link>
-                <Link href="/products?filter=gifts" className="group relative h-[50vh] lg:h-[60vh] overflow-hidden bg-neutral-200">
-                    <div className="absolute inset-0 bg-gradient-to-t from-brand-dark/30 to-transparent" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <h3 className="text-3xl md:text-4xl lg:text-5xl font-light tracking-[0.2em] uppercase text-white group-hover:scale-105 transition-transform duration-500">
-                            TOP GIFTS
-                        </h3>
-                    </div>
-                </Link>
-                <Link href="/products?price=under-50" className="group relative h-[50vh] lg:h-[60vh] overflow-hidden bg-neutral-300">
-                    <div className="absolute inset-0 bg-gradient-to-t from-brand-dark/30 to-transparent" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <h3 className="text-3xl md:text-4xl lg:text-5xl font-light tracking-[0.2em] uppercase text-white group-hover:scale-105 transition-transform duration-500">
-                            UNDER $50
-                        </h3>
-                    </div>
-                </Link>
-            </section>
-
-            {/* Hero Banner 3 - Third campaign (if available) */}
-            {homePageData?.heroBanners && homePageData.heroBanners.length > 2 && (
-                <section>
-                    <HeroBanner banner={homePageData.heroBanners[2]} />
-                </section>
-            )}
-
-            {/* Hero Banner 4 - Fourth campaign (if available) */}
-            {homePageData?.heroBanners && homePageData.heroBanners.length > 3 && (
-                <section>
-                    <HeroBanner banner={homePageData.heroBanners[3]} />
-                </section>
-            )}
-
-            {/* Text-Only Section - "HOLIDAY HEAT" style */}
-            <section className="bg-brand-cream py-20 md:py-32">
-                <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-12">
-                    <h2 className="text-6xl md:text-8xl lg:text-9xl font-light tracking-wider uppercase text-center mb-12">
-                        HOLIDAY HEAT
-                    </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-                        <Link href="/products?category=gifts" className="group py-8 border-t-2 border-brand-primary hover:opacity-60 transition-opacity">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xl md:text-2xl font-light uppercase tracking-wider text-brand-dark">SHOP ALL GIFTS</span>
-                                <span className="text-2xl">→</span>
-                            </div>
-                        </Link>
-                        <Link href="/products?category=top-gifts" className="group py-8 border-t-2 border-brand-primary hover:opacity-60 transition-opacity">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xl md:text-2xl font-light uppercase tracking-wider text-brand-dark">TOP GIFTS</span>
-                                <span className="text-2xl">→</span>
-                            </div>
-                        </Link>
-                        <Link href="/products?category=women-gifts" className="group py-8 border-t-2 border-brand-primary hover:opacity-60 transition-opacity">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xl md:text-2xl font-light uppercase tracking-wider text-brand-dark">WOMEN&apos;S GIFTS</span>
-                                <span className="text-2xl">→</span>
-                            </div>
-                        </Link>
-                        <Link href="/products?category=men-gifts" className="group py-8 border-t-2 border-brand-primary hover:opacity-60 transition-opacity">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xl md:text-2xl font-light uppercase tracking-wider text-brand-dark">MEN&apos;S GIFTS</span>
-                                <span className="text-2xl">→</span>
-                            </div>
-                        </Link>
-                        <Link href="/products?price=under-50" className="group py-8 border-t-2 border-brand-primary hover:opacity-60 transition-opacity">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xl md:text-2xl font-light uppercase tracking-wider text-brand-dark">GIFTS UNDER $50</span>
-                                <span className="text-2xl">→</span>
-                            </div>
-                        </Link>
-                    </div>
-                </div>
-            </section>
-
-            {/* Rewards Banner */}
-            <section className="relative h-[50vh] bg-gradient-to-br from-gray-800 to-gray-900 text-white flex items-center justify-center">
-                <div className="text-center px-4 max-w-3xl">
-                    <p className="text-xs uppercase tracking-[0.3em] mb-4 text-gray-400">INTRODUCING</p>
-                    <h2 className="text-3xl md:text-5xl font-light tracking-wider mb-4">
-                        My Sankofa Rewards
-                    </h2>
-                    <p className="text-4xl md:text-6xl font-light tracking-wide mb-8">
-                        Earn. Redeem. Enjoy.
-                    </p>
-                    <p className="text-sm md:text-base mb-8 text-gray-300">
-                        A new way to experience SANKOFA. Unlock exclusive benefits designed for you, every time you shop.
-                    </p>
-                    <Button size="lg" variant="secondary" className="min-w-[200px] border-white text-black">
-                        Learn More
-                    </Button>
-                </div>
-            </section>
-
-            {/* Featured Products Grid */}
+            {/* Spotlight Section - Featured Products */}
             {featuredProducts && featuredProducts.length > 0 && (
-                <section className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12 py-20 md:py-32">
+                <Spotlight products={featuredProducts.slice(0, 8)} />
+            )}
+
+            {/* Secondary Hero - Campaign Banner */}
+            {homePageData?.heroBanners?.[1] && (
+                <PremiumHeroBanner
+                    image={homePageData.heroBanners[1].image}
+                    title={homePageData.heroBanners[1].title || 'New Arrivals'}
+                    subtitle={homePageData.heroBanners[1].subtitle}
+                    ctaText={homePageData.heroBanners[1].ctaText || 'Shop Now'}
+                    ctaLink={homePageData.heroBanners[1].ctaLink || '/products'}
+                    textPosition="left"
+                    textColor="white"
+                />
+            )}
+
+            {/* Collection Section */}
+            <section className="py-20 md:py-32 bg-gray-50">
+                <div className="mx-auto px-4 sm:px-6 lg:px-12 max-w-7xl">
                     <div className="text-center mb-16">
-                        <h2 className="text-xs uppercase tracking-[0.3em] font-medium mb-3 text-gray-600">
-                            New Arrivals
-                        </h2>
-                        <p className="text-3xl md:text-4xl font-light tracking-wider">
-                            The Latest Collection
+                        <h2 className="text-4xl md:text-5xl font-bold mb-4">Latest Collections</h2>
+                        <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+                            Discover our carefully curated selection of premium products
                         </p>
                     </div>
-                    <ProductGrid products={featuredProducts} />
-                    <div className="text-center mt-16">
-                        <Link href="/products">
-                            <Button size="lg" variant="secondary" className="min-w-[200px]">
-                                Shop All
-                            </Button>
-                        </Link>
-                    </div>
-                </section>
-            )}
+                    {featuredProducts && featuredProducts.length > 8 && (
+                        <ProductGrid products={featuredProducts.slice(8, 16)} />
+                    )}
+                </div>
+            </section>
 
-            {/* Bottom Category Grid */}
-            <section className="grid grid-cols-2 md:grid-cols-4 border-t border-neutral-100">
-                <div className="border-r border-b border-neutral-100 p-8 md:p-12 text-center hover:bg-neutral-50 transition-colors">
-                    <h3 className="text-lg md:text-xl font-light uppercase tracking-wider mb-4">Top Gifts</h3>
-                    <p className="text-xs text-neutral-600 mb-6">Shop Now</p>
-                    <div className="flex justify-center gap-4">
-                        <Link href="/category/women?filter=gifts" className="text-xs hover:underline">Women</Link>
-                        <Link href="/category/men?filter=gifts" className="text-xs hover:underline">Men</Link>
+            {/* Categories Grid Section */}
+            <section className="grid grid-cols-2 md:grid-cols-4 border-t border-gray-200">
+                <Link href="/category/men" className="group relative aspect-square overflow-hidden bg-gray-100 border-b border-r border-gray-200">
+                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors duration-300" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <h3 className="text-2xl font-bold text-white text-center">Men</h3>
                     </div>
-                </div>
-                <div className="border-r border-b border-neutral-100 p-8 md:p-12 text-center hover:bg-neutral-50 transition-colors">
-                    <h3 className="text-lg md:text-xl font-light uppercase tracking-wider mb-4">Underwear</h3>
-                    <p className="text-xs text-neutral-600 mb-6">Shop Now</p>
-                    <div className="flex justify-center gap-4">
-                        <Link href="/category/women?filter=underwear" className="text-xs hover:underline">Women</Link>
-                        <Link href="/category/men?filter=underwear" className="text-xs hover:underline">Men</Link>
+                </Link>
+                <Link href="/category/women" className="group relative aspect-square overflow-hidden bg-gray-100 border-b border-r border-gray-200">
+                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors duration-300" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <h3 className="text-2xl font-bold text-white text-center">Women</h3>
                     </div>
-                </div>
-                <div className="border-r border-b border-neutral-100 p-8 md:p-12 text-center hover:bg-neutral-50 transition-colors">
-                    <h3 className="text-lg md:text-xl font-light uppercase tracking-wider mb-4">Logo Gifts</h3>
-                    <p className="text-xs text-neutral-600 mb-6">Shop Now</p>
-                    <div className="flex justify-center gap-4">
-                        <Link href="/category/women?filter=logo" className="text-xs hover:underline">Women</Link>
-                        <Link href="/category/men?filter=logo" className="text-xs hover:underline">Men</Link>
+                </Link>
+                <Link href="/products?filter=sale" className="group relative aspect-square overflow-hidden bg-gray-100 border-b border-r border-gray-200">
+                    <div className="absolute inset-0 bg-red-600/20 group-hover:bg-red-600/40 transition-colors duration-300" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <h3 className="text-2xl font-bold text-white text-center">Sale</h3>
                     </div>
-                </div>
-                <div className="border-b border-neutral-100 p-8 md:p-12 text-center hover:bg-neutral-50 transition-colors">
-                    <h3 className="text-lg md:text-xl font-light uppercase tracking-wider mb-4">Fleece Gifts</h3>
-                    <p className="text-xs text-neutral-600 mb-6">Shop Now</p>
-                    <div className="flex justify-center gap-4">
-                        <Link href="/category/women?filter=fleece" className="text-xs hover:underline">Women</Link>
-                        <Link href="/category/men?filter=fleece" className="text-xs hover:underline">Men</Link>
+                </Link>
+                <Link href="/products?filter=new" className="group relative aspect-square overflow-hidden bg-gray-100 border-b border-gray-200">
+                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors duration-300" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <h3 className="text-2xl font-bold text-white text-center">New</h3>
+                    </div>
+                </Link>
+            </section>
+
+            {/* Benefits Section */}
+            <section className="bg-black text-white py-16 md:py-24">
+                <div className="mx-auto px-4 sm:px-6 lg:px-12 max-w-7xl">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+                        <div className="text-center">
+                            <div className="text-4xl font-bold mb-4">Free Shipping</div>
+                            <p className="text-gray-400">On orders over $100</p>
+                        </div>
+                        <div className="text-center">
+                            <div className="text-4xl font-bold mb-4">30-Day Returns</div>
+                            <p className="text-gray-400">Easy returns & exchanges</p>
+                        </div>
+                        <div className="text-center">
+                            <div className="text-4xl font-bold mb-4">Premium Support</div>
+                            <p className="text-gray-400">24/7 customer service</p>
+                        </div>
                     </div>
                 </div>
             </section>

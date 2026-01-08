@@ -22,17 +22,17 @@ export async function POST(req: NextRequest) {
             price_data: {
                 currency: 'usd',
                 product_data: {
-                    name: item.product.name,
+                    name: item.name,
                     description: `Size: ${item.selectedSize || 'N/A'}, Color: ${item.selectedColor || 'N/A'}`,
-                    images: [], // You can add product images here if needed
+                    images: [item.image].filter(Boolean), // Add product image if available
                 },
-                unit_amount: Math.round(item.product.price * 100), // Convert to cents
+                unit_amount: Math.round(item.price * 100), // Convert to cents
             },
             quantity: item.quantity,
         }))
 
         // Add shipping if applicable
-        const subtotal = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0)
+        const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
         if (subtotal < 100) {
             lineItems.push({
                 price_data: {

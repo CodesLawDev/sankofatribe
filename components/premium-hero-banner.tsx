@@ -1,0 +1,85 @@
+import Image from 'next/image'
+import Link from 'next/link'
+import { Button } from './ui/button'
+import { urlFor } from '@/lib/sanity'
+
+interface HeroBannerProps {
+    image: any // Sanity image object or URL string
+    title: string
+    subtitle?: string
+    ctaText?: string
+    ctaLink?: string
+    textPosition?: 'left' | 'center' | 'right'
+    textColor?: 'white' | 'black'
+}
+
+export default function PremiumHeroBanner({
+    image,
+    title,
+    subtitle,
+    ctaText,
+    ctaLink,
+    textPosition = 'left',
+    textColor = 'white',
+}: HeroBannerProps) {
+    const positionClasses = {
+        left: 'items-start',
+        center: 'items-center text-center',
+        right: 'items-end',
+    }
+
+    const textColorClasses = {
+        white: 'text-white',
+        black: 'text-black',
+    }
+
+    // Handle both Sanity image objects and URL strings
+    const imageUrl = typeof image === 'string' 
+        ? image 
+        : image 
+            ? urlFor(image).width(1920).height(1080).url()
+            : null
+
+    return (
+        <div className="relative w-full h-[60vh] md:h-[75vh] lg:h-[85vh] overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900">
+            {/* Background Image */}
+            {imageUrl && (
+                <Image
+                    src={imageUrl}
+                    alt={title}
+                    fill
+                    className="object-cover object-center"
+                    priority
+                    quality={95}
+                />
+            )}
+
+            {/* Overlay */}
+            <div className="absolute inset-0 bg-black/20" />
+
+            {/* Content */}
+            <div className={`absolute inset-0 flex flex-col ${positionClasses[textPosition]} justify-center px-4 sm:px-6 lg:px-12 max-w-7xl mx-auto w-full`}>
+                <div className={`max-w-2xl ${textColorClasses[textColor]}`}>
+                    <h2 className="text-4xl md:text-5xl lg:text-7xl font-bold tracking-tight mb-4 leading-tight">
+                        {title}
+                    </h2>
+                    {subtitle && (
+                        <p className="text-base md:text-lg lg:text-xl mb-8 font-light opacity-90">
+                            {subtitle}
+                        </p>
+                    )}
+                    {ctaText && ctaLink && (
+                        <Link href={ctaLink}>
+                            <Button
+                                size="lg"
+                                className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-black transition-all duration-300"
+                            >
+                                {ctaText}
+                            </Button>
+                        </Link>
+                    )}
+                </div>
+            </div>
+        </div>
+    )
+}

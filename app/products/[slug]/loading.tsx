@@ -2,7 +2,7 @@ import { ProductDetailSkeleton } from '@/components/skeletons'
 
 export default function ProductLoading() {
     return (
-        <div className="bg-white">
+        <div className="bg-white text-black">
             <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12 py-8 md:py-16">
                 {/* Breadcrumb Skeleton */}
                 <div className="mb-8 flex gap-2">

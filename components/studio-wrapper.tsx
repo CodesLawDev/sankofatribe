@@ -3,5 +3,9 @@ import { NextStudio } from 'next-sanity/studio'
 import config from '@/sanity.config'
 
 export function StudioWrapper() {
-  return <NextStudio config={config} />
+  return (
+    <div className="bg-white text-black" style={{ minHeight: '100vh' }}>
+      <NextStudio config={config} />
+    </div>
+  )
 }

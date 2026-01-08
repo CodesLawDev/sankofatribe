@@ -19,7 +19,7 @@ export default function HeroBanner({ banner }: HeroBannerProps) {
     const imageUrl = urlFor(banner.image).width(2400).height(1350).url()
 
     return (
-        <div className="relative h-[85vh] md:h-[90vh] w-full overflow-hidden">
+       <div className="relative h-[50vh] md:h-[70vh] lg:h-[90vh] w-full overflow-hidden">
             <Image
                 src={imageUrl}
                 alt={banner.title || 'Hero banner'}

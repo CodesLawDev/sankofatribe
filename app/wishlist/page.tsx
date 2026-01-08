@@ -90,8 +90,21 @@ export default function WishlistPage() {
                                 {/* Quick Add to Cart */}
                                 {product.inStock && (
                                     <button
-                                        onClick={() => {
-                                            addToCart(product, 1, product.sizes?.[0] || '', product.colors?.[0]?.name || '')
+                                        onClick={async () => {
+                                            const imageUrlForCart = product.images?.[0]
+                                                ? urlFor(product.images[0]).width(600).height(800).url()
+                                                : '/placeholder-product.png'
+                                            await addToCart(
+                                                {
+                                                    id: product._id,
+                                                    name: product.name,
+                                                    price: product.price,
+                                                    image: imageUrlForCart,
+                                                    selectedSize: product.sizes?.[0] || '',
+                                                    selectedColor: product.colors?.[0]?.name || '',
+                                                },
+                                                product.stockQuantity || 0
+                                            )
                                         }}
                                         className="w-full mt-3 py-2 border border-brand-primary text-xs uppercase tracking-wider hover:bg-brand-primary hover:text-white transition-colors flex items-center justify-center gap-2"
                                     >

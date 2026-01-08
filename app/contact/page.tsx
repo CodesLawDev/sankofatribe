@@ -1,10 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { MapPin, Phone, Mail, Clock } from 'lucide-react'
+import { getContentPage, ContentPageData } from '@/lib/content'
+import { PortableText } from '@portabletext/react'
 
 export default function ContactPage() {
+    const [pageData, setPageData] = useState<ContentPageData | null>(null)
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -13,6 +16,14 @@ export default function ContactPage() {
     })
     const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
 
+    useEffect(() => {
+        async function loadData() {
+            const data = await getContentPage('contact')
+            setPageData(data)
+        }
+        loadData()
+    }, [])
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setStatus('loading')
@@ -20,7 +31,6 @@ export default function ContactPage() {
         // Simulate form submission
         await new Promise(resolve => setTimeout(resolve, 1000))
         
-        // In production, you would send this to your API
         console.log('Form submitted:', formData)
         setStatus('success')
         setFormData({ name: '', email: '', subject: '', message: '' })
@@ -31,182 +41,172 @@ export default function ContactPage() {
     }
 
     return (
-        <div className="bg-white">
+        <div className="bg-white text-black">
             {/* Hero Section */}
-            <section className="bg-brand-cream py-20 md:py-32 text-center">
-                <div className="max-w-3xl mx-auto px-4">
-                    <h1 className="text-3xl md:text-5xl font-light tracking-[0.2em] uppercase mb-6">
-                        Contact Us
-                    </h1>
-                    <p className="text-sm text-gray-600 tracking-wide">
-                        We'd love to hear from you. Get in touch with our team.
-                    </p>
-                </div>
-            </section>
-
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-16 md:py-24">
-                <div className="grid lg:grid-cols-2 gap-16 lg:gap-24">
-                    {/* Contact Form */}
-                    <div>
-                        <h2 className="text-xs uppercase tracking-[0.2em] font-medium mb-8">Send Us a Message</h2>
-                        
-                        {status === 'success' ? (
-                            <div className="bg-green-50 border border-green-200 p-8 text-center">
-                                <h3 className="text-sm font-medium text-green-800 mb-2">Message Sent!</h3>
-                                <p className="text-xs text-green-600">
-                                    Thank you for reaching out. We'll get back to you within 24-48 hours.
-                                </p>
-                                <Button 
-                                    onClick={() => setStatus('idle')} 
-                                    variant="secondary" 
-                                    className="mt-6"
-                                >
-                                    Send Another Message
-                                </Button>
-                            </div>
-                        ) : (
-                            <form onSubmit={handleSubmit} className="space-y-6">
-                                <div className="grid sm:grid-cols-2 gap-6">
-                                    <div>
-                                        <label className="block text-xs uppercase tracking-[0.15em] mb-2">
-                                            Name <span className="text-red-500">*</span>
-                                        </label>
-                                        <input
-                                            type="text"
-                                            name="name"
-                                            value={formData.name}
-                                            onChange={handleChange}
-                                            required
-                                            className="w-full px-4 py-3 border border-gray-300 text-sm focus:outline-none focus:border-brand-primary transition-colors"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs uppercase tracking-[0.15em] mb-2">
-                                            Email <span className="text-red-500">*</span>
-                                        </label>
-                                        <input
-                                            type="email"
-                                            name="email"
-                                            value={formData.email}
-                                            onChange={handleChange}
-                                            required
-                                            className="w-full px-4 py-3 border border-gray-300 text-sm focus:outline-none focus:border-brand-primary transition-colors"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-xs uppercase tracking-[0.15em] mb-2">
-                                        Subject <span className="text-red-500">*</span>
-                                    </label>
-                                    <select
-                                        name="subject"
-                                        value={formData.subject}
-                                        onChange={handleChange}
-                                        required
-                                        className="w-full px-4 py-3 border border-gray-300 text-sm focus:outline-none focus:border-brand-primary transition-colors bg-white"
-                                    >
-                                        <option value="">Select a subject</option>
-                                        <option value="order">Order Inquiry</option>
-                                        <option value="product">Product Question</option>
-                                        <option value="returns">Returns & Exchanges</option>
-                                        <option value="shipping">Shipping Information</option>
-                                        <option value="other">Other</option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label className="block text-xs uppercase tracking-[0.15em] mb-2">
-                                        Message <span className="text-red-500">*</span>
-                                    </label>
-                                    <textarea
-                                        name="message"
-                                        value={formData.message}
-                                        onChange={handleChange}
-                                        required
-                                        rows={6}
-                                        className="w-full px-4 py-3 border border-gray-300 text-sm focus:outline-none focus:border-brand-primary transition-colors resize-none"
-                                    />
-                                </div>
-
-                                <Button 
-                                    type="submit" 
-                                    size="lg" 
-                                    className="w-full sm:w-auto min-w-[200px]"
-                                    disabled={status === 'loading'}
-                                >
-                                    {status === 'loading' ? 'Sending...' : 'Send Message'}
-                                </Button>
-                            </form>
+            {pageData?.hero?.showHero && (
+                <section className="bg-brand-cream py-20 md:py-32 text-center">
+                    <div className="max-w-3xl mx-auto px-4">
+                        <h1 className="text-3xl md:text-5xl font-light tracking-[0.2em] uppercase mb-6">
+                            {pageData.hero.title || pageData.title}
+                        </h1>
+                        {pageData.hero.subtitle && (
+                            <p className="text-sm text-gray-600 tracking-wide">{pageData.hero.subtitle}</p>
                         )}
                     </div>
+                </section>
+            )}
 
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-16">
+                <div className="grid md:grid-cols-2 gap-16">
                     {/* Contact Information */}
                     <div>
-                        <h2 className="text-xs uppercase tracking-[0.2em] font-medium mb-8">Get in Touch</h2>
+                        <h2 className="text-2xl font-light tracking-wider uppercase mb-8">Get in Touch</h2>
                         
-                        <div className="space-y-8">
-                            <div className="flex gap-4">
-                                <div className="flex-shrink-0 w-10 h-10 border border-gray-200 flex items-center justify-center">
-                                    <MapPin className="h-4 w-4" />
-                                </div>
-                                <div>
-                                    <h3 className="text-sm font-medium mb-1">Visit Us</h3>
-                                    <p className="text-xs text-gray-600 leading-relaxed">
-                                        123 Fashion Avenue<br />
-                                        New York, NY 10001<br />
-                                        United States
-                                    </p>
-                                </div>
+                        {pageData?.content && (
+                            <div className="prose mb-8">
+                                <PortableText value={pageData.content} />
                             </div>
+                        )}
 
-                            <div className="flex gap-4">
-                                <div className="flex-shrink-0 w-10 h-10 border border-gray-200 flex items-center justify-center">
-                                    <Phone className="h-4 w-4" />
+                        <div className="space-y-6">
+                            {pageData?.contactInfo?.address && (
+                                <div className="flex gap-4">
+                                    <MapPin className="h-5 w-5 text-gray-400 flex-shrink-0 mt-1" />
+                                    <div>
+                                        <h3 className="text-sm font-medium mb-1">Address</h3>
+                                        <p className="text-sm text-gray-600 whitespace-pre-line">{pageData.contactInfo.address}</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3 className="text-sm font-medium mb-1">Call Us</h3>
-                                    <p className="text-xs text-gray-600">
-                                        +1 (555) 123-4567
-                                    </p>
-                                </div>
-                            </div>
+                            )}
 
-                            <div className="flex gap-4">
-                                <div className="flex-shrink-0 w-10 h-10 border border-gray-200 flex items-center justify-center">
-                                    <Mail className="h-4 w-4" />
+                            {pageData?.contactInfo?.phone && (
+                                <div className="flex gap-4">
+                                    <Phone className="h-5 w-5 text-gray-400 flex-shrink-0 mt-1" />
+                                    <div>
+                                        <h3 className="text-sm font-medium mb-1">Phone</h3>
+                                        <a href={`tel:${pageData.contactInfo.phone}`} className="text-sm text-gray-600 hover:text-black">
+                                            {pageData.contactInfo.phone}
+                                        </a>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3 className="text-sm font-medium mb-1">Email Us</h3>
-                                    <p className="text-xs text-gray-600">
-                                        hello@sankofa.com
-                                    </p>
-                                </div>
-                            </div>
+                            )}
 
-                            <div className="flex gap-4">
-                                <div className="flex-shrink-0 w-10 h-10 border border-gray-200 flex items-center justify-center">
-                                    <Clock className="h-4 w-4" />
+                            {pageData?.contactInfo?.email && (
+                                <div className="flex gap-4">
+                                    <Mail className="h-5 w-5 text-gray-400 flex-shrink-0 mt-1" />
+                                    <div>
+                                        <h3 className="text-sm font-medium mb-1">Email</h3>
+                                        <a href={`mailto:${pageData.contactInfo.email}`} className="text-sm text-gray-600 hover:text-black">
+                                            {pageData.contactInfo.email}
+                                        </a>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3 className="text-sm font-medium mb-1">Business Hours</h3>
-                                    <p className="text-xs text-gray-600 leading-relaxed">
-                                        Monday - Friday: 9am - 6pm EST<br />
-                                        Saturday: 10am - 4pm EST<br />
-                                        Sunday: Closed
-                                    </p>
+                            )}
+
+                            {pageData?.contactInfo?.hours && (
+                                <div className="flex gap-4">
+                                    <Clock className="h-5 w-5 text-gray-400 flex-shrink-0 mt-1" />
+                                    <div>
+                                        <h3 className="text-sm font-medium mb-1">Business Hours</h3>
+                                        <p className="text-sm text-gray-600 whitespace-pre-line">{pageData.contactInfo.hours}</p>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
+                    </div>
 
-                        {/* Additional Info */}
-                        <div className="mt-12 p-6 bg-brand-cream">
-                            <h3 className="text-xs uppercase tracking-[0.15em] font-medium mb-4">Customer Service</h3>
-                            <p className="text-xs text-gray-600 leading-relaxed">
-                                For order-related inquiries, please have your order number ready. 
-                                Our team typically responds within 24-48 business hours.
-                            </p>
-                        </div>
+                    {/* Contact Form */}
+                    <div>
+                        <h2 className="text-2xl font-light tracking-wider uppercase mb-8">Send a Message</h2>
+                        
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            <div>
+                                <label htmlFor="name" className="block text-sm font-medium mb-2">
+                                    Name *
+                                </label>
+                                <input
+                                    type="text"
+                                    id="name"
+                                    name="name"
+                                    required
+                                    value={formData.name}
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-3 border border-gray-300 text-sm focus:outline-none focus:border-brand-primary transition-colors bg-white text-black"
+                                />
+                            </div>
+
+                            <div>
+                                <label htmlFor="email" className="block text-sm font-medium mb-2">
+                                    Email *
+                                </label>
+                                <input
+                                    type="email"
+                                    id="email"
+                                    name="email"
+                                    required
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-3 border border-gray-300 text-sm focus:outline-none focus:border-brand-primary transition-colors bg-white text-black"
+                                />
+                            </div>
+
+                            <div>
+                                <label htmlFor="subject" className="block text-sm font-medium mb-2">
+                                    Subject *
+                                </label>
+                                <select
+                                    id="subject"
+                                    name="subject"
+                                    required
+                                    value={formData.subject}
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-3 border border-gray-300 text-sm focus:outline-none focus:border-brand-primary transition-colors bg-white text-black"
+                                >
+                                    <option value="">Select a subject</option>
+                                    <option value="general">General Inquiry</option>
+                                    <option value="order">Order Question</option>
+                                    <option value="product">Product Question</option>
+                                    <option value="returns">Returns & Exchanges</option>
+                                    <option value="wholesale">Wholesale Inquiry</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label htmlFor="message" className="block text-sm font-medium mb-2">
+                                    Message *
+                                </label>
+                                <textarea
+                                    id="message"
+                                    name="message"
+                                    required
+                                    rows={6}
+                                    value={formData.message}
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-3 border border-gray-300 text-sm focus:outline-none focus:border-brand-primary transition-colors resize-none bg-white text-black"
+                                />
+                            </div>
+
+                            <Button
+                                type="submit"
+                                disabled={status === 'loading'}
+                                className="w-full md:w-auto"
+                            >
+                                {status === 'loading' ? 'Sending...' : 'Send Message'}
+                            </Button>
+
+                            {status === 'success' && (
+                                <p className="text-sm text-green-600">
+                                    Thank you! Your message has been sent successfully.
+                                </p>
+                            )}
+
+                            {status === 'error' && (
+                                <p className="text-sm text-red-600">
+                                    Sorry, there was an error sending your message. Please try again.
+                                </p>
+                            )}
+                        </form>
                     </div>
                 </div>
             </div>

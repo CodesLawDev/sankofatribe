@@ -26,14 +26,25 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
 
     const inWishlist = isInWishlist(product._id)
 
-    const handleAddToCart = () => {
-        addToCart(
-            product,
-            1,
-            selectedSize || product.sizes?.[0] || '',
-            selectedColor || product.colors?.[0]?.name || ''
+    const handleAddToCart = async () => {
+        const imageUrl = product.images?.[0]
+            ? urlFor(product.images[0]).width(800).height(1067).url()
+            : '/placeholder-product.png'
+
+        const success = await addToCart(
+            {
+                id: product._id,
+                name: product.name,
+                price: product.price,
+                image: imageUrl,
+                selectedSize: selectedSize || product.sizes?.[0] || '',
+                selectedColor: selectedColor || product.colors?.[0]?.name || '',
+            },
+            product.stockQuantity || 0
         )
-        onClose()
+        if (success) {
+            onClose()
+        }
     }
 
     const handleWishlistToggle = () => {
@@ -65,7 +76,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
             />
 
             {/* Modal */}
-            <div className="relative bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="relative bg-white text-black w-full max-w-4xl max-h-[90vh] overflow-y-auto">
                 {/* Close Button */}
                 <button
                     onClick={onClose}

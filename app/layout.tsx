@@ -1,14 +1,47 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import './globals.css'
-import Header from '@/components/header'
+import Header from '@/components/header-new'
 import Footer from '@/components/footer'
-import { CartProvider } from '@/lib/cart-context'
-import { WishlistProvider } from '@/lib/wishlist-context'
+import { Providers } from './providers'
+
+export const viewport: Viewport = {
+    width: 'device-width',
+    initialScale: 1,
+    minimumScale: 1,
+    maximumScale: 5,
+    themeColor: [
+        { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+        { media: '(prefers-color-scheme: dark)', color: '#0f0f0f' },
+    ],
+}
 
 export const metadata: Metadata = {
-    title: 'SANKOFA - Premium Fashion',
-    description: 'Discover timeless style and premium quality. Shop the latest collections from SANKOFA.',
-    keywords: 'fashion, clothing, premium, luxury, sankofa, designer, lifestyle',
+    title: 'SANKOFA TRIBE - Premium Fashion',
+    description: 'Discover timeless style and premium quality. Shop the latest collections from SANKOFA TRIBE.',
+    keywords: 'fashion, clothing, premium, luxury, sankofa tribe, designer, lifestyle',
+    manifest: '/manifest.json',
+    appleWebApp: {
+        capable: true,
+        statusBarStyle: 'black-translucent',
+        title: 'SANKOFA TRIBE',
+    },
+    icons: {
+        icon: '/icon-192x192.png',
+        apple: '/icon-192x192.png',
+    },
+    openGraph: {
+        type: 'website',
+        url: 'https://sankofatribe.com',
+        title: 'SANKOFA TRIBE - Premium Fashion',
+        description: 'Discover timeless style and premium quality. Shop the latest collections from SANKOFA TRIBE.',
+        images: [
+            {
+                url: '/og-image.jpg',
+                width: 1200,
+                height: 630,
+            },
+        ],
+    },
 }
 
 export default function RootLayout({
@@ -17,15 +50,13 @@ export default function RootLayout({
     children: React.ReactNode
 }) {
     return (
-        <html lang="en">
-            <body>
-                <CartProvider>
-                    <WishlistProvider>
-                        <Header />
-                        <main className="min-h-screen">{children}</main>
-                        <Footer />
-                    </WishlistProvider>
-                </CartProvider>
+        <html lang="en" suppressHydrationWarning>
+            <body className="dark:bg-darkbg dark:text-white bg-white text-black">
+                <Providers>
+                    <Header />
+                    <main className="min-h-screen">{children}</main>
+                    <Footer />
+                </Providers>
             </body>
         </html>
     )

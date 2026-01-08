@@ -4,113 +4,130 @@ import React, { createContext, useContext, useState, useEffect } from 'react'
 import { Product } from './sanity'
 
 export interface CartItem {
-    product: Product
+    id: string
+    name: string
+    price: number
+    image: string
     quantity: number
+    maxStock?: number
     selectedSize?: string
     selectedColor?: string
 }
 
 interface CartContextType {
-    items: CartItem[]
-    addToCart: (product: Product, quantity?: number, size?: string, color?: string) => void
-    removeFromCart: (productId: string) => void
-    updateQuantity: (productId: string, quantity: number) => void
+    cart: CartItem[]
+    addToCart: (item: Omit<CartItem, 'quantity'>, maxStock: number) => Promise<boolean>
+    removeFromCart: (id: string) => void
+    updateQuantity: (id: string, quantity: number, maxStock: number) => Promise<boolean>
     clearCart: () => void
-    totalItems: number
-    totalPrice: number
+    cartTotal: number
+    cartCount: number
+    validateCartStock: () => Promise<{ valid: boolean; errors: string[] }>
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-    const [items, setItems] = useState<CartItem[]>([])
+    const [cart, setCart] = useState<CartItem[]>([])
 
     // Load cart from localStorage on mount
     useEffect(() => {
-        const savedCart = localStorage.getItem('cart')
+        const savedCart = localStorage.getItem('sankofatribe-cart')
         if (savedCart) {
-            setItems(JSON.parse(savedCart))
+            setCart(JSON.parse(savedCart))
         }
     }, [])
 
     // Save cart to localStorage whenever it changes
     useEffect(() => {
-        localStorage.setItem('cart', JSON.stringify(items))
-    }, [items])
+        localStorage.setItem('sankofatribe-cart', JSON.stringify(cart))
+    }, [cart])
 
-    const addToCart = (
-        product: Product,
-        quantity = 1,
-        size?: string,
-        color?: string
-    ) => {
-        setItems((prevItems) => {
-            const existingItem = prevItems.find(
-                (item) =>
-                    item.product._id === product._id &&
-                    item.selectedSize === size &&
-                    item.selectedColor === color
-            )
+    const addToCart = async (item: Omit<CartItem, 'quantity'>, maxStock: number) => {
+        const existingItem = cart.find((i) => i.id === item.id)
+        const requestedQuantity = existingItem ? existingItem.quantity + 1 : 1
 
-            if (existingItem) {
-                return prevItems.map((item) =>
-                    item.product._id === product._id &&
-                        item.selectedSize === size &&
-                        item.selectedColor === color
-                        ? { ...item, quantity: item.quantity + quantity }
-                        : item
-                )
-            }
-
-            return [
-                ...prevItems,
-                {
-                    product,
-                    quantity,
-                    selectedSize: size,
-                    selectedColor: color,
-                },
-            ]
-        })
-    }
-
-    const removeFromCart = (productId: string) => {
-        setItems((prevItems) => prevItems.filter((item) => item.product._id !== productId))
-    }
-
-    const updateQuantity = (productId: string, quantity: number) => {
-        if (quantity <= 0) {
-            removeFromCart(productId)
-            return
+        // Check stock availability
+        if (requestedQuantity > maxStock) {
+            return false // Not enough stock
         }
 
-        setItems((prevItems) =>
-            prevItems.map((item) =>
-                item.product._id === productId ? { ...item, quantity } : item
+        setCart((prevCart) => {
+            const existingItem = prevCart.find((i) => i.id === item.id)
+            if (existingItem) {
+                return prevCart.map((i) =>
+                    i.id === item.id ? { ...i, quantity: i.quantity + 1, maxStock } : i
+                )
+            }
+            return [...prevCart, { ...item, quantity: 1, maxStock }]
+        })
+
+        return true // Successfully added
+    }
+
+    const removeFromCart = (id: string) => {
+        setCart((prevCart) => prevCart.filter((item) => item.id !== id))
+    }
+
+    const updateQuantity = async (id: string, quantity: number, maxStock: number) => {
+        if (quantity <= 0) {
+            removeFromCart(id)
+            return true
+        }
+
+        // Check stock availability
+        if (quantity > maxStock) {
+            return false // Not enough stock
+        }
+
+        setCart((prevCart) =>
+            prevCart.map((item) =>
+                item.id === id ? { ...item, quantity, maxStock } : item
             )
         )
+
+        return true
     }
 
     const clearCart = () => {
-        setItems([])
+        setCart([])
     }
 
-    const totalItems = items.reduce((sum, item) => sum + item.quantity, 0)
-    const totalPrice = items.reduce(
-        (sum, item) => sum + item.product.price * item.quantity,
-        0
-    )
+    // Validate entire cart stock before checkout
+    const validateCartStock = async () => {
+        const errors: string[] = []
+
+        for (const item of cart) {
+            if (item.quantity > (item.maxStock || 0)) {
+                const available = item.maxStock || 0
+                if (available === 0) {
+                    errors.push(`${item.name} is out of stock`)
+                } else {
+                    errors.push(`${item.name}: Only ${available} available (you have ${item.quantity} in cart)`)
+                }
+            }
+        }
+
+        return {
+            valid: errors.length === 0,
+            errors
+        }
+    }
+
+    const cartTotal = cart.reduce((total, item) => total + item.price * item.quantity, 0)
+    const cartCount = cart.reduce((count, item) => count + item.quantity, 0)
 
     return (
         <CartContext.Provider
             value={{
-                items,
+                cart,
                 addToCart,
                 removeFromCart,
                 updateQuantity,
                 clearCart,
-                totalItems,
-                totalPrice,
+                cartTotal,
+                cartCount,
+                validateCartStock,
             }}
         >
             {children}

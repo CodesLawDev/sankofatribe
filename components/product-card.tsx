@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { urlFor, Product } from '@/lib/sanity'
-import { Heart, Eye } from 'lucide-react'
+import { Heart } from 'lucide-react'
 import { useWishlist } from '@/lib/wishlist-context'
 
 interface ProductCardProps {
@@ -29,67 +29,70 @@ export default function ProductCard({ product, onQuickView }: ProductCardProps) 
         }
     }
 
-    const handleQuickViewClick = (e: React.MouseEvent) => {
-        e.preventDefault()
-        e.stopPropagation()
-        onQuickView?.(product)
-    }
-
     return (
-        <div className="group block relative">
+        <div className="group block">
             <Link href={`/products/${product.slug.current}`}>
-                <div className="relative aspect-[3/4] overflow-hidden bg-neutral-50 mb-4">
+                <div className="relative aspect-[3/4] overflow-hidden bg-gray-50 mb-6">
                     {product.images?.[0] ? (
                         <Image
                             src={imageUrl}
                             alt={product.name}
                             fill
-                            className="object-cover transition-all duration-700 ease-out group-hover:scale-[1.02]"
+                            className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.05]"
                             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                         />
                     ) : (
-                        <div className="absolute inset-0 flex items-center justify-center bg-neutral-100">
-                            <span className="text-xs uppercase tracking-[0.2em] text-neutral-400">
-                                No Image
-                            </span>
+                        <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+                            <span className="text-xs text-gray-400">No Image</span>
                         </div>
                     )}
+                    
                     {!product.inStock && (
-                        <div className="absolute inset-0 bg-brand-cream/90 flex items-center justify-center">
-                            <span className="text-xs uppercase tracking-[0.2em] font-medium">
-                                Sold Out
-                            </span>
+                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                            <span className="text-white text-sm font-medium">Sold Out</span>
                         </div>
                     )}
 
-                    {/* Hover Actions */}
-                    <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    {/* Wishlist Button - Always Visible on Desktop, Hover on Mobile */}
+                    <div className="absolute top-4 right-4">
                         <button
                             onClick={handleWishlistClick}
-                            className="p-2 bg-white/90 hover:bg-white transition-colors"
+                            className="p-2 bg-white rounded-full hover:bg-gray-100 transition-colors shadow-sm md:opacity-0 group-hover:opacity-100 md:group-hover:opacity-100"
                             aria-label={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
                         >
-                            <Heart className={`h-4 w-4 ${inWishlist ? 'fill-current text-red-500' : ''}`} />
+                            <Heart 
+                                className={`h-5 w-5 transition-colors ${
+                                    inWishlist ? 'fill-red-500 text-red-500' : 'text-gray-600'
+                                }`} 
+                            />
                         </button>
-                        {onQuickView && (
-                            <button
-                                onClick={handleQuickViewClick}
-                                className="p-2 bg-white/90 hover:bg-white transition-colors"
-                                aria-label="Quick view"
-                            >
-                                <Eye className="h-4 w-4" />
-                            </button>
-                        )}
                     </div>
                 </div>
             </Link>
-            <div className="space-y-2">
+
+            <div className="space-y-1">
                 <Link href={`/products/${product.slug.current}`}>
-                    <h3 className="text-xs uppercase tracking-[0.15em] font-medium text-brand-dark group-hover:opacity-60 transition-opacity">
+                    <h3 className="text-sm font-medium text-black group-hover:text-gray-600 transition-colors line-clamp-2">
                         {product.name}
                     </h3>
                 </Link>
-                <p className="text-xs text-neutral-600">${product.price.toFixed(2)}</p>
+                
+                {/* Category/Type */}
+                {product.category && (
+                    <p className="text-xs text-gray-600">{product.category.name}</p>
+                )}
+                
+                {/* Price */}
+                <div className="pt-1">
+                    <p className="text-sm font-semibold text-black">${product.price.toFixed(2)}</p>
+                </div>
+
+                {/* Stock Indicator */}
+                {product.inStock && product.stockQuantity && product.stockQuantity <= 3 && (
+                    <p className="text-xs text-red-600 font-medium pt-1">
+                        Only {product.stockQuantity} left
+                    </p>
+                )}
             </div>
         </div>
     )

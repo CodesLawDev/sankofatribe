@@ -1,6 +1,7 @@
 import type { Config } from 'tailwindcss'
 
 const config: Config = {
+    darkMode: 'class',
     content: [
         './pages/**/*.{js,ts,jsx,tsx,mdx}',
         './components/**/*.{js,ts,jsx,tsx,mdx}',
@@ -22,15 +23,17 @@ const config: Config = {
                     200: '#E4DBC9',
                     300: '#CFC6B8',
                     400: '#B7AC9A',
-                    500: '#8A8172',
-                    600: '#6E6558',
+                        500: '#736A5E', // Improved contrast
+                        600: '#5A5349', // Darker for better WCAG compliance
                     700: '#544D43',
                     800: '#3C372F',
                     900: '#29241F',
                 },
+                darkbg: '#0f0f0f',
             },
             fontFamily: {
                 sans: ['var(--font-helvetica)', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
+                display: ['Playfair Display', 'serif'],
             },
             animation: {
                 'fade-in': 'fadeIn 0.5s ease-in-out',
