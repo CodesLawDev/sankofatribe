@@ -10,11 +10,10 @@ async function getAllProducts() {
     price,
     inStock,
     featured,
-        stockQuantity,
-        soldCount,
-    sizes,
+    sizes[]{size, stock},
     colors,
-    "category": category-> {
+    soldCount,
+    "categories": categories[]-> {
       _id,
       name,
       slug

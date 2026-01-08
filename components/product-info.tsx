@@ -20,7 +20,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
     const { addToCart } = useCart()
     const { showToast } = useToast()
     const { addToRecentlyViewed } = useRecentlyViewed()
-    const [selectedSize, setSelectedSize] = useState(product.sizes?.[0] || '')
+    const [selectedSize, setSelectedSize] = useState(product.sizes?.[0]?.size || '')
     const [selectedColor, setSelectedColor] = useState(product.colors?.[0]?.name || '')
     const [quantity, setQuantity] = useState(1)
     const [sizeGuideOpen, setSizeGuideOpen] = useState(false)
@@ -30,7 +30,20 @@ export default function ProductInfo({ product }: ProductInfoProps) {
         addToRecentlyViewed(product)
     }, [product, addToRecentlyViewed])
 
+    // Get stock for selected size
+    const getStockForSize = (size: string) => {
+        return product.sizes?.find((s: any) => s.size === size)?.stock || 0
+    }
+
+    const selectedSizeStock = getStockForSize(selectedSize)
+    const isSizeOutOfStock = selectedSizeStock === 0
+
     const handleAddToCart = async () => {
+        if (!selectedSize) {
+            showToast('Please select a size', 'error')
+            return
+        }
+
         const imageUrl = product.images?.[0]
             ? urlFor(product.images[0]).width(800).height(1000).url()
             : '/placeholder-product.png'
@@ -44,13 +57,13 @@ export default function ProductInfo({ product }: ProductInfoProps) {
                 selectedSize,
                 selectedColor,
             },
-            product.stockQuantity || 0
+            selectedSizeStock
         )
 
         if (success) {
             showToast(`${product.name} added to cart!`, 'success')
         } else {
-            showToast(`Not enough stock for ${product.name}.`, 'error')
+            showToast(`Not enough stock in size ${selectedSize}.`, 'error')
         }
     }
 
@@ -72,9 +85,14 @@ export default function ProductInfo({ product }: ProductInfoProps) {
                         </div>
                     
                         {/* Stock Status */}
-                        {product.stockQuantity && product.stockQuantity <= 5 && product.stockQuantity > 0 && (
+                        {selectedSizeStock && selectedSizeStock <= 5 && selectedSizeStock > 0 && (
                             <p className="text-xs text-red-600 font-medium">
-                                Only {product.stockQuantity} left in stock - order soon!
+                                Only {selectedSizeStock} left in size {selectedSize} - order soon!
+                            </p>
+                        )}
+                        {isSizeOutOfStock && (
+                            <p className="text-xs text-red-600 font-medium">
+                                Out of stock in size {selectedSize}
                             </p>
                         )}
                 </div>
@@ -101,17 +119,23 @@ export default function ProductInfo({ product }: ProductInfoProps) {
                                 </button>
                             </div>
                         <div className="flex flex-wrap gap-2">
-                            {product.sizes.map((size) => (
+                            {product.sizes?.map((sizeObj: any) => (
                                 <button
-                                    key={size}
-                                    onClick={() => setSelectedSize(size)}
-                                    className={`px-6 py-3 border text-xs uppercase tracking-wider transition-all ${
-                                        selectedSize === size
+                                    key={sizeObj.size}
+                                    onClick={() => setSelectedSize(sizeObj.size)}
+                                    disabled={sizeObj.stock === 0}
+                                    className={`px-6 py-3 border text-xs uppercase tracking-wider transition-all relative ${
+                                        selectedSize === sizeObj.size
                                             ? 'bg-black text-white border-black'
+                                            : sizeObj.stock === 0
+                                            ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
                                             : 'bg-white text-black border-gray-300 hover:border-black'
                                     }`}
                                 >
-                                    {size}
+                                    {sizeObj.size}
+                                    {sizeObj.stock < 10 && sizeObj.stock > 0 && (
+                                        <span className="text-[10px] text-gray-500 block">({sizeObj.stock} left)</span>
+                                    )}
                                 </button>
                             ))}
                         </div>
@@ -175,10 +199,10 @@ export default function ProductInfo({ product }: ProductInfoProps) {
                     <Button
                         size="lg"
                         onClick={handleAddToCart}
-                        disabled={!product.inStock}
+                        disabled={!product.inStock || isSizeOutOfStock || !selectedSize}
                         className="w-full"
                     >
-                        {product.inStock ? 'Add to Bag' : 'Out of Stock'}
+                        {!product.inStock ? 'Out of Stock' : isSizeOutOfStock ? `Out of Stock in ${selectedSize}` : 'Add to Bag'}
                     </Button>
                     <Button
                         size="lg"

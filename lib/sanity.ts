@@ -32,13 +32,12 @@ export interface Product {
     images: SanityImage[]
     description?: string
     price: number
-    category?: Category
-    sizes?: string[]
+    categories?: Category[]
+    sizes?: { size: string; stock: number }[]
     colors?: { name: string; hex: string }[]
     featured?: boolean
     inStock?: boolean
-        stockQuantity?: number
-        soldCount?: number
+    soldCount?: number
 }
 
 export interface Category {

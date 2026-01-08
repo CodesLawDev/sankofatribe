@@ -14,12 +14,11 @@ async function getProduct(slug: string) {
     images,
     description,
     price,
-    sizes,
+    sizes[]{size, stock},
     colors,
     inStock,
-        stockQuantity,
-        soldCount,
-    "category": category-> {
+    soldCount,
+    "categories": categories[]-> {
       _id,
       name,
       slug
@@ -31,15 +30,20 @@ async function getProduct(slug: string) {
 }
 
 async function getRelatedProducts(categoryId: string, currentProductId: string) {
-    const query = `*[_type == "product" && category._ref == $categoryId && _id != $currentProductId][0...4] {
+    const query = `*[_type == "product" && $categoryId in categories[]._ref && _id != $currentProductId][0...4] {
     _id,
     name,
     slug,
     images,
     price,
-    sizes,
+    sizes[]{size, stock},
     colors,
-    inStock
+    inStock,
+    "categories": categories[]-> {
+      _id,
+      name,
+      slug
+    }
   }`
 
     const products = await client.fetch<Product[]>(query, { categoryId, currentProductId })
@@ -82,13 +86,15 @@ export default async function ProductPage({ params }: { params: { slug: string }
         ? reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviews.length
         : 0
 
-    const relatedProducts = product.category
-        ? await getRelatedProducts(product.category._id, product._id)
+    const relatedProducts = product.categories && product.categories.length > 0
+        ? await getRelatedProducts(product.categories[0]._id, product._id)
         : []
 
     const breadcrumbItems = [
         { label: 'Products', href: '/products' },
-        ...(product.category ? [{ label: product.category.name, href: `/category/${product.category.slug.current}` }] : []),
+        ...(product.categories && product.categories.length > 0
+            ? [{ label: product.categories[0].name, href: `/category/${product.categories[0].slug.current}` }]
+            : []),
         { label: product.name },
     ]
 

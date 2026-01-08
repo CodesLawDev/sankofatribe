@@ -26,9 +26,14 @@ async function getHomePageData() {
       images,
       price,
       inStock,
-            featured,
-            stockQuantity,
-            soldCount
+      featured,
+      sizes[]{size, stock},
+      "categories": categories[]-> {
+        _id,
+        name,
+        slug
+      },
+      soldCount
     }
   }`
 
@@ -44,9 +49,14 @@ async function getFeaturedProducts() {
     images,
     price,
     inStock,
-        featured,
-        stockQuantity,
-        soldCount
+    featured,
+    sizes[]{size, stock},
+    "categories": categories[]-> {
+      _id,
+      name,
+      slug
+    },
+    soldCount
   }`
 
     const products = await client.fetch<Product[]>(query, {}, { next: { revalidate: 60 } })

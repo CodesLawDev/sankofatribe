@@ -13,7 +13,7 @@ export async function GET(request: Request) {
         const searchQuery = `*[_type == "product" && (
             name match $searchTerm ||
             description match $searchTerm ||
-            category->name match $searchTerm
+            categories[]->name match $searchTerm
         )] | order(_createdAt desc)[0...20] {
             _id,
             name,
@@ -21,7 +21,7 @@ export async function GET(request: Request) {
             images,
             price,
             inStock,
-            "category": category-> { name }
+            sizes[]{size, stock}
         }`
 
         const products = await client.fetch(searchQuery, {

@@ -100,10 +100,10 @@ export default function WishlistPage() {
                                                     name: product.name,
                                                     price: product.price,
                                                     image: imageUrlForCart,
-                                                    selectedSize: product.sizes?.[0] || '',
+                                                    selectedSize: product.sizes?.[0]?.size || '',
                                                     selectedColor: product.colors?.[0]?.name || '',
                                                 },
-                                                product.stockQuantity || 0
+                                                product.sizes?.[0]?.stock || 0
                                             )
                                         }}
                                         className="w-full mt-3 py-2 border border-brand-primary text-xs uppercase tracking-wider hover:bg-brand-primary hover:text-white transition-colors flex items-center justify-center gap-2"

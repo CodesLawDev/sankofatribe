@@ -77,9 +77,11 @@ export default function ProductCard({ product, onQuickView }: ProductCardProps) 
                     </h3>
                 </Link>
                 
-                {/* Category/Type */}
-                {product.category && (
-                    <p className="text-xs text-gray-600">{product.category.name}</p>
+                {/* Categories */}
+                {product.categories && product.categories.length > 0 && (
+                    <p className="text-xs text-gray-600">
+                        {product.categories.map((cat: any) => cat.name).join(', ')}
+                    </p>
                 )}
                 
                 {/* Price */}
@@ -88,10 +90,15 @@ export default function ProductCard({ product, onQuickView }: ProductCardProps) 
                 </div>
 
                 {/* Stock Indicator */}
-                {product.inStock && product.stockQuantity && product.stockQuantity <= 3 && (
-                    <p className="text-xs text-red-600 font-medium pt-1">
-                        Only {product.stockQuantity} left
-                    </p>
+                {product.inStock && product.sizes && (
+                    (() => {
+                        const validSizes = product.sizes.filter((s: any) => s != null)
+                        const minStock = validSizes.length > 0 ? Math.min(...validSizes.map((s: any) => s.stock || 0)) : 0
+                        if (minStock > 0 && minStock <= 3) {
+                            return <p className="text-xs text-red-600 font-medium pt-1">Low stock</p>
+                        }
+                        return null
+                    })()
                 )}
             </div>
         </div>

@@ -41,26 +41,47 @@ export const product = defineType({
             validation: (Rule) => Rule.required().positive(),
         }),
         {
-            name: 'category',
-            title: 'Category',
-            type: 'reference',
-            to: [{ type: 'category' }],
+            name: 'categories',
+            title: 'Categories',
+            type: 'array',
+            of: [{ type: 'reference', to: [{ type: 'category' }] }],
+            description: 'Select one or more categories for this product',
         },
         {
             name: 'sizes',
             title: 'Available Sizes',
             type: 'array',
-            of: [{ type: 'string' }],
-            options: {
-                list: [
-                    { title: 'XS', value: 'xs' },
-                    { title: 'S', value: 's' },
-                    { title: 'M', value: 'm' },
-                    { title: 'L', value: 'l' },
-                    { title: 'XL', value: 'xl' },
-                    { title: 'XXL', value: 'xxl' },
-                ],
-            },
+            of: [
+                {
+                    type: 'object',
+                    fields: [
+                        {
+                            name: 'size',
+                            title: 'Size',
+                            type: 'string',
+                            options: {
+                                list: [
+                                    { title: 'XS', value: 'xs' },
+                                    { title: 'S', value: 's' },
+                                    { title: 'M', value: 'm' },
+                                    { title: 'L', value: 'l' },
+                                    { title: 'XL', value: 'xl' },
+                                    { title: 'XXL', value: 'xxl' },
+                                ],
+                            },
+                            validation: (Rule: any) => Rule.required(),
+                        },
+                        {
+                            name: 'stock',
+                            title: 'Stock Quantity',
+                            type: 'number',
+                            description: 'Number of items in this size',
+                            initialValue: 0,
+                            validation: (Rule: any) => Rule.required().min(0),
+                        },
+                    ],
+                },
+            ],
         },
         {
             name: 'colors',
@@ -88,20 +109,13 @@ export const product = defineType({
             type: 'boolean',
             initialValue: true,
         }),
-            defineField({
-                name: 'stockQuantity',
-                title: 'Stock Quantity',
-                type: 'number',
-                description: 'Number of items in stock (for urgency messages)',
-                initialValue: 0,
-            }),
-            defineField({
-                name: 'soldCount',
-                title: 'Sold Count',
-                type: 'number',
-                description: 'Total number sold (for social proof)',
-                initialValue: 0,
-            }),
+        defineField({
+            name: 'soldCount',
+            title: 'Sold Count',
+            type: 'number',
+            description: 'Total number sold (for social proof)',
+            initialValue: 0,
+        }),
     ],
     preview: {
         select: {

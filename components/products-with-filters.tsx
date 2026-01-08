@@ -36,7 +36,7 @@ export default function ProductsWithFilters({ products, categories }: ProductsWi
 
         // Filter by category
         if (filters.category) {
-            result = result.filter(p => p.category?.slug?.current === filters.category)
+            result = result.filter(p => p.categories?.some((cat: any) => cat.slug.current === filters.category))
         }
 
         // Filter by price range

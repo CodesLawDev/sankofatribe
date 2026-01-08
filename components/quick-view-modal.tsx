@@ -37,10 +37,10 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
                 name: product.name,
                 price: product.price,
                 image: imageUrl,
-                selectedSize: selectedSize || product.sizes?.[0] || '',
+                selectedSize: selectedSize || product.sizes?.[0]?.size || '',
                 selectedColor: selectedColor || product.colors?.[0]?.name || '',
             },
-            product.stockQuantity || 0
+            product.sizes?.find((s: any) => s.size === selectedSize)?.stock || 0
         )
         if (success) {
             onClose()
@@ -161,17 +161,20 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
                                     Size
                                 </label>
                                 <div className="flex flex-wrap gap-2">
-                                    {product.sizes.map((size) => (
+                                    {product.sizes.map((sizeObj: any) => (
                                         <button
-                                            key={size}
-                                            onClick={() => setSelectedSize(size)}
+                                            key={sizeObj.size}
+                                            onClick={() => setSelectedSize(sizeObj.size)}
+                                            disabled={sizeObj.stock === 0}
                                             className={`px-4 py-2 border text-xs uppercase tracking-wider transition-all ${
-                                                selectedSize === size
+                                                selectedSize === sizeObj.size
                                                     ? 'bg-black text-white border-black'
+                                                    : sizeObj.stock === 0
+                                                    ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
                                                     : 'bg-white text-black border-gray-300 hover:border-black'
                                             }`}
                                         >
-                                            {size}
+                                            {sizeObj.size}
                                         </button>
                                     ))}
                                 </div>
