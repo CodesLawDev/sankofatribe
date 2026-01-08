@@ -106,14 +106,22 @@ export default function Footer() {
         ],
     }
 
-    const data = footerData || defaultData
+    const sections = footerData?.sections ?? defaultData.sections
+    const socialLinks = {
+        ...defaultData.socialLinks,
+        ...(footerData?.socialLinks || {}),
+    }
+    const newsletter = footerData?.newsletter ?? defaultData.newsletter
+    const bottomSection = footerData?.bottomSection ?? defaultData.bottomSection
+    const legalLinks = footerData?.legalLinks ?? defaultData.legalLinks
+    const copyrightText = (footerData?.copyrightText || defaultData.copyrightText).replace('{year}', currentYear.toString())
 
     return (
         <footer className="bg-black text-white">
             {/* Main Footer Content */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 py-20">
-                    {data.sections.map((section, idx) => (
+                    {sections.map((section, idx) => (
                         <div key={idx}>
                             <h4 className="text-xs font-bold uppercase tracking-wider mb-6">{section.heading}</h4>
                             <ul className="space-y-3">
@@ -132,23 +140,23 @@ export default function Footer() {
                     <div>
                         <h4 className="text-xs font-bold uppercase tracking-wider mb-6">Connect</h4>
                         <div className="flex gap-4">
-                            {data.socialLinks.instagram && (
-                                <a href={data.socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors" aria-label="Instagram">
+                            {socialLinks.instagram && (
+                                <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors" aria-label="Instagram">
                                     <Instagram className="h-5 w-5" />
                                 </a>
                             )}
-                            {data.socialLinks.facebook && (
-                                <a href={data.socialLinks.facebook} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors" aria-label="Facebook">
+                            {socialLinks.facebook && (
+                                <a href={socialLinks.facebook} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors" aria-label="Facebook">
                                     <Facebook className="h-5 w-5" />
                                 </a>
                             )}
-                            {data.socialLinks.twitter && (
-                                <a href={data.socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors" aria-label="Twitter">
+                            {socialLinks.twitter && (
+                                <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors" aria-label="Twitter">
                                     <Twitter className="h-5 w-5" />
                                 </a>
                             )}
-                            {data.socialLinks.youtube && (
-                                <a href={data.socialLinks.youtube} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors" aria-label="YouTube">
+                            {socialLinks.youtube && (
+                                <a href={socialLinks.youtube} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors" aria-label="YouTube">
                                     <Youtube className="h-5 w-5" />
                                 </a>
                             )}
@@ -159,9 +167,9 @@ export default function Footer() {
                 {/* Newsletter */}
                 <div className="border-y border-gray-800 py-12">
                     <div className="max-w-md">
-                        <h3 className="text-sm font-bold mb-4">{data.newsletter.heading}</h3>
+                        <h3 className="text-sm font-bold mb-4">{newsletter.heading}</h3>
                         <p className="text-xs text-gray-400 mb-4">
-                            {data.newsletter.description}
+                            {newsletter.description}
                         </p>
                         <form className="flex gap-2">
                             <label htmlFor="newsletter-email" className="sr-only">
@@ -180,17 +188,17 @@ export default function Footer() {
                                 type="submit" 
                                 className="bg-white text-black px-4 py-2 text-xs font-bold hover:bg-gray-200 transition-colors focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
                             >
-                                {data.newsletter.buttonText}
+                                {newsletter.buttonText}
                             </button>
                         </form>
                     </div>
                 </div>
 
                 {/* Bottom Section */}
-                {data.bottomSection && data.bottomSection.length > 0 && (
+                {bottomSection && bottomSection.length > 0 && (
                     <div className="py-8 border-b border-gray-800">
                         <div className="grid grid-cols-2 gap-4">
-                            {data.bottomSection.map((item, idx) => (
+                            {bottomSection.map((item, idx) => (
                                 <div key={idx}>
                                     <p className="text-xs font-bold mb-2">{item.title}</p>
                                     <p className="text-xs text-gray-400">{item.description}</p>
@@ -205,11 +213,11 @@ export default function Footer() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-6">
                 <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
                     <p className="text-xs text-gray-500">
-                        {data.copyrightText.replace('{year}', String(currentYear))}
+                        {copyrightText}
                     </p>
-                    {data.legalLinks && data.legalLinks.length > 0 && (
+                    {legalLinks && legalLinks.length > 0 && (
                         <div className="flex gap-6 text-xs">
-                            {data.legalLinks.map((link, idx) => (
+                            {legalLinks.map((link, idx) => (
                                 <Link key={idx} href={link.url} className="text-gray-500 hover:text-white transition-colors">
                                     {link.text}
                                 </Link>

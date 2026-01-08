@@ -1,5 +1,5 @@
-import { client } from '@/lib/sanity'
-import type { HomePage, Product } from '@/lib/sanity'
+import { client, urlFor } from '@/lib/sanity'
+import type { HomePage, Product, Category } from '@/lib/sanity'
 import PremiumHeroBanner from '@/components/premium-hero-banner'
 import FeaturedCategories from '@/components/featured-categories'
 import Spotlight from '@/components/spotlight'
@@ -31,14 +31,33 @@ async function getHomePageData() {
       "categories": categories[]-> {
         _id,
         name,
-        slug
+        slug,
+        image
       },
       soldCount
+    },
+    "featuredCategories": featuredCategories[]-> {
+      _id,
+      name,
+      slug,
+      image
     }
   }`
 
     const homePage = await client.fetch<HomePage>(query, {}, { next: { revalidate: 60 } })
     return homePage
+}
+
+async function getCategories() {
+    const query = `*[_type == "category"] | order(name asc)[0...6] {
+      _id,
+      name,
+      slug,
+      image
+    }`
+
+    const categories = await client.fetch<Category[]>(query, {}, { next: { revalidate: 60 } })
+    return categories
 }
 
 async function getFeaturedProducts() {
@@ -65,7 +84,37 @@ async function getFeaturedProducts() {
 
 export default async function HomePage() {
     const homePageData = await getHomePageData()
-    const featuredProducts = homePageData?.featuredProducts || await getFeaturedProducts()
+
+    const [categories, featuredProducts] = await Promise.all([
+        getCategories(),
+        homePageData?.featuredProducts ? Promise.resolve(homePageData.featuredProducts) : getFeaturedProducts()
+    ])
+
+    const cmsFeaturedCategories = (homePageData?.featuredCategories || []).map((cat) => ({
+        id: cat._id,
+        title: cat.name,
+        image: cat.image ? urlFor(cat.image).width(800).height(800).url() : '',
+        link: `/category/${cat.slug.current}`,
+    }))
+
+    const dynamicCategories = categories.map((cat) => ({
+        id: cat._id,
+        title: cat.name,
+        image: cat.image ? urlFor(cat.image).width(800).height(800).url() : '',
+        link: `/category/${cat.slug.current}`,
+    }))
+
+    const defaultFeaturedCategories = [
+        { id: 'men', title: "Men's Collection", image: '', link: '/category/men' },
+        { id: 'women', title: "Women's Collection", image: '', link: '/category/women' },
+        { id: 'sale', title: 'On Sale', image: '', link: '/products?filter=sale' },
+    ]
+
+    const featuredCategoryList = cmsFeaturedCategories.length
+        ? cmsFeaturedCategories
+        : dynamicCategories.length
+        ? dynamicCategories
+        : defaultFeaturedCategories
 
     return (
         <div className="bg-white text-black">
@@ -94,26 +143,7 @@ export default async function HomePage() {
 
             {/* Featured Categories - Sports/Lifestyle */}
             <FeaturedCategories
-                categories={[
-                    {
-                        id: 'men',
-                        title: "Men's Collection",
-                        image: '',
-                        link: '/category/men'
-                    },
-                    {
-                        id: 'women',
-                        title: "Women's Collection",
-                        image: '',
-                        link: '/category/women'
-                    },
-                    {
-                        id: 'sale',
-                        title: 'On Sale',
-                        image: '',
-                        link: '/products?filter=sale'
-                    }
-                ]}
+                categories={featuredCategoryList}
             />
 
             {/* Spotlight Section - Featured Products */}
