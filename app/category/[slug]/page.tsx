@@ -2,14 +2,15 @@ import { client, Product } from '@/lib/sanity'
 import ProductGrid from '@/components/product-grid'
 
 async function getCategoryProducts(categorySlug: string) {
-    const query = `*[_type == "product" && category->slug.current == $categorySlug] | order(_createdAt desc) {
+    const query = `*[_type == "product" && $categorySlug in categories[]->slug.current] | order(_createdAt desc) {
     _id,
     name,
     slug,
     images,
     price,
     inStock,
-    "category": category-> {
+    sizes[]{size, stock},
+    "categories": categories[]-> {
       _id,
       name,
       slug
