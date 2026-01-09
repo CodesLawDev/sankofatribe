@@ -12,6 +12,7 @@ import StarRating from '@/components/star-rating'
 import { Ruler, Truck, RotateCcw } from 'lucide-react'
 import { useEffect } from 'react'
 import { useCurrency } from '@/lib/currency-context'
+import { useRouter } from 'next/navigation'
 
 interface ProductInfoProps {
     product: Product
@@ -22,6 +23,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
     const { showToast } = useToast()
     const { addToRecentlyViewed } = useRecentlyViewed()
     const { formatPrice, convertPrice } = useCurrency()
+    const router = useRouter()
     const [selectedSize, setSelectedSize] = useState(product.sizes?.[0]?.size || '')
     const [selectedColor, setSelectedColor] = useState(product.colors?.[0]?.name || '')
     const [quantity, setQuantity] = useState(1)
@@ -66,6 +68,37 @@ export default function ProductInfo({ product }: ProductInfoProps) {
 
         if (success) {
             showToast(`${quantity} × ${product.name} added to cart!`, 'success')
+        } else {
+            showToast(`Not enough stock in size ${selectedSize}.`, 'error')
+        }
+    }
+
+    const handleBuyNow = async () => {
+        if (!selectedSize) {
+            showToast('Please select a size', 'error')
+            return
+        }
+
+        const imageUrl = product.images?.[0] && (product.images[0] as any).asset
+            ? urlFor(product.images[0]).width(800).height(1000).url()
+            : '/placeholder-product.png'
+
+        const success = await addToCart(
+            {
+                id: product._id,
+                name: product.name,
+                price: product.price,
+                image: imageUrl,
+                selectedSize,
+                selectedColor,
+            },
+            selectedSizeStock,
+            quantity
+        )
+
+        if (success) {
+            // Redirect to checkout immediately
+            router.push('/checkout')
         } else {
             showToast(`Not enough stock in size ${selectedSize}.`, 'error')
         }
@@ -211,6 +244,8 @@ export default function ProductInfo({ product }: ProductInfoProps) {
                     <Button
                         size="lg"
                         variant="secondary"
+                        onClick={handleBuyNow}
+                        disabled={!product.inStock || isSizeOutOfStock || !selectedSize}
                         className="w-full"
                     >
                         Buy Now
