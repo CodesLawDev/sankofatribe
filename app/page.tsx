@@ -1,6 +1,7 @@
 import { client, urlFor } from '@/lib/sanity'
 import type { HomePage, Product, Category } from '@/lib/sanity'
 import PremiumHeroBanner from '@/components/premium-hero-banner'
+import BannerGrid from '@/components/banner-grid'
 import FeaturedCategories from '@/components/featured-categories'
 import Spotlight from '@/components/spotlight'
 import ProductGrid from '@/components/product-grid'
@@ -64,6 +65,23 @@ async function getHomePageData() {
       slug,
       image
     }
+        ,
+        bannerSections[]{
+            title,
+            layout,
+            "banners": banners[]->{
+                _id,
+                title,
+                subtitle,
+                image,
+                videoUrl,
+                ctaText,
+                ctaLink,
+                ctaTextSecondary,
+                ctaLinkSecondary,
+                textColor
+            }
+        }
   }`
 
     const homePage = await client.fetch<HomePage>(query, {}, { next: { revalidate: 0 } })
@@ -172,33 +190,14 @@ export default async function HomePage() {
                 />
             )}
 
-            {/* Featured Categories - Sports/Lifestyle */}
-            <FeaturedCategories
-                categories={featuredCategoryList}
-            />
+            {/* Render all curated banner sections (2-up / 3-up) */}
+            {homePageData?.bannerSections?.length ? (
+                homePageData.bannerSections.map((section, idx) => (
+                    <BannerGrid key={idx} title={section.title} layout={(section.layout as any) || 'two'} banners={section.banners || []} />
+                ))
+            ) : null}
 
-            {/* Spotlight Section - Featured Products */}
-            {featuredProducts && featuredProducts.length > 0 && (
-                <Spotlight products={featuredProducts.slice(0, 8)} />
-            )}
-
-            {/* Secondary Hero - Campaign Banner */}
-            {homePageData?.heroBanners?.[1] && (
-                <PremiumHeroBanner
-                    image={homePageData.heroBanners[1].image}
-                    videoUrl={homePageData.heroBanners[1].videoUrl}
-                    title={homePageData.heroBanners[1].title || 'New Arrivals'}
-                    subtitle={homePageData.heroBanners[1].subtitle}
-                    ctaText={homePageData.heroBanners[1].ctaText || 'Shop Now'}
-                    ctaLink={homePageData.heroBanners[1].ctaLink || '/products'}
-                    ctaTextSecondary={homePageData.heroBanners[1].ctaTextSecondary}
-                    ctaLinkSecondary={homePageData.heroBanners[1].ctaLinkSecondary}
-                    textPosition="left"
-                    textColor="white"
-                />
-            )}
-
-            {/* Collection Section */}
+            {/* Collection Section (last part will be added as provided) */}
             <section className="py-20 md:py-32 bg-gray-50">
                 <div className="mx-auto px-4 sm:px-6 lg:px-12 max-w-7xl">
                     <div className="text-center mb-16">

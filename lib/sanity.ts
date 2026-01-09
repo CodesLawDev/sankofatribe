@@ -73,6 +73,11 @@ export interface HomePage {
     collectionHeading?: string
     collectionSubheading?: string
     latestCollectionProducts?: Product[]
+    bannerSections?: Array<{
+        title?: string
+        layout: 'two' | 'three'
+        banners: Banner[]
+    }>
 }
 
 export interface SiteSettings {
