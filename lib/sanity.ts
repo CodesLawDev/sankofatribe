@@ -32,6 +32,7 @@ export interface Product {
     images: SanityImage[]
     description?: string
     price: number
+    audience?: 'men' | 'women' | 'kids' | 'unisex'
     categories?: Category[]
     sizes?: { size: string; stock: number }[]
     colors?: { name: string; hex: string }[]

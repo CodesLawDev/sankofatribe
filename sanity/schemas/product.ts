@@ -40,6 +40,20 @@ export const product = defineType({
             type: 'number',
             validation: (Rule) => Rule.required().positive(),
         }),
+        defineField({
+            name: 'audience',
+            title: 'Audience',
+            type: 'string',
+            options: {
+                list: [
+                    { title: 'Men', value: 'men' },
+                    { title: 'Women', value: 'women' },
+                    { title: 'Kids', value: 'kids' },
+                    { title: 'Unisex', value: 'unisex' },
+                ],
+            },
+            description: 'Who is this product for? Used for filters on the shop page.',
+        }),
         {
             name: 'categories',
             title: 'Categories',

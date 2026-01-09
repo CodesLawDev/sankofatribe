@@ -8,6 +8,7 @@ async function getAllProducts() {
     slug,
     images,
     price,
+        audience,
     inStock,
     featured,
     sizes[]{size, stock},
