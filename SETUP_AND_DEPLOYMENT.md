@@ -46,10 +46,10 @@ NEXT_PUBLIC_SANITY_DATASET=production
 SANITY_API_TOKEN=your-sanity-api-token
 
 # ============================================
-# Stripe Configuration (Existing)
+# Paystack Configuration
 # ============================================
-NEXT_PUBLIC_STRIPE_PUBLIC_KEY=pk_live_your_stripe_key
-STRIPE_SECRET_KEY=sk_live_your_stripe_key
+NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY=pk_live_your_paystack_key
+PAYSTACK_SECRET_KEY=sk_live_your_paystack_key
 
 # ============================================
 # Database URL (if using external DB)
@@ -404,7 +404,7 @@ npm run build
    NEXT_PUBLIC_SANITY_PROJECT_ID=<your-project-id>
    NEXT_PUBLIC_SANITY_DATASET=production
    SANITY_API_TOKEN=<your-token>
-   STRIPE_SECRET_KEY=<live-stripe-key>
+   PAYSTACK_SECRET_KEY=<live-paystack-key>
    ```
 
 ### Alternative: Docker Deployment

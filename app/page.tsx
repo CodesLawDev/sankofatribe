@@ -1,25 +1,39 @@
 import { client, urlFor } from '@/lib/sanity'
 import type { HomePage, Product, Category } from '@/lib/sanity'
 import PremiumHeroBanner from '@/components/premium-hero-banner'
+import RewardsCallout from '@/components/rewards-callout'
 import FeaturedCategories from '@/components/featured-categories'
 import Spotlight from '@/components/spotlight'
 import ProductGrid from '@/components/product-grid'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 
 async function getHomePageData() {
     const query = `*[_type == "homePage"][0] {
     _id,
+    collectionHeading,
+    collectionSubheading,
     "heroBanners": heroBanners[]-> {
       _id,
       title,
       subtitle,
+      order,
+      displayMode,
       image,
       videoUrl,
       ctaText,
       ctaLink,
+      ctaLinkSelect,
+      "ctaCategory": ctaCategory->{slug},
+      "ctaProduct": ctaProduct->{slug},
+      ctaTextSecondary,
+      ctaLinkSecondary,
+      ctaLinkSecondarySelect,
+      "ctaCategorySecondary": ctaCategorySecondary->{slug},
+      "ctaProductSecondary": ctaProductSecondary->{slug},
       textColor
-    },
+    } | order(order asc),
     "featuredProducts": featuredProducts[]-> {
       _id,
       name,
@@ -29,6 +43,33 @@ async function getHomePageData() {
       inStock,
       featured,
       sizes[]{size, stock},
+      hasDiscount,
+      discountType,
+      discountValue,
+      discountStartDate,
+      discountEndDate,
+      "categories": categories[]-> {
+        _id,
+        name,
+        slug,
+        image
+      },
+      soldCount
+    },
+    "latestCollectionProducts": latestCollectionProducts[]-> {
+      _id,
+      name,
+      slug,
+      images,
+      price,
+      inStock,
+      featured,
+      sizes[]{size, stock},
+      hasDiscount,
+      discountType,
+      discountValue,
+      discountStartDate,
+      discountEndDate,
       "categories": categories[]-> {
         _id,
         name,
@@ -50,11 +91,17 @@ async function getHomePageData() {
 }
 
 async function getCategories() {
-    const query = `*[_type == "category"] | order(name asc)[0...6] {
+    const query = `*[_type == "category" && !defined(parentCategory)] | order(name asc)[0...6] {
       _id,
       name,
       slug,
-      image
+      image,
+      "subCategories": subCategories[]->{
+        _id,
+        name,
+        slug,
+        image
+      }
     }`
 
     const categories = await client.fetch<Category[]>(query, {}, { next: { revalidate: 0 } })
@@ -88,7 +135,9 @@ export default async function HomePage() {
 
     const [categories, featuredProducts] = await Promise.all([
         getCategories(),
-        homePageData?.featuredProducts ? Promise.resolve(homePageData.featuredProducts) : getFeaturedProducts()
+        homePageData?.latestCollectionProducts ? Promise.resolve(homePageData.latestCollectionProducts) : 
+        homePageData?.featuredProducts ? Promise.resolve(homePageData.featuredProducts) : 
+        getFeaturedProducts()
     ])
 
     const cmsFeaturedCategories = (homePageData?.featuredCategories || []).map((cat) => ({
@@ -119,18 +168,103 @@ export default async function HomePage() {
 
     return (
         <div className="bg-white text-black">
-            {/* Main Hero Section - Premium Nike Style */}
-            {homePageData?.heroBanners?.[0] ? (
-                <PremiumHeroBanner
-                    image={homePageData.heroBanners[0].image}
-                    videoUrl={homePageData.heroBanners[0].videoUrl}
-                    title={homePageData.heroBanners[0].title || "SANKOFA TRIBE"}
-                    subtitle={homePageData.heroBanners[0].subtitle || "Premium African Heritage Fashion"}
-                    ctaText={homePageData.heroBanners[0].ctaText || "Explore Collection"}
-                    ctaLink={homePageData.heroBanners[0].ctaLink || "/products"}
-                    textPosition="center"
-                    textColor="white"
-                />
+            {/* Hero Banners - Mixed full-width and cards */}
+            {homePageData?.heroBanners && homePageData.heroBanners.length > 0 ? (
+                <div className="space-y-8 md:space-y-12 lg:space-y-16">
+                    {(() => {
+                        const banners = homePageData.heroBanners
+                        const result = []
+                        let i = 0
+                        
+                        while (i < banners.length) {
+                            const banner = banners[i]
+                            
+                            // Full-width banner
+                            if (banner.displayMode === 'full' || !banner.displayMode) {
+                                result.push(
+                                    <PremiumHeroBanner
+                                        key={banner._id || i}
+                                        image={banner.image}
+                                        videoUrl={banner.videoUrl}
+                                        title={banner.title || "SANKOFA TRIBE"}
+                                        subtitle={banner.subtitle || "Premium African Heritage Fashion"}
+                                        ctaText={banner.ctaText || "Explore Collection"}
+                                        ctaLink={banner.ctaLink || "/products"}
+                                        ctaLinkSelect={banner.ctaLinkSelect}
+                                        ctaCategory={banner.ctaCategory}
+                                        ctaProduct={banner.ctaProduct}
+                                        ctaTextSecondary={banner.ctaTextSecondary}
+                                        ctaLinkSecondary={banner.ctaLinkSecondary}
+                                        ctaLinkSecondarySelect={banner.ctaLinkSecondarySelect}
+                                        ctaCategorySecondary={banner.ctaCategorySecondary}
+                                        ctaProductSecondary={banner.ctaProductSecondary}
+                                        textPosition="center"
+                                        textColor={banner.textColor || "white"}
+                                    />
+                                )
+                                i++
+                            } 
+                            // Card mode - group up to 3 cards
+                            else if (banner.displayMode === 'card') {
+                                const cardBanners = []
+                                let j = i
+                                
+                                // Collect up to 3 consecutive card banners
+                                while (j < banners.length && banners[j].displayMode === 'card' && cardBanners.length < 3) {
+                                    cardBanners.push(banners[j])
+                                    j++
+                                }
+                                
+                                result.push(
+                                    <div key={`cards-${i}`} className="w-full">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0">
+                                            {cardBanners.map((cardBanner, idx) => (
+                                                <div key={cardBanner._id || idx} className="relative h-[50vh] md:h-[60vh] overflow-hidden group">
+                                                    {cardBanner.image && (
+                                                        <Image
+                                                            src={urlFor(cardBanner.image).width(800).height(600).url()}
+                                                            alt={cardBanner.title || 'Banner'}
+                                                            fill
+                                                            className="object-cover transition-transform duration-500 group-hover:scale-105"
+                                                        />
+                                                    )}
+                                                    <div className="absolute inset-0 bg-black/20" />
+                                                    <div className="absolute inset-0 flex flex-col items-center justify-end text-center px-6 pb-8">
+                                                        <div className={`${cardBanner.textColor === 'black' ? 'text-black' : 'text-white'}`}>
+                                                            {cardBanner.title && (
+                                                                <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-3">
+                                                                    {cardBanner.title}
+                                                                </h3>
+                                                            )}
+                                                            {cardBanner.subtitle && (
+                                                                <p className="text-sm md:text-base mb-6 opacity-90">
+                                                                    {cardBanner.subtitle}
+                                                                </p>
+                                                            )}
+                                                            {cardBanner.ctaText && cardBanner.ctaLink && (
+                                                                <Link href={cardBanner.ctaLink}>
+                                                                    <Button
+                                                                        size="sm"
+                                                                        className="bg-white/90 text-black hover:bg-white"
+                                                                    >
+                                                                        {cardBanner.ctaText}
+                                                                    </Button>
+                                                                </Link>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )
+                                i = j
+                            }
+                        }
+                        
+                        return result
+                    })()}
+                </div>
             ) : (
                 <PremiumHeroBanner
                     image={null}
@@ -143,92 +277,11 @@ export default async function HomePage() {
                 />
             )}
 
-            {/* Featured Categories - Sports/Lifestyle */}
-            <FeaturedCategories
-                categories={featuredCategoryList}
-            />
 
-            {/* Spotlight Section - Featured Products */}
-            {featuredProducts && featuredProducts.length > 0 && (
-                <Spotlight products={featuredProducts.slice(0, 8)} />
-            )}
+            {/* Final Callout Section (last part of page) */}
+            <RewardsCallout />
 
-            {/* Secondary Hero - Campaign Banner */}
-            {homePageData?.heroBanners?.[1] && (
-                <PremiumHeroBanner
-                    image={homePageData.heroBanners[1].image}
-                    videoUrl={homePageData.heroBanners[1].videoUrl}
-                    title={homePageData.heroBanners[1].title || 'New Arrivals'}
-                    subtitle={homePageData.heroBanners[1].subtitle}
-                    ctaText={homePageData.heroBanners[1].ctaText || 'Shop Now'}
-                    ctaLink={homePageData.heroBanners[1].ctaLink || '/products'}
-                    textPosition="left"
-                    textColor="white"
-                />
-            )}
-
-            {/* Collection Section */}
-            <section className="py-20 md:py-32 bg-gray-50">
-                <div className="mx-auto px-4 sm:px-6 lg:px-12 max-w-7xl">
-                    <div className="text-center mb-16">
-                        <h2 className="text-4xl md:text-5xl font-bold mb-4">Latest Collections</h2>
-                        <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-                            Discover our carefully curated selection of premium products
-                        </p>
-                    </div>
-                    {featuredProducts && featuredProducts.length > 8 && (
-                        <ProductGrid products={featuredProducts.slice(8, 16)} />
-                    )}
-                </div>
-            </section>
-
-            {/* Categories Grid Section */}
-            <section className="grid grid-cols-2 md:grid-cols-4 border-t border-gray-200">
-                <Link href="/category/men" className="group relative aspect-square overflow-hidden bg-gray-100 border-b border-r border-gray-200">
-                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors duration-300" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <h3 className="text-2xl font-bold text-white text-center">Men</h3>
-                    </div>
-                </Link>
-                <Link href="/category/women" className="group relative aspect-square overflow-hidden bg-gray-100 border-b border-r border-gray-200">
-                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors duration-300" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <h3 className="text-2xl font-bold text-white text-center">Women</h3>
-                    </div>
-                </Link>
-                <Link href="/products?filter=sale" className="group relative aspect-square overflow-hidden bg-gray-100 border-b border-r border-gray-200">
-                    <div className="absolute inset-0 bg-red-600/20 group-hover:bg-red-600/40 transition-colors duration-300" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <h3 className="text-2xl font-bold text-white text-center">Sale</h3>
-                    </div>
-                </Link>
-                <Link href="/products?filter=new" className="group relative aspect-square overflow-hidden bg-gray-100 border-b border-gray-200">
-                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors duration-300" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <h3 className="text-2xl font-bold text-white text-center">New</h3>
-                    </div>
-                </Link>
-            </section>
-
-            {/* Benefits Section */}
-            <section className="bg-black text-white py-16 md:py-24">
-                <div className="mx-auto px-4 sm:px-6 lg:px-12 max-w-7xl">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-                        <div className="text-center">
-                            <div className="text-4xl font-bold mb-4">Free Shipping</div>
-                            <p className="text-gray-400">On orders over $100</p>
-                        </div>
-                        <div className="text-center">
-                            <div className="text-4xl font-bold mb-4">30-Day Returns</div>
-                            <p className="text-gray-400">Easy returns & exchanges</p>
-                        </div>
-                        <div className="text-center">
-                            <div className="text-4xl font-bold mb-4">Premium Support</div>
-                            <p className="text-gray-400">24/7 customer service</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
+            {/* Removed extra grid/benefits sections per request */}
         </div>
     )
 }

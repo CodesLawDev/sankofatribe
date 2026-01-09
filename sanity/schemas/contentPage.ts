@@ -4,6 +4,7 @@ export const contentPage = defineType({
     name: 'contentPage',
     title: 'Content Pages',
     type: 'document',
+    description: 'Static pages like About, Contact, FAQ, Shipping, Returns, etc. Edit slug to: about, contact, faq, shipping, returns, privacy, terms. Each page supports a hero section, rich content blocks, and structured sections (e.g., FAQ items).',
     fields: [
         defineField({
             name: 'title',

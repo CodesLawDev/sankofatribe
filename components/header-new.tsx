@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useCart } from '@/lib/cart-context'
-import { ShoppingBag, Search, Menu, X } from 'lucide-react'
+import { ShoppingBag, Search, Menu, X, Heart, User } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import SearchModal from './search-modal'
 import { client } from '@/lib/sanity'
@@ -84,96 +84,170 @@ export default function Header() {
         black: 'text-black',
     }
 
+    // Close mobile menu when a link is clicked
+    const closeMobileMenu = () => setMobileMenuOpen(false)
+
     return (
         <>
-            <header className="sticky top-0 z-50 bg-white text-black">
+            <header className="sticky top-0 z-50 bg-white text-black shadow-sm">
                 {/* Announcement Bar */}
                 {announcement && (
                     <div className={`${bgColorMap[announcement.backgroundColor] || 'bg-black'} ${textColorMap[announcement.textColor] || 'text-white'} text-center py-2 px-4`}>
                         {announcement.link ? (
-                            <Link href={announcement.link} className="text-xs font-medium hover:opacity-80 transition-opacity">
+                            <Link href={announcement.link} className="text-xs sm:text-sm font-medium hover:opacity-80 transition-opacity inline-block">
                                 {announcement.text}
                             </Link>
                         ) : (
-                            <p className="text-xs font-medium">{announcement.text}</p>
+                            <p className="text-xs sm:text-sm font-medium">{announcement.text}</p>
                         )}
                     </div>
                 )}
 
                 {/* Main Navigation */}
-                <nav className="border-b border-gray-200">
-                    <div className="mx-auto px-4 sm:px-6 lg:px-12 max-w-7xl">
-                        <div className="flex h-16 items-center justify-between">
+                <nav className="border-b border-gray-100">
+                    <div className="mx-auto px-4 sm:px-6 lg:px-8 w-full">
+                        <div className="flex h-14 sm:h-16 items-center justify-between gap-2 sm:gap-4">
+                            {/* Mobile Menu Button - Left */}
+                            <button
+                                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                                className="lg:hidden flex-shrink-0 p-2 hover:bg-gray-50 rounded-lg transition-colors -ml-2"
+                                aria-label="Toggle menu"
+                            >
+                                {mobileMenuOpen ? (
+                                    <X className="h-6 w-6" strokeWidth={1.5} />
+                                ) : (
+                                    <Menu className="h-6 w-6" strokeWidth={1.5} />
+                                )}
+                            </button>
+
                             {/* Logo */}
-                            <Link href="/" className="flex-shrink-0">
-                                <span className="text-xl font-bold tracking-tight">SANKOFA TRIBE</span>
+                            <Link 
+                                href="/" 
+                                className="flex-shrink-0 font-bold tracking-tight text-sm sm:text-base md:text-lg whitespace-nowrap"
+                                onClick={closeMobileMenu}
+                            >
+                                SANKOFA
                             </Link>
 
-                            {/* Desktop Navigation */}
-                            <div className="flex items-center gap-8 flex-1 justify-center">
+                            {/* Desktop Navigation - Center */}
+                            <div className="hidden lg:flex items-center gap-1 flex-1 justify-center">
                                 {mainNav && mainNav.length > 0 ? (
                                     mainNav.map((item) => (
                                         <Link
                                             key={item.name}
                                             href={item.href}
-                                            className="text-xs font-medium tracking-wide hover:text-gray-600 transition-colors"
+                                            className="px-3 py-2 text-xs font-medium tracking-wide text-gray-700 hover:text-black hover:bg-gray-50 rounded-md transition-all duration-200"
                                         >
                                             {item.name}
                                         </Link>
                                     ))
-                                ) : (
-                                    <span className="text-gray-400 text-xs">Loading navigation...</span>
-                                )}
+                                ) : null}
                             </div>
 
                             {/* Right Actions */}
-                            <div className="flex items-center gap-4 lg:gap-6">
+                            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                                {/* Search - Hide on very small screens */}
                                 <button 
                                     onClick={() => setSearchOpen(true)}
-                                    className="p-2 hover:bg-gray-100 rounded-full transition-colors lg:p-1" 
+                                    className="hidden xs:flex p-2 hover:bg-gray-50 rounded-lg transition-colors text-gray-700 hover:text-black" 
                                     aria-label="Search"
+                                    title="Search"
                                 >
-                                    <Search className="h-5 w-5" />
+                                    <Search className="h-5 w-5 sm:h-5 sm:w-5" strokeWidth={1.5} />
                                 </button>
+
+                                {/* Wishlist - Desktop only */}
+                                <Link
+                                    href="/wishlist"
+                                    className="hidden sm:flex p-2 hover:bg-gray-50 rounded-lg transition-colors text-gray-700 hover:text-black"
+                                    aria-label="Wishlist"
+                                    title="Wishlist"
+                                >
+                                    <Heart className="h-5 w-5" strokeWidth={1.5} />
+                                </Link>
+
+                                {/* Account - Desktop only */}
+                                <Link
+                                    href="/account"
+                                    className="hidden sm:flex p-2 hover:bg-gray-50 rounded-lg transition-colors text-gray-700 hover:text-black"
+                                    aria-label="Account"
+                                    title="Account"
+                                >
+                                    <User className="h-5 w-5" strokeWidth={1.5} />
+                                </Link>
+
+                                {/* Cart */}
                                 <Link
                                     href="/cart"
-                                    className="relative p-2 hover:bg-gray-100 rounded-full transition-colors lg:p-1"
+                                    className="relative p-2 hover:bg-gray-50 rounded-lg transition-colors text-gray-700 hover:text-black"
                                     aria-label="Shopping bag"
+                                    title="Shopping bag"
                                 >
-                                    <ShoppingBag className="h-5 w-5" />
+                                    <ShoppingBag className="h-5 w-5 sm:h-5 sm:w-5" strokeWidth={1.5} />
                                     {cartCount > 0 && (
-                                        <span className="absolute -top-1 -right-1 bg-black text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center font-medium">
-                                            {cartCount}
+                                        <span className="absolute top-1 right-1 bg-black text-white text-[9px] sm:text-[10px] font-bold rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center">
+                                            {cartCount > 9 ? '9+' : cartCount}
                                         </span>
                                     )}
                                 </Link>
-                                {/* Mobile Menu Button */}
-                                <button
-                                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                                    className="lg:hidden p-2 hover:bg-gray-100 rounded-full transition-colors"
-                                    aria-label="Toggle menu"
-                                >
-                                    {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-                                </button>
                             </div>
                         </div>
                     </div>
                 </nav>
 
-                {/* Mobile Menu */}
+                {/* Mobile Menu - Dropdown */}
                 {mobileMenuOpen && (
-                    <div className="lg:hidden bg-white border-t border-gray-200">
-                        <div className="px-4 sm:px-6 py-6 space-y-4">
-                            {mainNav.map((item) => (
-                                <Link
-                                    key={item.name}
-                                    href={item.href}
-                                    className="block text-sm font-medium hover:text-gray-600 transition-colors"
-                                    onClick={() => setMobileMenuOpen(false)}
+                    <div className="lg:hidden bg-white border-t border-gray-100 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div className="px-4 py-4 space-y-2 max-h-[calc(100vh-140px)] overflow-y-auto">
+                            {/* Mobile Navigation Links */}
+                            <div className="space-y-1 mb-4 pb-4 border-b border-gray-100">
+                                {mainNav && mainNav.length > 0 ? (
+                                    mainNav.map((item) => (
+                                        <Link
+                                            key={item.name}
+                                            href={item.href}
+                                            className="block px-3 py-3 text-sm font-medium text-gray-700 hover:text-black hover:bg-gray-50 rounded-lg transition-colors"
+                                            onClick={closeMobileMenu}
+                                        >
+                                            {item.name}
+                                        </Link>
+                                    ))
+                                ) : null}
+                            </div>
+
+                            {/* Mobile Additional Actions */}
+                            <div className="space-y-1">
+                                <button 
+                                    onClick={() => {
+                                        setSearchOpen(true)
+                                        closeMobileMenu()
+                                    }}
+                                    className="w-full text-left px-3 py-3 text-sm font-medium text-gray-700 hover:text-black hover:bg-gray-50 rounded-lg transition-colors flex items-center gap-3"
                                 >
-                                    {item.name}
+                                    <Search className="h-5 w-5" strokeWidth={1.5} />
+                                    Search
+                                </button>
+                                <Link
+                                    href="/wishlist"
+                                    className="block px-3 py-3 text-sm font-medium text-gray-700 hover:text-black hover:bg-gray-50 rounded-lg transition-colors"
+                                    onClick={closeMobileMenu}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <Heart className="h-5 w-5" strokeWidth={1.5} />
+                                        Wishlist
+                                    </div>
                                 </Link>
-                            ))}
+                                <Link
+                                    href="/account"
+                                    className="block px-3 py-3 text-sm font-medium text-gray-700 hover:text-black hover:bg-gray-50 rounded-lg transition-colors"
+                                    onClick={closeMobileMenu}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <User className="h-5 w-5" strokeWidth={1.5} />
+                                        Account
+                                    </div>
+                                </Link>
+                            </div>
                         </div>
                     </div>
                 )}

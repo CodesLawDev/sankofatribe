@@ -10,6 +10,14 @@ interface HeroBannerProps {
     subtitle?: string
     ctaText?: string
     ctaLink?: string
+    ctaLinkSelect?: string
+    ctaCategory?: { slug?: { current: string } }
+    ctaProduct?: { slug?: { current: string } }
+    ctaTextSecondary?: string
+    ctaLinkSecondary?: string
+    ctaLinkSecondarySelect?: string
+    ctaCategorySecondary?: { slug?: { current: string } }
+    ctaProductSecondary?: { slug?: { current: string } }
     textPosition?: 'left' | 'center' | 'right'
     textColor?: 'white' | 'black'
 }
@@ -21,6 +29,14 @@ export default function PremiumHeroBanner({
     subtitle,
     ctaText,
     ctaLink,
+    ctaLinkSelect,
+    ctaCategory,
+    ctaProduct,
+    ctaTextSecondary,
+    ctaLinkSecondary,
+    ctaLinkSecondarySelect,
+    ctaCategorySecondary,
+    ctaProductSecondary,
     textPosition = 'left',
     textColor = 'white',
 }: HeroBannerProps) {
@@ -41,6 +57,30 @@ export default function PremiumHeroBanner({
         : image && (image as any).asset
             ? urlFor(image).width(1920).height(1080).url()
             : null
+
+    const resolveLink = (select?: string, manual?: string, category?: { slug?: { current: string } }, product?: { slug?: { current: string } }) => {
+        if (select) {
+            switch (select) {
+                case 'home': return '/'
+                case 'products': return '/products'
+                case 'products-men': return '/products?audience=men'
+                case 'products-women': return '/products?audience=women'
+                case 'products-kids': return '/products?audience=kids'
+                case 'wishlist': return '/wishlist'
+                case 'cart': return '/cart'
+                case 'account': return '/account'
+                case 'contact': return '/contact'
+                case 'faq': return '/faq'
+                default: break
+            }
+        }
+        if (category?.slug?.current) return `/category/${category.slug.current}`
+        if (product?.slug?.current) return `/products/${product.slug.current}`
+        return manual
+    }
+
+    const primaryHref = resolveLink(ctaLinkSelect, ctaLink, ctaCategory, ctaProduct)
+    const secondaryHref = resolveLink(ctaLinkSecondarySelect, ctaLinkSecondary, ctaCategorySecondary, ctaProductSecondary)
 
     return (
         <div className="relative w-full h-[60vh] md:h-[75vh] lg:h-[85vh] overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900">
@@ -80,16 +120,31 @@ export default function PremiumHeroBanner({
                             {subtitle}
                         </p>
                     )}
-                    {ctaText && ctaLink && (
-                        <Link href={ctaLink}>
-                            <Button
-                                size="lg"
-                                className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-black transition-all duration-300"
-                            >
-                                {ctaText}
-                            </Button>
-                        </Link>
-                    )}
+                    {(ctaText && primaryHref) || (ctaTextSecondary && secondaryHref) ? (
+                        <div className={`flex flex-wrap gap-3 ${textPosition === 'center' ? 'justify-center' : ''}`}>
+                            {ctaText && primaryHref && (
+                                <Link href={primaryHref}>
+                                    <Button
+                                        size="lg"
+                                        className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-black transition-all duration-300"
+                                    >
+                                        {ctaText}
+                                    </Button>
+                                </Link>
+                            )}
+                            {ctaTextSecondary && secondaryHref && (
+                                <Link href={secondaryHref}>
+                                    <Button
+                                        size="lg"
+                                        variant={textColor === 'white' ? 'secondary' : 'default'}
+                                        className="bg-white/90 text-black hover:bg-white border-0"
+                                    >
+                                        {ctaTextSecondary}
+                                    </Button>
+                                </Link>
+                            )}
+                        </div>
+                    ) : null}
                 </div>
             </div>
         </div>

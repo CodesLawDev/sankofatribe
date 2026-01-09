@@ -327,7 +327,7 @@ Returns current admin user data
 
 ## 🔧 Environment Variables Required
 
-Create a `.env.local` file with:
+Create a `.env` file with:
 
 ```env
 # JWT Authentication
@@ -355,7 +355,7 @@ npm install
 ```
 
 ### 2. Set Environment Variables
-Create `.env.local` with required keys (see above)
+Create `.env` with required keys (see above)
 
 ### 3. Add Admin User to Sanity
 Create a document in Sanity with:

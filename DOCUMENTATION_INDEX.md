@@ -262,7 +262,7 @@
 - `tsconfig.json` - TypeScript configuration
 - `tailwind.config.ts` - Tailwind CSS configuration
 - `package.json` - Dependencies and scripts
-- `.env.local` - Environment variables (not in repo)
+- `.env` - Environment variables (not in repo)
 
 ### Key Directories
 - `app/admin/` - Admin panel pages

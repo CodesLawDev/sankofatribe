@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { ChevronDown, X, SlidersHorizontal } from 'lucide-react'
 
 interface FilterState {
+    audience: string
     category: string
     priceRange: string
     sortBy: string
@@ -13,6 +14,7 @@ interface ProductFiltersProps {
     categories: { name: string; slug: string }[]
     onFilterChange: (filters: FilterState) => void
     totalProducts: number
+    initialFilters?: Partial<FilterState>
 }
 
 const priceRanges = [
@@ -30,11 +32,12 @@ const sortOptions = [
     { label: 'Name: A-Z', value: 'name-asc' },
 ]
 
-export default function ProductFilters({ categories, onFilterChange, totalProducts }: ProductFiltersProps) {
+export default function ProductFilters({ categories, onFilterChange, totalProducts, initialFilters }: ProductFiltersProps) {
     const [filters, setFilters] = useState<FilterState>({
-        category: '',
-        priceRange: '',
-        sortBy: 'newest',
+        audience: initialFilters?.audience || '',
+        category: initialFilters?.category || '',
+        priceRange: initialFilters?.priceRange || '',
+        sortBy: initialFilters?.sortBy || 'newest',
     })
     const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
 
@@ -45,18 +48,45 @@ export default function ProductFilters({ categories, onFilterChange, totalProduc
     }
 
     const clearFilters = () => {
-        const newFilters = { category: '', priceRange: '', sortBy: 'newest' }
+        const newFilters = { audience: '', category: '', priceRange: '', sortBy: 'newest' }
         setFilters(newFilters)
         onFilterChange(newFilters)
     }
 
-    const hasActiveFilters = filters.category || filters.priceRange
+    const hasActiveFilters = filters.audience || filters.category || filters.priceRange
 
     return (
         <>
             {/* Desktop Filters */}
             <div className="hidden lg:flex items-center justify-between mb-8 pb-6 border-b border-gray-100">
                 <div className="flex items-center gap-8">
+                    {/* Audience Filter */}
+                    <div className="relative group">
+                        <button className="flex items-center gap-2 text-xs uppercase tracking-[0.15em] hover:opacity-60 transition-opacity">
+                            Audience
+                            <ChevronDown className="h-3 w-3" />
+                        </button>
+                        <div className="absolute top-full left-0 mt-2 bg-white border border-gray-100 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-20 min-w-[200px]">
+                            {[
+                                { label: 'All', value: '' },
+                                { label: 'Men', value: 'men' },
+                                { label: 'Women', value: 'women' },
+                                { label: 'Kids', value: 'kids' },
+                                { label: 'Unisex', value: 'unisex' },
+                            ].map((opt) => (
+                                <button
+                                    key={opt.value}
+                                    onClick={() => updateFilter('audience', opt.value)}
+                                    className={`block w-full text-left px-4 py-3 text-xs hover:bg-gray-50 transition-colors ${
+                                        filters.audience === opt.value ? 'font-medium' : ''
+                                    }`}
+                                >
+                                    {opt.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
                     {/* Category Filter */}
                     <div className="relative group">
                         <button className="flex items-center gap-2 text-xs uppercase tracking-[0.15em] hover:opacity-60 transition-opacity">
@@ -182,6 +212,30 @@ export default function ProductFilters({ categories, onFilterChange, totalProduc
                                             }`}
                                         >
                                             {option.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Audience */}
+                            <div className="mb-8">
+                                <h3 className="text-xs uppercase tracking-[0.15em] font-medium mb-4">Audience</h3>
+                                <div className="space-y-3">
+                                    {[
+                                        { label: 'All', value: '' },
+                                        { label: 'Men', value: 'men' },
+                                        { label: 'Women', value: 'women' },
+                                        { label: 'Kids', value: 'kids' },
+                                        { label: 'Unisex', value: 'unisex' },
+                                    ].map((opt) => (
+                                        <button
+                                            key={opt.value}
+                                            onClick={() => updateFilter('audience', opt.value)}
+                                            className={`block text-sm ${
+                                                filters.audience === opt.value ? 'font-medium' : 'text-gray-600'
+                                            }`}
+                                        >
+                                            {opt.label}
                                         </button>
                                     ))}
                                 </div>

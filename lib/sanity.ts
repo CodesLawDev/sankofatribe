@@ -32,12 +32,18 @@ export interface Product {
     images: SanityImage[]
     description?: string
     price: number
+    audience?: 'men' | 'women' | 'kids' | 'unisex'
     categories?: Category[]
     sizes?: { size: string; stock: number }[]
     colors?: { name: string; hex: string }[]
     featured?: boolean
     inStock?: boolean
     soldCount?: number
+    hasDiscount?: boolean
+    discountType?: 'percentage' | 'fixed'
+    discountValue?: number
+    discountStartDate?: string
+    discountEndDate?: string
 }
 
 export interface Category {
@@ -47,6 +53,8 @@ export interface Category {
     slug: { current: string }
     description?: string
     image?: SanityImage
+    parentCategory?: Category
+    subCategories?: Category[]
 }
 
 export interface Banner {
@@ -54,10 +62,20 @@ export interface Banner {
     _type: 'banner'
     title?: string
     subtitle?: string
+    order?: number
+    displayMode?: 'full' | 'card'
     image: SanityImage
     videoUrl?: string
     ctaText?: string
     ctaLink?: string
+    ctaLinkSelect?: string
+    ctaCategory?: Category
+    ctaProduct?: Product
+    ctaTextSecondary?: string
+    ctaLinkSecondary?: string
+    ctaLinkSecondarySelect?: string
+    ctaCategorySecondary?: Category
+    ctaProductSecondary?: Product
     textColor: 'white' | 'black'
 }
 
@@ -66,6 +84,89 @@ export interface HomePage {
     heroBanners?: Banner[]
     featuredProducts?: Product[]
     featuredCategories?: Category[]
+    collectionHeading?: string
+    collectionSubheading?: string
+    latestCollectionProducts?: Product[]
+    bannerDisplayMode?: 'all' | 'curated'
+    bannerSections?: Array<{
+        title?: string
+        layout: 'two' | 'three'
+        banners: Banner[]
+    }>
+}
+
+export interface PromoCode {
+    _id: string
+    _type: 'promoCode'
+    code: string
+    description?: string
+    discountType: 'percentage' | 'fixed' | 'free_shipping'
+    discountValue?: number
+    minimumPurchase?: number
+    maxDiscount?: number
+    usageLimit?: number
+    usageLimitPerCustomer?: number
+    timesUsed?: number
+    validFrom: string
+    validUntil: string
+    isActive?: boolean
+    applicableProducts?: Product[]
+    applicableCategories?: Category[]
+    firstTimeCustomerOnly?: boolean
+}
+
+export interface Campaign {
+    _id: string
+    _type: 'campaign'
+    name: string
+    slug: { current: string }
+    description?: string
+    startDate: string
+    endDate: string
+    isActive?: boolean
+    bannerImage?: SanityImage
+    bannerTitle?: string
+    bannerSubtitle?: string
+    showOnHomepage?: boolean
+    discountType: 'percentage' | 'fixed' | 'custom'
+    discountValue?: number
+    includedProducts?: Product[]
+    includedCategories?: Category[]
+    excludedProducts?: Product[]
+    stackWithPromos?: boolean
+}
+
+export interface Customer {
+    _id: string
+    _type: 'customer'
+    email: string
+    firstName: string
+    lastName: string
+    phone?: string
+    profileImage?: SanityImage
+    registeredAt: string
+    lastLogin?: string
+    status: 'active' | 'inactive' | 'suspended' | 'deleted'
+    shippingAddresses?: Array<{
+        id: string
+        label?: string
+        street: string
+        city: string
+        region?: string
+        postalCode?: string
+        country: string
+        isDefault?: boolean
+    }>
+    orders?: string[]
+    totalOrders?: number
+    totalSpent?: number
+    loyaltyPoints?: number
+    preferences?: {
+        emailMarketing?: boolean
+        smsNotifications?: boolean
+        orderUpdates?: boolean
+    }
+    notes?: string
 }
 
 export interface SiteSettings {

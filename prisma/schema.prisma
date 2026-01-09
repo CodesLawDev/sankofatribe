@@ -1,0 +1,176 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SUPERADMIN
+  ADMIN
+  CUSTOMER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+// Unified Users table for both admin staff and customers
+model User {
+  id                    String      @id @default(cuid())
+  email                 String      @unique @db.VarChar(255)
+  phone                 String?     @db.VarChar(20)
+  firstName             String      @db.VarChar(100)
+  lastName              String      @db.VarChar(100)
+  passwordHash          String
+  role                  UserRole    @default(CUSTOMER)
+  status                UserStatus  @default(ACTIVE)
+  
+  // Permissions (for admin staff)
+  permissions           String[]    @default([])
+  
+  // Profile
+  profileImage          String?
+  bio                   String?     @db.Text
+  
+  // Communication preferences
+  preferences           Json @default("{\"emailMarketing\": true, \"smsMarketing\": false, \"orderUpdates\": true}")
+  
+  // Customer data
+  loyaltyPoints         Int         @default(0)
+  totalOrders           Int         @default(0)
+  totalSpent            Float       @default(0)
+  
+  // Metadata
+  registeredAt          DateTime    @default(now())
+  lastLogin             DateTime?
+  updatedAt             DateTime    @updatedAt
+  
+  // Relations
+  addresses             Address[]     @relation("UserAddresses")
+  orders                Order[]       @relation("UserOrders")
+  wishlistItems         WishlistItem[] @relation("UserWishlist")
+  loginHistory          LoginHistory[] @relation("UserLoginHistory")
+  
+  @@index([email])
+  @@index([phone])
+  @@index([role])
+  @@index([status])
+  @@index([registeredAt])
+}
+
+model Address {
+  id                    String      @id @default(cuid())
+  userId                String
+  user                  User        @relation("UserAddresses", fields: [userId], references: [id], onDelete: Cascade)
+  ordersShipped         Order[]     @relation("OrderShippingAddress")
+  
+  label                 String?     @default("Address")
+  street                String      @db.VarChar(255)
+  city                  String      @db.VarChar(100)
+  region                String?     @db.VarChar(100)
+  postalCode            String?     @db.VarChar(20)
+  country               String      @db.VarChar(100)
+  isDefault             Boolean     @default(false)
+  
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+  
+  @@index([userId])
+}
+
+model Order {
+  id                    String      @id @default(cuid())
+  orderNumber           String      @unique
+  userId                String
+  user                  User        @relation("UserOrders", fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Order details
+  subtotal              Float
+  discount              Float       @default(0)
+  shipping              Float       @default(0)
+  tax                   Float       @default(0)
+  total                 Float
+  
+  // Promo code used
+  promoCode             String?
+  
+  // Status
+  status                OrderStatus @default(PENDING)
+  paymentStatus         String      @default("pending")
+  
+  // Shipping
+  shippingAddressId     String?
+  shippingAddress       Address?    @relation("OrderShippingAddress", fields: [shippingAddressId], references: [id], onDelete: SetNull)
+  
+  // Items
+  items                 OrderItem[]
+  
+  // Metadata
+  notes                 String?     @db.Text
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+  
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id                    String      @id @default(cuid())
+  orderId               String
+  order                 Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  productId             String      // Reference to Sanity product
+  productName           String
+  price                 Float
+  quantity              Int
+  size                  String?
+  color                 String?
+  
+  @@index([orderId])
+}
+
+model WishlistItem {
+  id                    String      @id @default(cuid())
+  userId                String
+  user                  User        @relation("UserWishlist", fields: [userId], references: [id], onDelete: Cascade)
+  productId             String      // Reference to Sanity product
+  
+  addedAt               DateTime    @default(now())
+  
+  @@unique([userId, productId])
+  @@index([userId])
+}
+
+model LoginHistory {
+  id                    String      @id @default(cuid())
+  userId                String
+  user                  User        @relation("UserLoginHistory", fields: [userId], references: [id], onDelete: Cascade)
+  
+  ipAddress             String?
+  userAgent             String?     @db.Text
+  loginTime             DateTime    @default(now())
+  logoutTime            DateTime?
+  
+  @@index([userId])
+  @@index([loginTime])
+}

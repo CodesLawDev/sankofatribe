@@ -7,6 +7,7 @@ import ProductFilters from './product-filters'
 import ActiveFilters from './active-filters'
 
 interface FilterState {
+    audience: string
     category: string
     priceRange: string
     sortBy: string
@@ -15,24 +16,32 @@ interface FilterState {
 interface ProductsWithFiltersProps {
     products: Product[]
     categories: { name: string; slug: string }[]
+    initialFilters?: Partial<FilterState>
 }
 
-export default function ProductsWithFilters({ products, categories }: ProductsWithFiltersProps) {
+export default function ProductsWithFilters({ products, categories, initialFilters }: ProductsWithFiltersProps) {
     const [filters, setFilters] = useState<FilterState>({
-        category: '',
-        priceRange: '',
-        sortBy: 'newest',
+        audience: initialFilters?.audience || '',
+        category: initialFilters?.category || '',
+        priceRange: initialFilters?.priceRange || '',
+        sortBy: initialFilters?.sortBy || 'newest',
     })
 
     const clearFilter = (type: string, value: string) => {
+        if (type === 'audience') setFilters((prev) => ({ ...prev, audience: '' }))
         if (type === 'category') setFilters((prev) => ({ ...prev, category: '' }))
         if (type === 'priceRange') setFilters((prev) => ({ ...prev, priceRange: '' }))
     }
 
-    const clearAll = () => setFilters({ category: '', priceRange: '', sortBy: 'newest' })
+    const clearAll = () => setFilters({ audience: '', category: '', priceRange: '', sortBy: 'newest' })
 
     const filteredProducts = useMemo(() => {
         let result = [...products]
+
+        // Filter by audience
+        if (filters.audience) {
+            result = result.filter(p => (p as any).audience === filters.audience)
+        }
 
         // Filter by category
         if (filters.category) {
@@ -83,9 +92,13 @@ export default function ProductsWithFilters({ products, categories }: ProductsWi
                 categories={categories}
                 onFilterChange={setFilters}
                 totalProducts={filteredProducts.length}
+                initialFilters={filters}
             />
             <ActiveFilters
                 filters={[
+                    ...(filters.audience
+                        ? [{ label: audienceLabel(filters.audience), value: filters.audience, type: 'audience' as const }]
+                        : []),
                     ...(filters.category
                         ? [{ label: categories.find(c => c.slug === filters.category)?.name || filters.category, value: filters.category, type: 'category' as const }]
                         : []),
@@ -126,5 +139,20 @@ function priceRangesLabel(value: string) {
             return 'Over $200'
         default:
             return 'All Prices'
+    }
+}
+
+function audienceLabel(value: string) {
+    switch (value) {
+        case 'men':
+            return 'Men'
+        case 'women':
+            return 'Women'
+        case 'kids':
+            return 'Kids'
+        case 'unisex':
+            return 'Unisex'
+        default:
+            return 'All'
     }
 }

@@ -1,4 +1,4 @@
-export type UserRole = 'admin' | 'user'
+export type UserRole = 'SUPERADMIN' | 'ADMIN'
 
 export type UserPermission = 
   | 'view_orders'
@@ -48,18 +48,21 @@ export const ALL_PERMISSIONS: UserPermission[] = [
 
 export function hasPermission(user: AdminUser | null, permission: UserPermission): boolean {
   if (!user) return false
-  if (user.role === 'admin') return true
-  return user.permissions.includes(permission)
+  if (user.role === 'SUPERADMIN') return true
+  if (user.role === 'ADMIN') return user.permissions.includes(permission)
+  return false
 }
 
 export function hasAnyPermission(user: AdminUser | null, permissions: UserPermission[]): boolean {
   if (!user) return false
-  if (user.role === 'admin') return true
-  return permissions.some(p => user.permissions.includes(p))
+  if (user.role === 'SUPERADMIN') return true
+  if (user.role === 'ADMIN') return permissions.some(p => user.permissions.includes(p))
+  return false
 }
 
 export function hasAllPermissions(user: AdminUser | null, permissions: UserPermission[]): boolean {
   if (!user) return false
-  if (user.role === 'admin') return true
-  return permissions.every(p => user.permissions.includes(p))
+  if (user.role === 'SUPERADMIN') return true
+  if (user.role === 'ADMIN') return permissions.every(p => user.permissions.includes(p))
+  return false
 }
