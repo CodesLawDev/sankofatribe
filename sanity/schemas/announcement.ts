@@ -4,6 +4,7 @@ export const announcement = defineType({
     name: 'announcement',
     title: 'Announcement Bar',
     type: 'document',
+    description: 'Configure a banner that appears at the top of your website to announce important messages, promotions, or updates. Only one active announcement displays at a time.',
     fields: [
         defineField({
             name: 'title',

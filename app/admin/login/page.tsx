@@ -142,14 +142,13 @@ export default function AdminLoginPage() {
                 return
             }
 
-            // Save session to localStorage
+            // Save session to localStorage (UI state only)
             saveAdminSession({
                 user: data.user,
                 token: data.token,
             })
 
-            // Also set cookie for middleware authentication
-            document.cookie = `admin-token=${data.token}; path=/; max-age=86400; SameSite=Lax`
+            // Cookie is set httpOnly by the API response
 
             // Store email if remember me is checked
             if (formData.rememberMe) {

@@ -47,6 +47,8 @@ export interface Category {
     slug: { current: string }
     description?: string
     image?: SanityImage
+    parentCategory?: Category
+    subCategories?: Category[]
 }
 
 export interface Banner {
@@ -58,6 +60,8 @@ export interface Banner {
     videoUrl?: string
     ctaText?: string
     ctaLink?: string
+    ctaTextSecondary?: string
+    ctaLinkSecondary?: string
     textColor: 'white' | 'black'
 }
 
@@ -66,6 +70,9 @@ export interface HomePage {
     heroBanners?: Banner[]
     featuredProducts?: Product[]
     featuredCategories?: Category[]
+    collectionHeading?: string
+    collectionSubheading?: string
+    latestCollectionProducts?: Product[]
 }
 
 export interface SiteSettings {

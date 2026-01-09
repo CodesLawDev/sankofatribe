@@ -42,17 +42,32 @@ export default function HeroBanner({ banner }: HeroBannerProps) {
                             {banner.subtitle}
                         </p>
                     )}
-                    {banner.ctaText && banner.ctaLink && (
-                        <Link href={banner.ctaLink}>
-                            <Button
-                                size="lg"
-                                variant={banner.textColor === 'white' ? 'default' : 'secondary'}
-                                className="min-w-[200px]"
-                            >
-                                {banner.ctaText}
-                            </Button>
-                        </Link>
-                    )}
+                    {(banner.ctaText && banner.ctaLink) || (banner.ctaTextSecondary && banner.ctaLinkSecondary) ? (
+                        <div className="flex flex-wrap items-center justify-center gap-3">
+                            {banner.ctaText && banner.ctaLink && (
+                                <Link href={banner.ctaLink}>
+                                    <Button
+                                        size="lg"
+                                        variant={banner.textColor === 'white' ? 'default' : 'secondary'}
+                                        className="min-w-[200px]"
+                                    >
+                                        {banner.ctaText}
+                                    </Button>
+                                </Link>
+                            )}
+                            {banner.ctaTextSecondary && banner.ctaLinkSecondary && (
+                                <Link href={banner.ctaLinkSecondary}>
+                                    <Button
+                                        size="lg"
+                                        variant={banner.textColor === 'white' ? 'secondary' : 'default'}
+                                        className="min-w-[200px]"
+                                    >
+                                        {banner.ctaTextSecondary}
+                                    </Button>
+                                </Link>
+                            )}
+                        </div>
+                    ) : null}
                 </div>
             </div>
         </div>

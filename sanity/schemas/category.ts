@@ -34,5 +34,19 @@ export const category = defineType({
                 hotspot: true,
             },
         }),
+        {
+            name: 'parentCategory',
+            title: 'Parent Category',
+            type: 'reference',
+            to: [{ type: 'category' }],
+            description: 'Leave empty for a top-level category',
+        },
+        {
+            name: 'subCategories',
+            title: 'Sub Categories',
+            type: 'array',
+            of: [{ type: 'reference', to: [{ type: 'category' }] }],
+            description: 'Optional curated children for navigation',
+        },
     ],
 })

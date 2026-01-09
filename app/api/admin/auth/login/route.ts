@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { serverClient } from '@/lib/sanity-server'
 import { AdminUser } from '@/lib/adminTypes'
 import { verifyPassword } from '@/lib/passwordUtils'
-import crypto from 'crypto'
+import { SignJWT } from 'jose'
+
+const JWT_SECRET = new TextEncoder().encode(
+  process.env.JWT_SECRET || 'your-secret-key-change-this-in-production'
+)
 
 export async function POST(request: NextRequest) {
   try {
@@ -46,9 +50,6 @@ export async function POST(request: NextRequest) {
     // Update last login
     await serverClient.patch(user._id).set({ lastLogin: new Date().toISOString() }).commit()
 
-    // Generate session token
-    const token = crypto.randomBytes(32).toString('hex')
-
     const adminUser: AdminUser = {
       _id: user._id,
       email: user.email,
@@ -60,11 +61,28 @@ export async function POST(request: NextRequest) {
       lastLogin: new Date().toISOString(),
     }
 
-    return NextResponse.json({
+    // Issue signed JWT for middleware validation
+    const token = await new SignJWT({ sub: user._id, role: user.role })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setIssuedAt()
+      .setExpirationTime('24h')
+      .sign(JWT_SECRET)
+
+    const response = NextResponse.json({
       user: adminUser,
       token,
       message: 'Login successful',
     })
+
+    // Set httpOnly cookie for middleware
+    response.cookies.set('admin-token', token, {
+      httpOnly: true,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24,
+    })
+
+    return response
   } catch (error) {
     console.error('Admin login error:', error)
     return NextResponse.json(

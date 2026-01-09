@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import paymentService from '@/lib/payment'
+import { serverClient, assertSanityToken } from '@/lib/sanity-server'
 
 async function verify(reference: string) {
     // Verify payment with Paystack
@@ -17,6 +18,34 @@ async function verify(reference: string) {
     }
 
     const data: any = (result as any).data || {}
+
+    // Try to record payment in Sanity (non-blocking)
+    try {
+        assertSanityToken()
+        
+        const paystackData = data.metadata || {}
+        const orderId = paystackData.orderId || `ORD-${data.reference}`
+
+        const paymentDoc = {
+            _type: 'payment',
+            reference: data.reference || reference,
+            orderId: { _type: 'reference', _ref: orderId },
+            amount: data.amount ? data.amount / 100 : 0,
+            currency: data.currency || 'GHS',
+            status: 'success',
+            customerEmail: data.customer?.email || '',
+            customerPhone: data.customer?.phone,
+            paymentMethod: data.channel,
+            paidAt: data.paid_at || new Date().toISOString(),
+            verifiedAt: new Date().toISOString(),
+            paystackResponse: result,
+        }
+
+        await serverClient.create(paymentDoc)
+    } catch (sanityError) {
+        console.warn('Failed to record payment in Sanity:', sanityError)
+        // Continue anyway - payment is verified even if Sanity logging fails
+    }
 
     return NextResponse.json({
         success: true,

@@ -11,6 +11,7 @@ import { announcement } from './announcement'
 import { order } from './order'
 import { user } from './user'
 import smsLog from './smsLog'
+import { payment } from './payment'
 
 export const schemaTypes = [
     product,
@@ -24,6 +25,7 @@ export const schemaTypes = [
     contentPage,
     announcement,
     order,
+    payment,
     user,
     smsLog,
 ]

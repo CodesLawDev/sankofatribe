@@ -32,12 +32,23 @@ export const banner = defineType({
         }),
         defineField({
             name: 'ctaText',
-            title: 'CTA Button Text',
+            title: 'Primary CTA Text',
             type: 'string',
         }),
         defineField({
             name: 'ctaLink',
-            title: 'CTA Link',
+            title: 'Primary CTA Link',
+            type: 'string',
+        }),
+        defineField({
+            name: 'ctaTextSecondary',
+            title: 'Secondary CTA Text',
+            type: 'string',
+            description: 'Optional second button shown beside the primary CTA',
+        }),
+        defineField({
+            name: 'ctaLinkSecondary',
+            title: 'Secondary CTA Link',
             type: 'string',
         }),
         defineField({

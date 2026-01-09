@@ -10,6 +10,8 @@ interface HeroBannerProps {
     subtitle?: string
     ctaText?: string
     ctaLink?: string
+    ctaTextSecondary?: string
+    ctaLinkSecondary?: string
     textPosition?: 'left' | 'center' | 'right'
     textColor?: 'white' | 'black'
 }
@@ -21,6 +23,8 @@ export default function PremiumHeroBanner({
     subtitle,
     ctaText,
     ctaLink,
+    ctaTextSecondary,
+    ctaLinkSecondary,
     textPosition = 'left',
     textColor = 'white',
 }: HeroBannerProps) {
@@ -80,16 +84,31 @@ export default function PremiumHeroBanner({
                             {subtitle}
                         </p>
                     )}
-                    {ctaText && ctaLink && (
-                        <Link href={ctaLink}>
-                            <Button
-                                size="lg"
-                                className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-black transition-all duration-300"
-                            >
-                                {ctaText}
-                            </Button>
-                        </Link>
-                    )}
+                    {(ctaText && ctaLink) || (ctaTextSecondary && ctaLinkSecondary) ? (
+                        <div className="flex flex-wrap gap-3">
+                            {ctaText && ctaLink && (
+                                <Link href={ctaLink}>
+                                    <Button
+                                        size="lg"
+                                        className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-black transition-all duration-300"
+                                    >
+                                        {ctaText}
+                                    </Button>
+                                </Link>
+                            )}
+                            {ctaTextSecondary && ctaLinkSecondary && (
+                                <Link href={ctaLinkSecondary}>
+                                    <Button
+                                        size="lg"
+                                        variant={textColor === 'white' ? 'secondary' : 'default'}
+                                        className="bg-white/90 text-black hover:bg-white border-0"
+                                    >
+                                        {ctaTextSecondary}
+                                    </Button>
+                                </Link>
+                            )}
+                        </div>
+                    ) : null}
                 </div>
             </div>
         </div>

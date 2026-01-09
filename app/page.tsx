@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button'
 async function getHomePageData() {
     const query = `*[_type == "homePage"][0] {
     _id,
+    collectionHeading,
+    collectionSubheading,
     "heroBanners": heroBanners[]-> {
       _id,
       title,
@@ -18,9 +20,28 @@ async function getHomePageData() {
       videoUrl,
       ctaText,
       ctaLink,
+      ctaTextSecondary,
+      ctaLinkSecondary,
       textColor
     },
     "featuredProducts": featuredProducts[]-> {
+      _id,
+      name,
+      slug,
+      images,
+      price,
+      inStock,
+      featured,
+      sizes[]{size, stock},
+      "categories": categories[]-> {
+        _id,
+        name,
+        slug,
+        image
+      },
+      soldCount
+    },
+    "latestCollectionProducts": latestCollectionProducts[]-> {
       _id,
       name,
       slug,
@@ -50,11 +71,17 @@ async function getHomePageData() {
 }
 
 async function getCategories() {
-    const query = `*[_type == "category"] | order(name asc)[0...6] {
+    const query = `*[_type == "category" && !defined(parentCategory)] | order(name asc)[0...6] {
       _id,
       name,
       slug,
-      image
+      image,
+      "subCategories": subCategories[]->{
+        _id,
+        name,
+        slug,
+        image
+      }
     }`
 
     const categories = await client.fetch<Category[]>(query, {}, { next: { revalidate: 0 } })
@@ -88,7 +115,9 @@ export default async function HomePage() {
 
     const [categories, featuredProducts] = await Promise.all([
         getCategories(),
-        homePageData?.featuredProducts ? Promise.resolve(homePageData.featuredProducts) : getFeaturedProducts()
+        homePageData?.latestCollectionProducts ? Promise.resolve(homePageData.latestCollectionProducts) : 
+        homePageData?.featuredProducts ? Promise.resolve(homePageData.featuredProducts) : 
+        getFeaturedProducts()
     ])
 
     const cmsFeaturedCategories = (homePageData?.featuredCategories || []).map((cat) => ({
@@ -162,6 +191,8 @@ export default async function HomePage() {
                     subtitle={homePageData.heroBanners[1].subtitle}
                     ctaText={homePageData.heroBanners[1].ctaText || 'Shop Now'}
                     ctaLink={homePageData.heroBanners[1].ctaLink || '/products'}
+                    ctaTextSecondary={homePageData.heroBanners[1].ctaTextSecondary}
+                    ctaLinkSecondary={homePageData.heroBanners[1].ctaLinkSecondary}
                     textPosition="left"
                     textColor="white"
                 />
@@ -171,13 +202,13 @@ export default async function HomePage() {
             <section className="py-20 md:py-32 bg-gray-50">
                 <div className="mx-auto px-4 sm:px-6 lg:px-12 max-w-7xl">
                     <div className="text-center mb-16">
-                        <h2 className="text-4xl md:text-5xl font-bold mb-4">Latest Collections</h2>
+                        <h2 className="text-4xl md:text-5xl font-bold mb-4">{homePageData?.collectionHeading || 'Latest Collections'}</h2>
                         <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-                            Discover our carefully curated selection of premium products
+                            {homePageData?.collectionSubheading || 'Discover our carefully curated selection of premium products'}
                         </p>
                     </div>
-                    {featuredProducts && featuredProducts.length > 8 && (
-                        <ProductGrid products={featuredProducts.slice(8, 16)} />
+                    {(homePageData?.latestCollectionProducts?.length || featuredProducts?.length) && (homePageData?.latestCollectionProducts?.length || 0) + (featuredProducts?.length || 0) > 8 && (
+                        <ProductGrid products={(homePageData?.latestCollectionProducts || featuredProducts)?.slice(0, 8) || []} />
                     )}
                 </div>
             </section>
