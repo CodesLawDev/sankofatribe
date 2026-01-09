@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken, prisma } from '@/lib/auth-utils';
+import { verifyToken, getPrisma } from '@/lib/auth-utils';
 import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic'
@@ -55,6 +55,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get total count
+    const prisma = getPrisma();
     const total = await prisma.user.count({ where });
 
     // Get customers

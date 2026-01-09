@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken, prisma } from '@/lib/auth-utils';
+import { verifyToken, getPrisma } from '@/lib/auth-utils';
 import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic'
@@ -28,6 +28,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
+    const prisma = getPrisma();
     const user = await prisma.user.findUnique({
       where: { id: params.id },
       select: {
@@ -111,7 +112,8 @@ export async function PUT(
       updateData.preferences = JSON.stringify(preferences);
     }
 
-    const user = await prisma.user.update({
+    const prisma2 = getPrisma();
+    const user = await prisma2.user.update({
       where: { id: params.id },
       data: updateData,
       select: {
@@ -163,7 +165,8 @@ export async function DELETE(
     }
 
     // Soft delete - set status to DELETED
-    const user = await prisma.user.update({
+    const prisma3 = getPrisma();
+    const user = await prisma3.user.update({
       where: { id: params.id },
       data: { status: 'DELETED' },
       select: {

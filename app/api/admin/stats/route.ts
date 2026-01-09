@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyToken, prisma } from '@/lib/auth-utils'
+import { verifyToken } from '@/lib/auth-utils'
 import { cookies } from 'next/headers'
 
 export const dynamic = 'force-dynamic'

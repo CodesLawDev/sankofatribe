@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken, prisma } from '@/lib/auth-utils';
+import { verifyToken, getPrisma } from '@/lib/auth-utils';
 import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic'
@@ -27,6 +27,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
+    const prisma = getPrisma();
     const addresses = await prisma.address.findMany({
       where: { userId: params.id },
       orderBy: { createdAt: 'desc' },
@@ -74,6 +75,8 @@ export async function POST(
         { status: 400 }
       );
     }
+
+    const prisma = getPrisma();
 
     // If setting as default, unset other defaults
     if (isDefault) {
