@@ -8,6 +8,7 @@ import { Product, urlFor } from '@/lib/sanity'
 import { useCart } from '@/lib/cart-context'
 import { useWishlist } from '@/lib/wishlist-context'
 import { Button } from './ui/button'
+import { useCurrency } from '@/lib/currency-context'
 
 interface QuickViewModalProps {
     product: Product | null
@@ -18,6 +19,7 @@ interface QuickViewModalProps {
 export default function QuickViewModal({ product, isOpen, onClose }: QuickViewModalProps) {
     const { addToCart } = useCart()
     const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist()
+    const { formatPrice, convertPrice } = useCurrency()
     const [selectedSize, setSelectedSize] = useState('')
     const [selectedColor, setSelectedColor] = useState('')
     const [quantity, setQuantity] = useState(1)
@@ -26,6 +28,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
     if (!isOpen || !product) return null
 
     const inWishlist = isInWishlist(product._id)
+    const displayPrice = formatPrice(convertPrice(product.price))
 
     const handleAddToCart = async () => {
         if (!selectedSize && product.sizes && product.sizes.length > 0) {
@@ -152,7 +155,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
                             <h2 className="text-xl md:text-2xl font-light tracking-wider uppercase mb-2">
                                 {product.name}
                             </h2>
-                            <p className="text-sm text-gray-600">${product.price.toFixed(2)}</p>
+                            <p className="text-sm text-gray-600">{displayPrice}</p>
                         </div>
 
                         {product.description && (

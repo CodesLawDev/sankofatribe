@@ -31,6 +31,7 @@ export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [ghsPerUsd, setGhsPerUsd] = useState<number>(12.5)
 
   useEffect(() => {
     const session = getAdminSession()
@@ -55,6 +56,11 @@ export default function SettingsPage() {
       if (!response.ok) throw new Error('Failed to load settings')
       const data = await response.json()
       setSettings(data)
+      // Initialize GHS per USD input from stored USD per GHS
+      const rate = data?.currency?.exchangeRate
+      if (typeof rate === 'number' && rate > 0) {
+        setGhsPerUsd(parseFloat((1 / rate).toFixed(3)))
+      }
     } catch (error) {
       setMessage({ type: 'error', text: 'Failed to load settings' })
       console.error(error)
@@ -204,25 +210,30 @@ export default function SettingsPage() {
               
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Exchange Rate (GHS to USD)</label>
+                  <label className="block text-sm font-medium mb-2">Exchange Rate (USD to GHS)</label>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600">1 GHS =</span>
+                    <span className="text-sm text-gray-600">1 USD =</span>
                     <input
                       type="number"
                       step="0.001"
-                      value={settings.currency.exchangeRate}
-                      onChange={(e) => setSettings({
-                        ...settings,
-                        currency: {
-                          ...settings.currency,
-                          exchangeRate: parseFloat(e.target.value) || 0,
-                        },
-                      })}
+                      value={ghsPerUsd}
+                      onChange={(e) => {
+                        const inputVal = parseFloat(e.target.value) || 0
+                        setGhsPerUsd(inputVal)
+                        const usdPerGhs = inputVal > 0 ? (1 / inputVal) : 0
+                        setSettings({
+                          ...settings,
+                          currency: {
+                            ...settings.currency,
+                            exchangeRate: parseFloat(usdPerGhs.toFixed(6)),
+                          },
+                        })
+                      }}
                       className="w-32 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-black"
                     />
-                    <span className="text-sm text-gray-600">USD</span>
+                    <span className="text-sm text-gray-600">GHS</span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-2">Current rate: {settings.currency.exchangeRate}</p>
+                  <p className="text-xs text-gray-500 mt-2">Stored: 1 GHS = {(settings.currency.exchangeRate || 0).toFixed(6)} USD</p>
                 </div>
 
                 <div className="bg-blue-50 border border-blue-200 rounded p-4 text-sm text-blue-700">

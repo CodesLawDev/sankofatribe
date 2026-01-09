@@ -8,6 +8,7 @@ import { useWishlist } from '@/lib/wishlist-context'
 import { useCart } from '@/lib/cart-context'
 import { useState } from 'react'
 import { useToast } from '@/components/toast-container'
+import { useCurrency } from '@/lib/currency-context'
 
 interface ProductCardProps {
     product: Product
@@ -18,6 +19,7 @@ export default function ProductCard({ product, onQuickView }: ProductCardProps) 
     const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist()
     const { addToCart } = useCart()
     const { showToast } = useToast()
+    const { formatPrice, convertPrice } = useCurrency()
     const inWishlist = isInWishlist(product._id)
     const [showOptions, setShowOptions] = useState(false)
     const [selectedSize, setSelectedSize] = useState(product.sizes?.[0]?.size || '')
@@ -34,6 +36,7 @@ export default function ProductCard({ product, onQuickView }: ProductCardProps) 
 
     const selectedSizeStock = getStockForSize(selectedSize)
     const isSizeOutOfStock = selectedSizeStock === 0
+    const displayPrice = formatPrice(convertPrice(product.price))
 
     const handleWishlistClick = (e: React.MouseEvent) => {
         e.preventDefault()
@@ -138,7 +141,7 @@ export default function ProductCard({ product, onQuickView }: ProductCardProps) 
                 
                 {/* Price */}
                 <div className="pt-1">
-                    <p className="text-sm font-semibold text-black">${product.price.toFixed(2)}</p>
+                    <p className="text-sm font-semibold text-black">{displayPrice}</p>
                 </div>
 
                 {/* Stock Indicator */}

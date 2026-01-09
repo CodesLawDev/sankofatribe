@@ -15,6 +15,7 @@ import smsLog from './smsLog'
 import { payment } from './payment'
 import { promoCode } from './promoCode'
 import { campaign } from './campaign'
+import { career } from './career'
 
 export const schemaTypes = [
     product,
@@ -34,4 +35,5 @@ export const schemaTypes = [
     smsLog,
     promoCode,
     campaign,
+    career,
 ]

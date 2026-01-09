@@ -1,13 +1,18 @@
+'use client'
+
 import Image from 'next/image'
 import Link from 'next/link'
 import { urlFor } from '@/lib/sanity'
 import { Product } from '@/lib/sanity'
+import { useCurrency } from '@/lib/currency-context'
 
 interface SpotlightProps {
     products: Product[]
 }
 
 export default function Spotlight({ products }: SpotlightProps) {
+    const { formatPrice, convertPrice } = useCurrency()
+
     return (
         <section className="py-20 md:py-32 bg-white">
             <div className="mx-auto px-4 sm:px-6 lg:px-12 max-w-7xl">
@@ -38,7 +43,7 @@ export default function Spotlight({ products }: SpotlightProps) {
                                     <h3 className="text-sm font-semibold mb-1 group-hover:opacity-70 transition-opacity">
                                         {product.name}
                                     </h3>
-                                    <p className="text-sm text-gray-600">${product.price.toFixed(2)}</p>
+                                    <p className="text-sm text-gray-600">{formatPrice(convertPrice(product.price))}</p>
                                 </div>
                             </Link>
                         )

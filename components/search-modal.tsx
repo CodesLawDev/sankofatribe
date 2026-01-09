@@ -6,6 +6,7 @@ import { X, Search, Loader2 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { urlFor } from '@/lib/sanity'
+import { useCurrency } from '@/lib/currency-context'
 
 interface SearchResult {
     _id: string
@@ -27,6 +28,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
     const [loading, setLoading] = useState(false)
     const [searched, setSearched] = useState(false)
         const [recentSearches, setRecentSearches] = useState<string[]>([])
+    const { formatPrice, convertPrice } = useCurrency()
 
         // Load recent searches
         useEffect(() => {
@@ -213,7 +215,7 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                                     <h3 className="text-xs uppercase tracking-[0.15em] font-medium group-hover:opacity-60 transition-opacity">
                                         {product.name}
                                     </h3>
-                                    <p className="text-xs text-neutral-600 mt-1">${product.price.toFixed(2)}</p>
+                                    <p className="text-xs text-neutral-600 mt-1">{formatPrice(convertPrice(product.price))}</p>
                                 </Link>
                             ))}
                         </div>
