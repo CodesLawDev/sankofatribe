@@ -1,367 +1,467 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Save, AlertCircle, CheckCircle, Users, Settings, BarChart3, LogOut, TrendingUp } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { getAdminSession, clearAdminSession } from '@/lib/adminAuth'
-import { hasPermission } from '@/lib/adminTypes'
+import {
+    LayoutDashboard,
+    Package,
+    Users,
+    ShoppingCart,
+    Settings,
+    LogOut,
+    Menu,
+    X,
+    DollarSign,
+    Clock,
+    Truck,
+    CheckCircle,
+    XCircle,
+    TrendingUp,
+} from 'lucide-react'
 
-interface SiteSettings {
-  _id: string
-  siteName: string
-  description: string
-  adminPhone: string
-  senderId: string
-  currency: {
-    defaultCurrency: 'GHS' | 'USD'
-    exchangeRate: number
-    lastUpdated?: string
-  }
-  geoLocation?: {
-    ghanaCurrencyCountries: string[]
-    defaultCountry: string
-  }
+interface User {
+    id: string
+    email: string
+    role: string
+    username?: string
+}
+
+interface SidebarLink {
+    href: string
+    label: string
+    icon: React.ReactNode
+}
+
+interface DashboardStats {
+    totalOrders: number
+    totalRevenue: number
+    pendingOrders: number
+    processingOrders: number
+    shippedOrders: number
+    deliveredOrders: number
+    cancelledOrders: number
+    todayOrders: number
+    todayRevenue: number
+    paidOrders: number
+    unpaidOrders: number
+}
+
+const initialStats: DashboardStats = {
+    totalOrders: 0,
+    totalRevenue: 0,
+    pendingOrders: 0,
+    processingOrders: 0,
+    shippedOrders: 0,
+    deliveredOrders: 0,
+    cancelledOrders: 0,
+    todayOrders: 0,
+    todayRevenue: 0,
+    paidOrders: 0,
+    unpaidOrders: 0,
+}
+
+const pickNumber = (value: any): number => {
+    if (typeof value === 'number') return value
+    if (typeof value === 'string') return parseFloat(value) || 0
+    return 0
 }
 
 export default function AdminPage() {
-  const router = useRouter()
-  const [settings, setSettings] = useState<SiteSettings | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isSaving, setIsSaving] = useState(false)
-  const [activeTab, setActiveTab] = useState<'overview' | 'settings' | 'users'>('overview')
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+    const router = useRouter()
+    const [user, setUser] = useState<User | null>(null)
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+    const [isLoading, setIsLoading] = useState(true)
+    const [stats, setStats] = useState<DashboardStats>(initialStats)
+    const [statsLoading, setStatsLoading] = useState(true)
 
-  useEffect(() => {
-    const session = getAdminSession()
-    if (!session) {
-      router.push('/admin/login')
-      return
+    // Helper function to fetch stats
+    const fetchStats = async () => {
+        try {
+            const response = await fetch('/api/admin/stats', {
+                credentials: 'include',
+                cache: 'no-store' as any,
+            })
+            if (response.ok) {
+                const data = await response.json()
+                setStats({
+                    totalOrders: pickNumber(data.totalOrders),
+                    totalRevenue: pickNumber(data.totalRevenue),
+                    pendingOrders: pickNumber(data.pendingOrders),
+                    processingOrders: pickNumber(data.processingOrders),
+                    shippedOrders: pickNumber(data.shippedOrders),
+                    deliveredOrders: pickNumber(data.deliveredOrders),
+                    cancelledOrders: pickNumber(data.cancelledOrders),
+                    todayOrders: pickNumber(data.todayOrders),
+                    todayRevenue: pickNumber(data.todayRevenue),
+                    paidOrders: pickNumber(data.paidOrders),
+                    unpaidOrders: pickNumber(data.unpaidOrders),
+                })
+            } else {
+                setStats(initialStats)
+            }
+        } catch (error) {
+            console.error('Failed to fetch stats:', error)
+            setStats(initialStats)
+        } finally {
+            setStatsLoading(false)
+        }
     }
 
-    // Check permissions
-    if (!hasPermission(session.user, 'view_settings')) {
-      router.push('/admin/dashboard')
-      return
-    }
+    // Fetch user session on mount
+    useEffect(() => {
+        const fetchSession = async () => {
+            try {
+                const response = await fetch('/api/auth/me', { credentials: 'include' })
+                if (response.ok) {
+                    const data = await response.json()
+                    const userData = data.user
 
-    fetchSettings()
-  }, [router])
-
-  const fetchSettings = async () => {
-    try {
-      setIsLoading(true)
-      const response = await fetch('/api/admin/settings')
-      if (!response.ok) throw new Error('Failed to fetch settings')
-      const data = await response.json()
-      setSettings(data)
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to load settings' })
-      console.error(error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleSave = async () => {
-    if (!settings) return
-
-    try {
-      setIsSaving(true)
-      const response = await fetch('/api/admin/settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings),
-      })
-
-      if (!response.ok) throw new Error('Failed to save settings')
-      
-      setMessage({ type: 'success', text: 'Settings saved successfully!' })
-      setTimeout(() => setMessage(null), 3000)
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to save settings' })
-      console.error(error)
-    } finally {
-      setIsSaving(false)
-    }
-  }
-
-  const handleLogout = async () => {
-    clearAdminSession()
-    router.push('/admin/login')
-  }
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    )
-  }
-
-  const session = getAdminSession()
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-light tracking-wider uppercase">Admin Dashboard</h1>
-          <div className="flex items-center gap-4">
-            {session && (
-              <span className="text-sm text-gray-600">
-                {session.user.firstName} {session.user.lastName} <span className="text-xs text-blue-600 ml-1">({session.user.role})</span>
-              </span>
-            )}
-            <Button variant="secondary" size="sm" onClick={handleLogout} className="flex items-center gap-2">
-              <LogOut className="h-4 w-4" />
-              Logout
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        {/* Quick Links */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {hasPermission(session?.user || null, 'view_analytics') && (
-            <Link
-              href="/admin/analytics"
-              className="bg-white rounded-lg border border-gray-200 p-6 hover:border-black transition-colors"
-            >
-              <TrendingUp className="h-8 w-8 mb-3 text-blue-600" />
-              <h3 className="font-medium mb-1">Analytics</h3>
-              <p className="text-xs text-gray-600">View sales trends</p>
-            </Link>
-          )}
-          <Link
-            href="/admin/team"
-            className="bg-white rounded-lg border border-gray-200 p-6 hover:border-black transition-colors"
-          >
-            <Users className="h-8 w-8 mb-3 text-green-600" />
-            <h3 className="font-medium mb-1">Team</h3>
-            <p className="text-xs text-gray-600">Manage users</p>
-          </Link>
-          <Link
-            href="/admin/settings"
-            className="bg-white rounded-lg border border-gray-200 p-6 hover:border-black transition-colors"
-          >
-            <Settings className="h-8 w-8 mb-3 text-purple-600" />
-            <h3 className="font-medium mb-1">Settings</h3>
-            <p className="text-xs text-gray-600">Site configuration</p>
-          </Link>
-          <a
-            href="/studio"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="bg-white rounded-lg border border-gray-200 p-6 hover:border-black transition-colors"
-          >
-            <BarChart3 className="h-8 w-8 mb-3 text-orange-600" />
-            <h3 className="font-medium mb-1">Studio</h3>
-            <p className="text-xs text-gray-600">Sanity CMS</p>
-          </a>
-        </div>
-
-        {/* Navigation */}
-        <div className="flex gap-4 mb-8 border-b border-gray-200">
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === 'overview' ? 'border-black text-black' : 'border-transparent text-gray-600 hover:text-black'
-            }`}
-          >
-            <BarChart3 className="h-4 w-4 inline mr-2" />
-            Overview
-          </button>
-          <button
-            onClick={() => setActiveTab('settings')}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === 'settings' ? 'border-black text-black' : 'border-transparent text-gray-600 hover:text-black'
-            }`}
-          >
-            <Settings className="h-4 w-4 inline mr-2" />
-            Settings
-          </button>
-          {hasPermission(session?.user || null, 'manage_users') && (
-            <button
-              onClick={() => setActiveTab('users')}
-              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === 'users' ? 'border-black text-black' : 'border-transparent text-gray-600 hover:text-black'
-              }`}
-            >
-              <Users className="h-4 w-4 inline mr-2" />
-              Users
-            </button>
-          )}
-        </div>
-
-        {/* Message */}
-        {message && (
-          <div className={`mb-6 p-4 rounded flex items-center gap-3 ${message.type === 'success' ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
-            {message.type === 'success' ? (
-              <CheckCircle className="h-5 w-5 text-green-600" />
-            ) : (
-              <AlertCircle className="h-5 w-5 text-red-600" />
-            )}
-            <p className={message.type === 'success' ? 'text-green-700' : 'text-red-700'}>
-              {message.text}
-            </p>
-          </div>
-        )}
-
-        {/* Overview Tab */}
-        {activeTab === 'overview' && settings && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="text-sm font-medium text-gray-600 mb-2">Site Name</h3>
-              <p className="text-2xl font-light">{settings.siteName}</p>
-            </div>
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="text-sm font-medium text-gray-600 mb-2">Admin Phone</h3>
-              <p className="text-2xl font-light">{settings.adminPhone || 'Not set'}</p>
-            </div>
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="text-sm font-medium text-gray-600 mb-2">Exchange Rate</h3>
-              <p className="text-lg font-light">1 USD = <span className="font-medium">{(1 / (settings.currency.exchangeRate || 1)).toFixed(3)}</span> GHS</p>
-            </div>
-          </div>
-        )}
-
-        {/* Settings Tab */}
-        {activeTab === 'settings' && settings && (
-          <div className="space-y-6">
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h2 className="text-lg font-medium uppercase tracking-wider mb-6">General Settings</h2>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Site Name</label>
-                  <input
-                    type="text"
-                    value={settings.siteName}
-                    onChange={(e) => setSettings({ ...settings, siteName: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-black"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Description</label>
-                  <textarea
-                    value={settings.description || ''}
-                    onChange={(e) => setSettings({ ...settings, description: e.target.value })}
-                    rows={3}
-                    className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-black"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Admin Phone</label>
-                  <input
-                    type="tel"
-                    value={settings.adminPhone}
-                    onChange={(e) => setSettings({ ...settings, adminPhone: e.target.value })}
-                    placeholder="+233XXXXXXXXX"
-                    className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-black"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Used for SMS alerts</p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">SMS Sender ID</label>
-                  <input
-                    type="text"
-                    value={settings.senderId}
-                    onChange={(e) => setSettings({ ...settings, senderId: e.target.value })}
-                    placeholder="SANKOFA"
-                    className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-black"
-                    maxLength={11}
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Max 11 characters</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h2 className="text-lg font-medium uppercase tracking-wider mb-6">Currency & Exchange Rate</h2>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Exchange Rate (USD to GHS)</label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600">1 USD =</span>
-                    <input
-                      type="number"
-                      step="0.001"
-                      value={parseFloat((1 / (settings.currency.exchangeRate || 0.000001)).toFixed(3))}
-                      onChange={(e) => {
-                        const ghsPerUsd = parseFloat(e.target.value) || 0
-                        const usdPerGhs = ghsPerUsd > 0 ? (1 / ghsPerUsd) : 0
-                        setSettings({
-                          ...settings,
-                          currency: {
-                            ...settings.currency,
-                            exchangeRate: parseFloat(usdPerGhs.toFixed(6)),
-                          },
+                    if (userData.role === 'ADMIN' || userData.role === 'SUPERADMIN') {
+                        setUser({
+                            id: userData.id,
+                            email: userData.email,
+                            role: userData.role,
+                            username: userData.firstName || userData.email,
                         })
-                      }}
-                      className="w-32 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-black"
-                    />
-                    <span className="text-sm text-gray-600">GHS</span>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-2">Stored: 1 GHS = {(settings.currency.exchangeRate || 0).toFixed(6)} USD</p>
+                        // Fetch stats after user is confirmed
+                        await fetchStats()
+                    } else {
+                        router.push('/admin/login')
+                    }
+                } else {
+                    router.push('/admin/login')
+                }
+            } catch (error) {
+                console.error('Failed to fetch session:', error)
+                router.push('/admin/login')
+            } finally {
+                setIsLoading(false)
+            }
+        }
+
+        fetchSession()
+    }, [router])
+
+    const handleLogout = async () => {
+        try {
+            await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+            router.push('/admin/login')
+        } catch (error) {
+            console.error('Logout error:', error)
+        }
+    }
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-gray-50 dark:bg-darkbg flex items-center justify-center">
+                <div className="text-center">
+                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-black dark:border-white"></div>
+                    <p className="mt-4 text-gray-600 dark:text-gray-400">Loading...</p>
+                </div>
+            </div>
+        )
+    }
+
+    const sidebarLinks: SidebarLink[] = [
+        {
+            href: '/admin',
+            label: 'Dashboard',
+            icon: <LayoutDashboard className="w-5 h-5" />,
+        },
+        {
+            href: '/admin/products',
+            label: 'Products',
+            icon: <Package className="w-5 h-5" />,
+        },
+        {
+            href: '/admin/orders',
+            label: 'Orders',
+            icon: <ShoppingCart className="w-5 h-5" />,
+        },
+        {
+            href: '/admin/customers',
+            label: 'Customers',
+            icon: <Users className="w-5 h-5" />,
+        },
+        {
+            href: '/admin/settings',
+            label: 'Settings',
+            icon: <Settings className="w-5 h-5" />,
+        },
+    ]
+
+    return (
+        <div className="min-h-screen bg-gray-50 dark:bg-darkbg flex">
+            {/* Sidebar */}
+            <div
+                className={`${
+                    isSidebarOpen ? 'w-64' : 'w-20'
+                } bg-black dark:bg-gray-900 text-white transition-all duration-300 flex flex-col fixed h-screen left-0 top-0 z-40`}
+            >
+                {/* Logo */}
+                <div className="p-4 border-b border-gray-800 flex items-center justify-between">
+                    {isSidebarOpen && (
+                        <h2 className="font-bold text-lg whitespace-nowrap">SANKOFA TRIBE</h2>
+                    )}
+                    <button
+                        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                        className="p-1 hover:bg-gray-800 rounded-lg"
+                    >
+                        {isSidebarOpen ? (
+                            <X className="w-5 h-5" />
+                        ) : (
+                            <Menu className="w-5 h-5" />
+                        )}
+                    </button>
                 </div>
 
-                <div className="bg-blue-50 border border-blue-200 rounded p-4 text-sm text-blue-700">
-                  <p className="font-medium mb-2">Currency System:</p>
-                  <ul className="list-disc list-inside space-y-1 text-xs">
-                    <li>Users in Ghana see GHS (₵)</li>
-                    <li>International users see USD ($)</li>
-                    <li>Conversion based on exchange rate above</li>
-                  </ul>
+                {/* Navigation */}
+                <nav className="flex-1 px-3 py-6 space-y-2 overflow-y-auto">
+                    {sidebarLinks.map((link) => (
+                        <Link
+                            key={link.href}
+                            href={link.href}
+                            className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 transition-colors group"
+                        >
+                            {link.icon}
+                            {isSidebarOpen && (
+                                <span className="text-sm font-medium group-hover:text-gray-200">
+                                    {link.label}
+                                </span>
+                            )}
+                        </Link>
+                    ))}
+                </nav>
+
+                {/* User Section */}
+                <div className="border-t border-gray-800 p-3 space-y-2">
+                    {isSidebarOpen && user && (
+                        <div className="px-3 py-2 text-xs">
+                            <p className="text-gray-400">Logged in as</p>
+                            <p className="font-medium text-white truncate">{user.username}</p>
+                        </div>
+                    )}
+                    <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-red-600 transition-colors text-sm font-medium"
+                    >
+                        <LogOut className="w-5 h-5" />
+                        {isSidebarOpen && <span>Logout</span>}
+                    </button>
                 </div>
-              </div>
             </div>
 
-            <div className="flex gap-4">
-              <Button
-                onClick={handleSave}
-                disabled={isSaving}
-                className="flex items-center gap-2"
-              >
-                <Save className="h-4 w-4" />
-                {isSaving ? 'Saving...' : 'Save Changes'}
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={() => fetchSettings()}
-                disabled={isSaving}
-              >
-                Reset
-              </Button>
-            </div>
-          </div>
-        )}
+            {/* Main Content */}
+            <div
+                className={`${
+                    isSidebarOpen ? 'ml-64' : 'ml-20'
+                } flex-1 transition-all duration-300`}
+            >
+                {/* Top Bar */}
+                <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between sticky top-0 z-30">
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                        Dashboard
+                    </h1>
+                    <div className="flex items-center gap-4">
+                        <div className="text-right">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                {user?.username}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
+                                {user?.role}
+                            </p>
+                        </div>
+                    </div>
+                </div>
 
-        {/* Users Tab */}
-        {activeTab === 'users' && (
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h2 className="text-lg font-medium uppercase tracking-wider mb-6">User Management</h2>
-            <div className="space-y-4">
-              <Link 
-                href="/admin/team"
-                className="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm font-medium"
-              >
-                Go to Team Management →
-              </Link>
-              <p className="text-gray-600 text-sm">Create, edit, and manage user accounts and permissions.</p>
+                {/* Dashboard Content */}
+                <div className="p-6">
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        {[
+                            {
+                                label: 'Total Orders',
+                                value: statsLoading ? '...' : stats.totalOrders,
+                                icon: ShoppingCart,
+                                color: 'bg-blue-500',
+                                href: '/admin/orders',
+                            },
+                            {
+                                label: 'Total Revenue',
+                                value: statsLoading ? '...' : `GH₵${stats.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                                icon: DollarSign,
+                                color: 'bg-green-500',
+                                href: '/admin/orders',
+                            },
+                            {
+                                label: 'Pending Orders',
+                                value: statsLoading ? '...' : stats.pendingOrders,
+                                icon: Clock,
+                                color: 'bg-yellow-500',
+                                href: '/admin/orders?status=pending',
+                            },
+                            {
+                                label: 'Processing',
+                                value: statsLoading ? '...' : stats.processingOrders,
+                                icon: Truck,
+                                color: 'bg-purple-500',
+                                href: '/admin/orders?status=processing',
+                            },
+                            {
+                                label: 'Shipped',
+                                value: statsLoading ? '...' : stats.shippedOrders,
+                                icon: TrendingUp,
+                                color: 'bg-indigo-500',
+                                href: '/admin/orders?status=shipped',
+                            },
+                            {
+                                label: 'Delivered',
+                                value: statsLoading ? '...' : stats.deliveredOrders,
+                                icon: CheckCircle,
+                                color: 'bg-emerald-500',
+                                href: '/admin/orders?status=delivered',
+                            },
+                            {
+                                label: 'Cancelled',
+                                value: statsLoading ? '...' : stats.cancelledOrders,
+                                icon: XCircle,
+                                color: 'bg-red-600',
+                                href: '/admin/orders?status=cancelled',
+                            },
+                            {
+                                label: "Today's Orders",
+                                value: statsLoading ? '...' : stats.todayOrders,
+                                icon: TrendingUp,
+                                color: 'bg-cyan-500',
+                                href: '/admin/orders?date=today',
+                            },
+                        ].map((stat, i) => {
+                            const IconComponent = stat.icon
+                            return (
+                                <Link key={i} href={stat.href}>
+                                    <div className="bg-white dark:bg-gray-900 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-800 hover:shadow-lg transition-shadow cursor-pointer h-full">
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <p className="text-gray-600 dark:text-gray-400 text-sm font-medium">
+                                                    {stat.label}
+                                                </p>
+                                                <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                                                    {stat.value}
+                                                </p>
+                                            </div>
+                                            <div className={`${stat.color} p-3 rounded-lg`}>
+                                                <IconComponent className="w-6 h-6 text-white" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </Link>
+                            )
+                        })}
+                    </div>
+
+                    {/* Quick Actions */}
+                    <div className="bg-white dark:bg-gray-900 rounded-lg shadow border border-gray-200 dark:border-gray-800 p-6 mb-8">
+                        <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+                            Quick Actions
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <Link
+                                href="/admin/orders"
+                                className="block p-4 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-center"
+                            >
+                                <ShoppingCart className="w-6 h-6 text-black dark:text-white mb-2 mx-auto" />
+                                <p className="font-medium text-gray-900 dark:text-white">
+                                    View All Orders
+                                </p>
+                            </Link>
+                            <Link
+                                href="/admin/orders?status=processing"
+                                className="block p-4 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-center"
+                            >
+                                <Truck className="w-6 h-6 text-black dark:text-white mb-2 mx-auto" />
+                                <p className="font-medium text-gray-900 dark:text-white">
+                                    Process Orders
+                                </p>
+                            </Link>
+                            <Link
+                                href="/studio"
+                                className="block p-4 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-center"
+                            >
+                                <Package className="w-6 h-6 text-black dark:text-white mb-2 mx-auto" />
+                                <p className="font-medium text-gray-900 dark:text-white">
+                                    Manage Products
+                                </p>
+                            </Link>
+                            <Link
+                                href="/admin/customers"
+                                className="block p-4 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-center"
+                            >
+                                <Users className="w-6 h-6 text-black dark:text-white mb-2 mx-auto" />
+                                <p className="font-medium text-gray-900 dark:text-white">
+                                    View Customers
+                                </p>
+                            </Link>
+                        </div>
+                    </div>
+
+                    {/* Order Status Overview */}
+                    <div className="bg-white dark:bg-gray-900 rounded-lg shadow border border-gray-200 dark:border-gray-800 p-6">
+                        <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+                            Order Status Overview
+                        </h2>
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                                    <span className="text-gray-900 dark:text-white font-medium">
+                                        Pending Orders
+                                    </span>
+                                </div>
+                                <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                                    {statsLoading ? '...' : stats.pendingOrders}
+                                </span>
+                            </div>
+
+                            <div className="flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                                    <span className="text-gray-900 dark:text-white font-medium">
+                                        Processing
+                                    </span>
+                                </div>
+                                <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                                    {statsLoading ? '...' : stats.processingOrders}
+                                </span>
+                            </div>
+
+                            <div className="flex items-center justify-between p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                                    <span className="text-gray-900 dark:text-white font-medium">
+                                        Shipped
+                                    </span>
+                                </div>
+                                <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                                    {statsLoading ? '...' : stats.shippedOrders}
+                                </span>
+                            </div>
+
+                            <div className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                                    <span className="text-gray-900 dark:text-white font-medium">
+                                        Delivered
+                                    </span>
+                                </div>
+                                <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                                    {statsLoading ? '...' : stats.deliveredOrders}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
-        )}
-      </div>
-    </div>
-  )
+        </div>
+    )
 }
