@@ -33,7 +33,7 @@ export async function comparePassword(password: string, hash: string): Promise<b
  * Create JWT token
  */
 export async function createToken(payload: AuthPayload): Promise<string> {
-  const token = await new jwt.SignJWT(payload)
+  const token = await new jwt.SignJWT(payload as unknown as Record<string, unknown>)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('7d')

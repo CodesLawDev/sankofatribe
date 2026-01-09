@@ -62,6 +62,8 @@ export interface Banner {
     _type: 'banner'
     title?: string
     subtitle?: string
+    order?: number
+    displayMode?: 'full' | 'card'
     image: SanityImage
     videoUrl?: string
     ctaText?: string

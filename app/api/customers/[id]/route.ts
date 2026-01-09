@@ -41,7 +41,6 @@ export async function GET(
         loyaltyPoints: true,
         totalOrders: true,
         totalSpent: true,
-        createdAt: true,
         registeredAt: true,
         lastLogin: true,
         addresses: {

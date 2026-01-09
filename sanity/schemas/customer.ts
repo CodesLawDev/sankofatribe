@@ -119,16 +119,18 @@ export const customer = defineType({
             title: 'Communication Preferences',
             type: 'object',
             fields: [
-                { name: 'emailMarketing', type: 'boolean', title: 'Receive Marketing Emails', initialValue: true },
-                { name: 'smsNotifications', type: 'boolean', title: 'Receive SMS Notifications', initialValue: false },
-                { name: 'orderUpdates', type: 'boolean', title: 'Order Updates', initialValue: true },
+                defineField({ name: 'emailMarketing', type: 'boolean', title: 'Receive Marketing Emails', initialValue: true }),
+                defineField({ name: 'smsNotifications', type: 'boolean', title: 'Receive SMS Notifications', initialValue: false }),
+                defineField({ name: 'orderUpdates', type: 'boolean', title: 'Order Updates', initialValue: true }),
             ],
-        }),
+        } as any),
         defineField({
             name: 'notes',
             title: 'Internal Notes',
             type: 'text',
-            rows: 3,
+            options: {
+                rows: 3,
+            },
             description: 'Internal notes for staff use only',
         }),
     ],

@@ -16,19 +16,15 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        // Stripe has been removed from the project
-        // In production, you would integrate with Paystack or another payment provider
-        
-        console.warn('Checkout attempted without payment provider configured. Install stripe to enable Stripe payments.')
-
+        // Payment processing to be implemented with selected provider
         return NextResponse.json(
             {
-                error: 'Payment processing is not configured. Please contact support.',
+                error: 'Payment processing is not currently available. Please contact support.',
             },
             { status: 503 }
         )
     } catch (error) {
-        console.error('Error creating checkout session:', error)
+        console.error('Error processing checkout:', error)
         return NextResponse.json(
             { error: 'Error creating checkout session' },
             { status: 500 }
