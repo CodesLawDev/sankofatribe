@@ -14,6 +14,11 @@ async function getAllProducts() {
     sizes[]{size, stock},
     colors,
     soldCount,
+    hasDiscount,
+    discountType,
+    discountValue,
+    discountStartDate,
+    discountEndDate,
     "categories": categories[]-> {
       _id,
       name,

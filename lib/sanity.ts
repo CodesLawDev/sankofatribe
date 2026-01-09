@@ -39,6 +39,11 @@ export interface Product {
     featured?: boolean
     inStock?: boolean
     soldCount?: number
+    hasDiscount?: boolean
+    discountType?: 'percentage' | 'fixed'
+    discountValue?: number
+    discountStartDate?: string
+    discountEndDate?: string
 }
 
 export interface Category {
@@ -85,6 +90,47 @@ export interface HomePage {
         layout: 'two' | 'three'
         banners: Banner[]
     }>
+}
+
+export interface PromoCode {
+    _id: string
+    _type: 'promoCode'
+    code: string
+    description?: string
+    discountType: 'percentage' | 'fixed' | 'free_shipping'
+    discountValue?: number
+    minimumPurchase?: number
+    maxDiscount?: number
+    usageLimit?: number
+    usageLimitPerCustomer?: number
+    timesUsed?: number
+    validFrom: string
+    validUntil: string
+    isActive?: boolean
+    applicableProducts?: Product[]
+    applicableCategories?: Category[]
+    firstTimeCustomerOnly?: boolean
+}
+
+export interface Campaign {
+    _id: string
+    _type: 'campaign'
+    name: string
+    slug: { current: string }
+    description?: string
+    startDate: string
+    endDate: string
+    isActive?: boolean
+    bannerImage?: SanityImage
+    bannerTitle?: string
+    bannerSubtitle?: string
+    showOnHomepage?: boolean
+    discountType: 'percentage' | 'fixed' | 'custom'
+    discountValue?: number
+    includedProducts?: Product[]
+    includedCategories?: Category[]
+    excludedProducts?: Product[]
+    stackWithPromos?: boolean
 }
 
 export interface SiteSettings {

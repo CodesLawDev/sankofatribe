@@ -41,6 +41,11 @@ async function getHomePageData() {
       inStock,
       featured,
       sizes[]{size, stock},
+      hasDiscount,
+      discountType,
+      discountValue,
+      discountStartDate,
+      discountEndDate,
       "categories": categories[]-> {
         _id,
         name,
@@ -58,6 +63,11 @@ async function getHomePageData() {
       inStock,
       featured,
       sizes[]{size, stock},
+      hasDiscount,
+      discountType,
+      discountValue,
+      discountStartDate,
+      discountEndDate,
       "categories": categories[]-> {
         _id,
         name,

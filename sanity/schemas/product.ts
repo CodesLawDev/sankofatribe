@@ -130,19 +130,119 @@ export const product = defineType({
             description: 'Total number sold (for social proof)',
             initialValue: 0,
         }),
+        defineField({
+            name: 'hasDiscount',
+            title: 'Has Discount',
+            type: 'boolean',
+            description: 'Enable product-level discount (overrides campaign discounts)',
+            initialValue: false,
+        }),
+        defineField({
+            name: 'discountType',
+            title: 'Discount Type',
+            type: 'string',
+            options: {
+                list: [
+                    { title: 'Percentage (%)', value: 'percentage' },
+                    { title: 'Fixed Amount (₵)', value: 'fixed' },
+                ],
+            },
+            hidden: ({ parent }) => !(parent as any)?.hasDiscount,
+            validation: (Rule) =>
+                Rule.custom((value, context) => {
+                    const parent = context.parent as any
+                    if (parent?.hasDiscount && !value) {
+                        return 'Discount type is required when discount is enabled'
+                    }
+                    return true
+                }),
+        }),
+        defineField({
+            name: 'discountValue',
+            title: 'Discount Value',
+            type: 'number',
+            description: 'Percentage (0-100) or fixed amount',
+            hidden: ({ parent }) => !(parent as any)?.hasDiscount,
+            validation: (Rule) =>
+                Rule.custom((value, context) => {
+                    const parent = context.parent as any
+                    if (!parent?.hasDiscount) return true
+
+                    if (value === undefined || value === null) {
+                        return 'Discount value is required'
+                    }
+
+                    if ((value as number) <= 0) {
+                        return 'Discount value must be greater than 0'
+                    }
+
+                    if (parent.discountType === 'percentage' && (value as number) > 100) {
+                        return 'Percentage cannot exceed 100%'
+                    }
+
+                    if (parent.discountType === 'fixed' && (value as number) >= parent.price) {
+                        return 'Fixed discount must be less than product price'
+                    }
+
+                    return true
+                }),
+        }),
+        defineField({
+            name: 'discountStartDate',
+            title: 'Discount Start Date',
+            type: 'datetime',
+            description: 'When the discount becomes active',
+            hidden: ({ parent }) => !(parent as any)?.hasDiscount,
+        }),
+        defineField({
+            name: 'discountEndDate',
+            title: 'Discount End Date',
+            type: 'datetime',
+            description: 'When the discount expires',
+            hidden: ({ parent }) => !(parent as any)?.hasDiscount,
+            validation: (Rule) =>
+                Rule.custom((endDate, context) => {
+                    const parent = context.parent as any
+                    if (!parent?.hasDiscount || !endDate || !parent?.discountStartDate) {
+                        return true
+                    }
+
+                    if (new Date(endDate as string) <= new Date(parent.discountStartDate as string)) {
+                        return 'End date must be after start date'
+                    }
+
+                    return true
+                }),
+        }),
     ],
     preview: {
         select: {
             title: 'name',
             media: 'images.0',
             price: 'price',
+            hasDiscount: 'hasDiscount',
+            discountType: 'discountType',
+            discountValue: 'discountValue',
         },
         prepare(selection) {
-            const { title, media, price } = selection
+            const { title, media, price, hasDiscount, discountType, discountValue } = selection
+
+            let subtitle = `₵${price}`
+
+            if (hasDiscount && discountValue) {
+                let discountedPrice = price
+                if (discountType === 'percentage') {
+                    discountedPrice = price - (price * discountValue) / 100
+                } else if (discountType === 'fixed') {
+                    discountedPrice = price - discountValue
+                }
+                subtitle = `₵${discountedPrice.toFixed(2)} (was ₵${price})`
+            }
+
             return {
                 title,
                 media,
-                subtitle: `$${price}`,
+                subtitle,
             }
         },
     },

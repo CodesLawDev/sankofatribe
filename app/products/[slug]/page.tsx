@@ -18,6 +18,11 @@ async function getProduct(slug: string) {
     colors,
     inStock,
     soldCount,
+    hasDiscount,
+    discountType,
+    discountValue,
+    discountStartDate,
+    discountEndDate,
     "categories": categories[]-> {
       _id,
       name,
@@ -39,6 +44,11 @@ async function getRelatedProducts(categoryId: string, currentProductId: string) 
     sizes[]{size, stock},
     colors,
     inStock,
+    hasDiscount,
+    discountType,
+    discountValue,
+    discountStartDate,
+    discountEndDate,
     "categories": categories[]-> {
       _id,
       name,
