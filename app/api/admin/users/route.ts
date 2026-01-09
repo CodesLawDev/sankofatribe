@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken, prisma, hashPassword } from '@/lib/auth-utils'
 import { cookies } from 'next/headers'
 
+export const dynamic = 'force-dynamic'
+
 /**
  * Admin endpoint to list all staff users (from Postgres)
  * GET /api/admin/users
