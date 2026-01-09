@@ -2,6 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Button } from './ui/button'
 import { urlFor } from '@/lib/sanity'
+import { getVideoSource } from '@/lib/video-utils'
 
 interface HeroBannerProps {
     image: any // Sanity image object or URL string
@@ -82,18 +83,44 @@ export default function PremiumHeroBanner({
     const primaryHref = resolveLink(ctaLinkSelect, ctaLink, ctaCategory, ctaProduct)
     const secondaryHref = resolveLink(ctaLinkSecondarySelect, ctaLinkSecondary, ctaCategorySecondary, ctaProductSecondary)
 
+    // Determine video source type
+    const videoSource = getVideoSource(videoUrl || '')
+
     return (
         <div className="relative w-full h-[60vh] md:h-[75vh] lg:h-[85vh] overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900">
             {/* Background Video or Image */}
-            {videoUrl ? (
+            {videoSource.type === 'youtube' || videoSource.type === 'vimeo' ? (
+                <iframe
+                    src={(videoSource as any).embedUrl}
+                    className="absolute inset-0 w-full h-full border-0"
+                    allow="autoplay; encrypted-media"
+                    allowFullScreen
+                    title={title}
+                />
+            ) : videoSource.type === 'direct' ? (
                 <video
                     autoPlay
                     loop
                     muted
                     playsInline
+                    controls={false}
                     className="absolute inset-0 w-full h-full object-cover"
+                    onError={(e) => console.error('Video playback error:', e)}
                 >
-                    <source src={videoUrl} type="video/mp4" />
+                    <source src={(videoSource as any).url} type="video/mp4" />
+                    <source src={(videoSource as any).url} type="video/webm" />
+                    <source src={(videoSource as any).url} type="video/ogg" />
+                    {/* Fallback to image if video fails */}
+                    {imageUrl && (
+                        <Image
+                            src={imageUrl}
+                            alt={title}
+                            fill
+                            className="object-cover object-center"
+                            priority
+                            quality={95}
+                        />
+                    )}
                 </video>
             ) : imageUrl ? (
                 <Image

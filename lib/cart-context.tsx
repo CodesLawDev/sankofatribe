@@ -111,15 +111,85 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const validateCartStock = async () => {
         const errors: string[] = []
 
-        for (const item of cart) {
-            if (item.quantity > (item.maxStock || 0)) {
-                const available = item.maxStock || 0
-                if (available === 0) {
-                    errors.push(`${item.name} is out of stock`)
+        try {
+            // Fetch current stock levels from Sanity for all cart items
+            const productIds = [...new Set(cart.map(item => item.id))]
+            
+            if (productIds.length === 0) {
+                return { valid: true, errors: [] }
+            }
+
+            const query = `*[_type == "product" && _id in $ids] {
+                _id,
+                name,
+                sizes[] {
+                    size,
+                    stock
+                },
+                inStock
+            }`
+            
+            const { client } = await import('./sanity')
+            const products = await client.fetch<Array<{
+                _id: string;
+                name: string;
+                sizes?: Array<{ size: string; stock: number }>;
+                inStock?: boolean;
+            }>>(query, { ids: productIds })
+            
+            // Create a map for quick lookup
+            const productMap = new Map(products.map((p) => [p._id, p]))
+
+            // Validate each cart item against live stock
+            for (const item of cart) {
+                const product = productMap.get(item.id)
+                
+                if (!product) {
+                    errors.push(`${item.name} is no longer available`)
+                    continue
+                }
+
+                if (!product.inStock) {
+                    errors.push(`${item.name} is currently out of stock`)
+                    continue
+                }
+
+                // Check specific size stock if size is selected
+                if (item.selectedSize && product.sizes && product.sizes.length > 0) {
+                    const sizeVariant = product.sizes.find((s: any) => 
+                        s.size?.toLowerCase() === item.selectedSize?.toLowerCase()
+                    )
+                    
+                    if (!sizeVariant) {
+                        errors.push(`${item.name} - Size ${item.selectedSize} is no longer available`)
+                        continue
+                    }
+
+                    const availableStock = sizeVariant.stock || 0
+                    
+                    if (availableStock === 0) {
+                        errors.push(`${item.name} - Size ${item.selectedSize} is out of stock`)
+                    } else if (item.quantity > availableStock) {
+                        errors.push(
+                            `${item.name} - Size ${item.selectedSize}: Only ${availableStock} available (you have ${item.quantity} in cart)`
+                        )
+                    }
                 } else {
-                    errors.push(`${item.name}: Only ${available} available (you have ${item.quantity} in cart)`)
+                    // If no size specified, check if there's any stock available
+                    const totalStock = product.sizes?.reduce((sum: number, s: any) => sum + (s.stock || 0), 0) || 0
+                    
+                    if (totalStock === 0) {
+                        errors.push(`${item.name} is out of stock`)
+                    } else if (item.quantity > totalStock) {
+                        errors.push(
+                            `${item.name}: Only ${totalStock} available (you have ${item.quantity} in cart)`
+                        )
+                    }
                 }
             }
+        } catch (error) {
+            console.error('Stock validation error:', error)
+            errors.push('Unable to validate stock availability. Please try again.')
         }
 
         return {

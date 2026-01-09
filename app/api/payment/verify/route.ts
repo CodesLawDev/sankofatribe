@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import paymentService from '@/lib/payment'
-import { serverClient, assertSanityToken } from '@/lib/sanity-server'
+import { serverClient, assertSanityToken, decrementStock } from '@/lib/sanity-server'
 
 async function verify(reference: string) {
     // Verify payment with Paystack
@@ -19,7 +19,7 @@ async function verify(reference: string) {
 
     const data: any = (result as any).data || {}
 
-    // Try to record payment in Sanity (non-blocking)
+    // Try to record payment in Sanity and decrement stock
     try {
         assertSanityToken()
         
@@ -42,6 +42,39 @@ async function verify(reference: string) {
         }
 
         await serverClient.create(paymentDoc)
+
+        // Update order status and decrement stock
+        try {
+            // Fetch the order to get items
+            const order = await serverClient.getDocument(orderId)
+            
+            if (order && order.items) {
+                // Update order status
+                await serverClient
+                    .patch(orderId)
+                    .set({ 
+                        paymentStatus: 'paid',
+                        status: 'processing',
+                        'metadata.paymentMethod': data.channel,
+                        'metadata.paidAt': data.paid_at || new Date().toISOString()
+                    })
+                    .commit()
+
+                // Decrement stock for all items in the order
+                await decrementStock(
+                    order.items.map((item: any) => ({
+                        productId: item.productId,
+                        quantity: item.quantity,
+                        selectedSize: item.selectedSize
+                    }))
+                )
+
+                console.log(`Stock decremented for order ${orderId}`)
+            }
+        } catch (stockError) {
+            console.error('Failed to decrement stock:', stockError)
+            // Don't fail the payment verification, but log the error
+        }
     } catch (sanityError) {
         console.warn('Failed to record payment in Sanity:', sanityError)
         // Continue anyway - payment is verified even if Sanity logging fails

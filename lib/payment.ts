@@ -98,6 +98,10 @@ class PaymentService {
       console.log('Reference:', response.data?.data?.reference)
       console.log('Auth URL exists:', !!response.data?.data?.authorization_url)
 
+      if (!response.data || response.data.status !== true) {
+        throw new Error(response.data?.message || 'Paystack returned unsuccessful status')
+      }
+
       if (!response.data?.data?.authorization_url) {
         throw new Error('No authorization URL returned from Paystack')
       }

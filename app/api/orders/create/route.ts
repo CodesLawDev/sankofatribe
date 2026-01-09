@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { serverClient, assertSanityToken } from '@/lib/sanity-server'
+import { serverClient, assertSanityToken, validateOrderStock } from '@/lib/sanity-server'
 
 export async function POST(req: NextRequest) {
     try {
@@ -14,6 +14,8 @@ export async function POST(req: NextRequest) {
             shippingAddress,
             items,
             subtotal = 0,
+            discount = 0,
+            promoCode,
             shippingCost = 0,
             tax = 0,
             total = 0,
@@ -28,6 +30,23 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ success: false, error: 'No items in order' }, { status: 400 })
         }
 
+        // Validate stock availability before creating order
+        const stockValidation = await validateOrderStock(
+            items.map((item: any) => ({
+                productId: item.productId,
+                quantity: item.quantity,
+                selectedSize: item.selectedSize
+            }))
+        )
+
+        if (!stockValidation.valid) {
+            return NextResponse.json({ 
+                success: false, 
+                error: 'Stock validation failed', 
+                stockErrors: stockValidation.errors 
+            }, { status: 400 })
+        }
+
         const orderDoc = {
             _id: orderId,
             _type: 'order',
@@ -39,6 +58,8 @@ export async function POST(req: NextRequest) {
             shippingAddress,
             items,
             subtotal,
+            discount,
+            promoCode,
             shippingCost,
             tax,
             total,

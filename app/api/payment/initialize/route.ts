@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
         if (!process.env.PAYSTACK_SECRET_KEY) {
             console.error('PAYSTACK_SECRET_KEY is not configured')
             return NextResponse.json(
-                { error: 'Payment service not configured. Please contact support.' },
+                { success: false, error: 'Payment service not configured. Please contact support.' },
                 { status: 500 }
             )
         }
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
         if (!email || !amount || amount <= 0) {
             console.error('Invalid email or amount:', { email, amount })
             return NextResponse.json(
-                { error: 'Invalid email or amount' },
+                { success: false, error: 'Invalid email or amount' },
                 { status: 400 }
             )
         }
@@ -73,6 +73,7 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json(
             {
+                success: false,
                 error: error instanceof Error ? error.message : 'Failed to initialize payment',
                 details: process.env.NODE_ENV === 'development' ? String(error) : undefined,
             },

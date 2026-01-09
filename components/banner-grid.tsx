@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { Banner } from '@/lib/sanity'
 import { urlFor } from '@/lib/sanity'
 import { Button } from './ui/button'
+import { getVideoSource } from '@/lib/video-utils'
 
 interface BannerGridProps {
   title?: string
@@ -26,11 +27,41 @@ export default function BannerGrid({ title, layout, banners }: BannerGridProps) 
           {items.map((banner) => {
             const hasImage = banner.image && (banner.image as any).asset
             const imageUrl = hasImage ? urlFor(banner.image).width(1600).height(900).url() : null
+            const videoSource = getVideoSource(banner.videoUrl || '')
+            
             return (
               <div key={banner._id} className="relative aspect-[16/9] overflow-hidden rounded-lg bg-gray-100">
-                {imageUrl && (
+                {/* Video Background - YouTube or Vimeo */}
+                {videoSource.type === 'youtube' || videoSource.type === 'vimeo' ? (
+                  <iframe
+                    src={(videoSource as any).embedUrl}
+                    className="absolute inset-0 w-full h-full border-0"
+                    allow="autoplay; encrypted-media"
+                    allowFullScreen
+                    title={banner.title}
+                  />
+                ) : videoSource.type === 'direct' ? (
+                  <video
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    controls={false}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    onError={(e) => console.error('Video playback error:', e)}
+                  >
+                    <source src={(videoSource as any).url} type="video/mp4" />
+                    <source src={(videoSource as any).url} type="video/webm" />
+                    <source src={(videoSource as any).url} type="video/ogg" />
+                    {/* Fallback to image if video fails */}
+                    {imageUrl && (
+                      <Image src={imageUrl} alt={banner.title || 'Banner'} fill className="object-cover" />
+                    )}
+                  </video>
+                ) : imageUrl ? (
                   <Image src={imageUrl} alt={banner.title || 'Banner'} fill className="object-cover" />
-                )}
+                ) : null}
+                
                 <div className="absolute inset-0 bg-black/20" />
                 <div className="absolute inset-0 flex items-end">
                   <div className="p-4 sm:p-6 w-full">
