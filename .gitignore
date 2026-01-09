@@ -7,7 +7,7 @@
 
 # testing
 /coverage
-/.for-referencing
+/for-referencing
 
 # next.js
 /.next/

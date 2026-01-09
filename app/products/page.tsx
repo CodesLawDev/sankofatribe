@@ -39,11 +39,18 @@ export const metadata = {
     description: 'Browse all premium fashion products from SANKOFA',
 }
 
-export default async function ProductsPage() {
+export default async function ProductsPage({ searchParams }: { searchParams?: Record<string, string> }) {
     const [products, categories] = await Promise.all([
         getAllProducts(),
         getCategories()
     ])
+
+    const initialFilters = {
+        audience: (searchParams?.audience || '').toLowerCase(),
+        category: (searchParams?.category || '').toLowerCase(),
+        priceRange: (searchParams?.priceRange || ''),
+        sortBy: (searchParams?.sortBy || 'newest'),
+    }
 
     return (
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12 py-12 md:py-20">
@@ -53,7 +60,7 @@ export default async function ProductsPage() {
                 </h1>
             </div>
 
-            <ProductsWithFilters products={products} categories={categories} />
+            <ProductsWithFilters products={products} categories={categories} initialFilters={initialFilters} />
         </div>
     )
 }

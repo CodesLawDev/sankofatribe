@@ -14,6 +14,7 @@ interface ProductFiltersProps {
     categories: { name: string; slug: string }[]
     onFilterChange: (filters: FilterState) => void
     totalProducts: number
+    initialFilters?: Partial<FilterState>
 }
 
 const priceRanges = [
@@ -31,12 +32,12 @@ const sortOptions = [
     { label: 'Name: A-Z', value: 'name-asc' },
 ]
 
-export default function ProductFilters({ categories, onFilterChange, totalProducts }: ProductFiltersProps) {
+export default function ProductFilters({ categories, onFilterChange, totalProducts, initialFilters }: ProductFiltersProps) {
     const [filters, setFilters] = useState<FilterState>({
-        audience: '',
-        category: '',
-        priceRange: '',
-        sortBy: 'newest',
+        audience: initialFilters?.audience || '',
+        category: initialFilters?.category || '',
+        priceRange: initialFilters?.priceRange || '',
+        sortBy: initialFilters?.sortBy || 'newest',
     })
     const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
 

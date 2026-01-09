@@ -61,8 +61,14 @@ export interface Banner {
     videoUrl?: string
     ctaText?: string
     ctaLink?: string
+    ctaLinkSelect?: string
+    ctaCategory?: Category
+    ctaProduct?: Product
     ctaTextSecondary?: string
     ctaLinkSecondary?: string
+    ctaLinkSecondarySelect?: string
+    ctaCategorySecondary?: Category
+    ctaProductSecondary?: Product
     textColor: 'white' | 'black'
 }
 

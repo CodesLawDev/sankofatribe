@@ -22,8 +22,14 @@ async function getHomePageData() {
       videoUrl,
       ctaText,
       ctaLink,
+      ctaLinkSelect,
+      "ctaCategory": ctaCategory->{slug},
+      "ctaProduct": ctaProduct->{slug},
       ctaTextSecondary,
       ctaLinkSecondary,
+      ctaLinkSecondarySelect,
+      "ctaCategorySecondary": ctaCategorySecondary->{slug},
+      "ctaProductSecondary": ctaProductSecondary->{slug},
       textColor
     },
     "featuredProducts": featuredProducts[]-> {
@@ -176,8 +182,16 @@ export default async function HomePage() {
                     subtitle={homePageData.heroBanners[0].subtitle || "Premium African Heritage Fashion"}
                     ctaText={homePageData.heroBanners[0].ctaText || "Explore Collection"}
                     ctaLink={homePageData.heroBanners[0].ctaLink || "/products"}
+                    ctaLinkSelect={homePageData.heroBanners[0].ctaLinkSelect}
+                    ctaCategory={homePageData.heroBanners[0].ctaCategory}
+                    ctaProduct={homePageData.heroBanners[0].ctaProduct}
+                    ctaTextSecondary={homePageData.heroBanners[0].ctaTextSecondary}
+                    ctaLinkSecondary={homePageData.heroBanners[0].ctaLinkSecondary}
+                    ctaLinkSecondarySelect={homePageData.heroBanners[0].ctaLinkSecondarySelect}
+                    ctaCategorySecondary={homePageData.heroBanners[0].ctaCategorySecondary}
+                    ctaProductSecondary={homePageData.heroBanners[0].ctaProductSecondary}
                     textPosition="center"
-                    textColor="white"
+                    textColor={homePageData.heroBanners[0].textColor || "white"}
                 />
             ) : (
                 <PremiumHeroBanner

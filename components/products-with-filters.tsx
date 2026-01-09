@@ -16,14 +16,15 @@ interface FilterState {
 interface ProductsWithFiltersProps {
     products: Product[]
     categories: { name: string; slug: string }[]
+    initialFilters?: Partial<FilterState>
 }
 
-export default function ProductsWithFilters({ products, categories }: ProductsWithFiltersProps) {
+export default function ProductsWithFilters({ products, categories, initialFilters }: ProductsWithFiltersProps) {
     const [filters, setFilters] = useState<FilterState>({
-        audience: '',
-        category: '',
-        priceRange: '',
-        sortBy: 'newest',
+        audience: initialFilters?.audience || '',
+        category: initialFilters?.category || '',
+        priceRange: initialFilters?.priceRange || '',
+        sortBy: initialFilters?.sortBy || 'newest',
     })
 
     const clearFilter = (type: string, value: string) => {
@@ -91,6 +92,7 @@ export default function ProductsWithFilters({ products, categories }: ProductsWi
                 categories={categories}
                 onFilterChange={setFilters}
                 totalProducts={filteredProducts.length}
+                initialFilters={filters}
             />
             <ActiveFilters
                 filters={[
