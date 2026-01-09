@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken, prisma } from '@/lib/auth-utils';
 import { cookies } from 'next/headers';
 
+export const dynamic = 'force-dynamic'
+
 /**
  * Admin endpoint to list all customers
  * GET /api/admin/customers
