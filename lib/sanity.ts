@@ -182,3 +182,26 @@ export interface SiteSettings {
         twitter?: string
     }
 }
+
+export interface Career {
+    _id: string
+    _type: 'career'
+    title: string
+    slug?: { current: string }
+    department?: string
+    employmentType?: 'full-time' | 'part-time' | 'contract' | 'internship' | 'temporary'
+    location?: string
+    isRemote?: boolean
+    salaryRange?: string
+    summary?: string
+    description?: any
+    responsibilities?: string[]
+    requirements?: string[]
+    perks?: string[]
+    applicationUrl?: string
+    applicationEmail?: string
+    status?: 'open' | 'closed' | 'draft'
+    postedAt?: string
+    closingDate?: string
+    featured?: boolean
+}

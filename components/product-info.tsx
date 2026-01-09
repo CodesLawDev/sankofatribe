@@ -11,6 +11,7 @@ import SizeGuideModal from '@/components/size-guide-modal'
 import StarRating from '@/components/star-rating'
 import { Ruler, Truck, RotateCcw } from 'lucide-react'
 import { useEffect } from 'react'
+import { useCurrency } from '@/lib/currency-context'
 
 interface ProductInfoProps {
     product: Product
@@ -20,6 +21,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
     const { addToCart } = useCart()
     const { showToast } = useToast()
     const { addToRecentlyViewed } = useRecentlyViewed()
+    const { formatPrice, convertPrice } = useCurrency()
     const [selectedSize, setSelectedSize] = useState(product.sizes?.[0]?.size || '')
     const [selectedColor, setSelectedColor] = useState(product.colors?.[0]?.name || '')
     const [quantity, setQuantity] = useState(1)
@@ -37,6 +39,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
 
     const selectedSizeStock = getStockForSize(selectedSize)
     const isSizeOutOfStock = selectedSizeStock === 0
+    const displayPrice = formatPrice(convertPrice(product.price))
 
     const handleAddToCart = async () => {
         if (!selectedSize) {
@@ -80,7 +83,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
                 <div className="space-y-3">
                     <h1 className="text-2xl md:text-3xl font-light tracking-wider uppercase">{product.name}</h1>
                         <div className="flex items-center gap-3">
-                    <p className="text-sm text-gray-600">${product.price.toFixed(2)}</p>
+                    <p className="text-sm text-gray-600">{displayPrice}</p>
                             {/* Mock rating - would come from reviews */}
                             <StarRating rating={4.5} size="sm" showNumber />
                         </div>

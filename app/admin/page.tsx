@@ -226,7 +226,7 @@ export default function AdminPage() {
             </div>
             <div className="bg-white rounded-lg border border-gray-200 p-6">
               <h3 className="text-sm font-medium text-gray-600 mb-2">Exchange Rate</h3>
-              <p className="text-lg font-light">1 GHS = <span className="font-medium">{settings.currency.exchangeRate}</span> USD</p>
+              <p className="text-lg font-light">1 USD = <span className="font-medium">{(1 / (settings.currency.exchangeRate || 1)).toFixed(3)}</span> GHS</p>
             </div>
           </div>
         )}
@@ -290,25 +290,29 @@ export default function AdminPage() {
               
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Exchange Rate (GHS to USD)</label>
+                  <label className="block text-sm font-medium mb-2">Exchange Rate (USD to GHS)</label>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600">1 GHS =</span>
+                    <span className="text-sm text-gray-600">1 USD =</span>
                     <input
                       type="number"
                       step="0.001"
-                      value={settings.currency.exchangeRate}
-                      onChange={(e) => setSettings({
-                        ...settings,
-                        currency: {
-                          ...settings.currency,
-                          exchangeRate: parseFloat(e.target.value) || 0,
-                        },
-                      })}
+                      value={parseFloat((1 / (settings.currency.exchangeRate || 0.000001)).toFixed(3))}
+                      onChange={(e) => {
+                        const ghsPerUsd = parseFloat(e.target.value) || 0
+                        const usdPerGhs = ghsPerUsd > 0 ? (1 / ghsPerUsd) : 0
+                        setSettings({
+                          ...settings,
+                          currency: {
+                            ...settings.currency,
+                            exchangeRate: parseFloat(usdPerGhs.toFixed(6)),
+                          },
+                        })
+                      }}
                       className="w-32 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-black"
                     />
-                    <span className="text-sm text-gray-600">USD</span>
+                    <span className="text-sm text-gray-600">GHS</span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-2">Current rate: {settings.currency.exchangeRate}</p>
+                  <p className="text-xs text-gray-500 mt-2">Stored: 1 GHS = {(settings.currency.exchangeRate || 0).toFixed(6)} USD</p>
                 </div>
 
                 <div className="bg-blue-50 border border-blue-200 rounded p-4 text-sm text-blue-700">
