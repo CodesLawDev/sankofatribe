@@ -6,15 +6,19 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:generate": "prisma generate",
+    "prisma:seed": "prisma db seed",
+    "prisma:studio": "prisma studio"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "@portabletext/react": "^5.0.0",
+    "@prisma/client": "^6.9.0",
     "@sanity/client": "6.10.0",
     "@sanity/image-url": "1.0.2",
     "@sanity/vision": "3.22.0",
-    "@stripe/stripe-js": "2.4.0",
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "0.7.0",
@@ -30,7 +34,6 @@
     "react-dom": "18.2.0",
     "react-paystack": "5.0.0",
     "sanity": "3.22.0",
-    "stripe": "14.10.0",
     "styled-components": "6.1.19",
     "zustand": "4.4.7"
   },
@@ -42,7 +45,11 @@
     "eslint": "^8",
     "eslint-config-next": "14.0.4",
     "postcss": "^8",
+    "prisma": "^6.9.0",
     "tailwindcss": "^3.3.0",
     "typescript": "^5"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
   }
 }

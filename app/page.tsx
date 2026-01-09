@@ -1,12 +1,12 @@
 import { client, urlFor } from '@/lib/sanity'
 import type { HomePage, Product, Category } from '@/lib/sanity'
 import PremiumHeroBanner from '@/components/premium-hero-banner'
-import BannerGrid from '@/components/banner-grid'
 import RewardsCallout from '@/components/rewards-callout'
 import FeaturedCategories from '@/components/featured-categories'
 import Spotlight from '@/components/spotlight'
 import ProductGrid from '@/components/product-grid'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 
 async function getHomePageData() {
@@ -18,6 +18,8 @@ async function getHomePageData() {
       _id,
       title,
       subtitle,
+      order,
+      displayMode,
       image,
       videoUrl,
       ctaText,
@@ -31,7 +33,7 @@ async function getHomePageData() {
       "ctaCategorySecondary": ctaCategorySecondary->{slug},
       "ctaProductSecondary": ctaProductSecondary->{slug},
       textColor
-    },
+    } | order(order asc),
     "featuredProducts": featuredProducts[]-> {
       _id,
       name,
@@ -82,23 +84,6 @@ async function getHomePageData() {
       slug,
       image
     }
-        ,
-        bannerSections[]{
-            title,
-            layout,
-            "banners": banners[]->{
-                _id,
-                title,
-                subtitle,
-                image,
-                videoUrl,
-                ctaText,
-                ctaLink,
-                ctaTextSecondary,
-                ctaLinkSecondary,
-                textColor
-            }
-        }
   }`
 
     const homePage = await client.fetch<HomePage>(query, {}, { next: { revalidate: 0 } })
@@ -183,26 +168,103 @@ export default async function HomePage() {
 
     return (
         <div className="bg-white text-black">
-            {/* Main Hero Section - Premium Nike Style */}
-            {homePageData?.heroBanners?.[0] ? (
-                <PremiumHeroBanner
-                    image={homePageData.heroBanners[0].image}
-                    videoUrl={homePageData.heroBanners[0].videoUrl}
-                    title={homePageData.heroBanners[0].title || "SANKOFA TRIBE"}
-                    subtitle={homePageData.heroBanners[0].subtitle || "Premium African Heritage Fashion"}
-                    ctaText={homePageData.heroBanners[0].ctaText || "Explore Collection"}
-                    ctaLink={homePageData.heroBanners[0].ctaLink || "/products"}
-                    ctaLinkSelect={homePageData.heroBanners[0].ctaLinkSelect}
-                    ctaCategory={homePageData.heroBanners[0].ctaCategory}
-                    ctaProduct={homePageData.heroBanners[0].ctaProduct}
-                    ctaTextSecondary={homePageData.heroBanners[0].ctaTextSecondary}
-                    ctaLinkSecondary={homePageData.heroBanners[0].ctaLinkSecondary}
-                    ctaLinkSecondarySelect={homePageData.heroBanners[0].ctaLinkSecondarySelect}
-                    ctaCategorySecondary={homePageData.heroBanners[0].ctaCategorySecondary}
-                    ctaProductSecondary={homePageData.heroBanners[0].ctaProductSecondary}
-                    textPosition="center"
-                    textColor={homePageData.heroBanners[0].textColor || "white"}
-                />
+            {/* Hero Banners - Mixed full-width and cards */}
+            {homePageData?.heroBanners && homePageData.heroBanners.length > 0 ? (
+                <div className="space-y-8 md:space-y-12 lg:space-y-16">
+                    {(() => {
+                        const banners = homePageData.heroBanners
+                        const result = []
+                        let i = 0
+                        
+                        while (i < banners.length) {
+                            const banner = banners[i]
+                            
+                            // Full-width banner
+                            if (banner.displayMode === 'full' || !banner.displayMode) {
+                                result.push(
+                                    <PremiumHeroBanner
+                                        key={banner._id || i}
+                                        image={banner.image}
+                                        videoUrl={banner.videoUrl}
+                                        title={banner.title || "SANKOFA TRIBE"}
+                                        subtitle={banner.subtitle || "Premium African Heritage Fashion"}
+                                        ctaText={banner.ctaText || "Explore Collection"}
+                                        ctaLink={banner.ctaLink || "/products"}
+                                        ctaLinkSelect={banner.ctaLinkSelect}
+                                        ctaCategory={banner.ctaCategory}
+                                        ctaProduct={banner.ctaProduct}
+                                        ctaTextSecondary={banner.ctaTextSecondary}
+                                        ctaLinkSecondary={banner.ctaLinkSecondary}
+                                        ctaLinkSecondarySelect={banner.ctaLinkSecondarySelect}
+                                        ctaCategorySecondary={banner.ctaCategorySecondary}
+                                        ctaProductSecondary={banner.ctaProductSecondary}
+                                        textPosition="center"
+                                        textColor={banner.textColor || "white"}
+                                    />
+                                )
+                                i++
+                            } 
+                            // Card mode - group up to 3 cards
+                            else if (banner.displayMode === 'card') {
+                                const cardBanners = []
+                                let j = i
+                                
+                                // Collect up to 3 consecutive card banners
+                                while (j < banners.length && banners[j].displayMode === 'card' && cardBanners.length < 3) {
+                                    cardBanners.push(banners[j])
+                                    j++
+                                }
+                                
+                                result.push(
+                                    <div key={`cards-${i}`} className="w-full">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0">
+                                            {cardBanners.map((cardBanner, idx) => (
+                                                <div key={cardBanner._id || idx} className="relative h-[50vh] md:h-[60vh] overflow-hidden group">
+                                                    {cardBanner.image && (
+                                                        <Image
+                                                            src={urlFor(cardBanner.image).width(800).height(600).url()}
+                                                            alt={cardBanner.title || 'Banner'}
+                                                            fill
+                                                            className="object-cover transition-transform duration-500 group-hover:scale-105"
+                                                        />
+                                                    )}
+                                                    <div className="absolute inset-0 bg-black/20" />
+                                                    <div className="absolute inset-0 flex flex-col items-center justify-end text-center px-6 pb-8">
+                                                        <div className={`${cardBanner.textColor === 'black' ? 'text-black' : 'text-white'}`}>
+                                                            {cardBanner.title && (
+                                                                <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-3">
+                                                                    {cardBanner.title}
+                                                                </h3>
+                                                            )}
+                                                            {cardBanner.subtitle && (
+                                                                <p className="text-sm md:text-base mb-6 opacity-90">
+                                                                    {cardBanner.subtitle}
+                                                                </p>
+                                                            )}
+                                                            {cardBanner.ctaText && cardBanner.ctaLink && (
+                                                                <Link href={cardBanner.ctaLink}>
+                                                                    <Button
+                                                                        size="sm"
+                                                                        className="bg-white/90 text-black hover:bg-white"
+                                                                    >
+                                                                        {cardBanner.ctaText}
+                                                                    </Button>
+                                                                </Link>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )
+                                i = j
+                            }
+                        }
+                        
+                        return result
+                    })()}
+                </div>
             ) : (
                 <PremiumHeroBanner
                     image={null}
@@ -215,12 +277,6 @@ export default async function HomePage() {
                 />
             )}
 
-            {/* Render all curated banner sections (2-up / 3-up) */}
-            {homePageData?.bannerSections?.length ? (
-                homePageData.bannerSections.map((section, idx) => (
-                    <BannerGrid key={idx} title={section.title} layout={(section.layout as any) || 'two'} banners={section.banners || []} />
-                ))
-            ) : null}
 
             {/* Final Callout Section (last part of page) */}
             <RewardsCallout />

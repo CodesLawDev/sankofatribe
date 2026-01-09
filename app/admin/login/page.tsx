@@ -5,7 +5,7 @@ import { useState, FormEvent, ChangeEvent, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { AlertCircle, Loader, CheckCircle } from 'lucide-react'
-import { saveAdminSession, getAdminSession } from '@/lib/adminAuth'
+import { saveAdminSession } from '@/lib/adminAuth'
 
 interface FormData {
     email: string
@@ -42,13 +42,25 @@ export default function AdminLoginPage() {
     }, [])
 
     useEffect(() => {
-        // Only check session after hydration to avoid mismatch
+        // Check if already logged in by attempting to fetch user session
         if (!isHydrated) return
 
-        const session = getAdminSession()
-        if (session) {
-            router.push('/admin/dashboard')
+        const checkSession = async () => {
+            try {
+                const response = await fetch('/api/auth/me', { credentials: 'include' })
+                if (response.ok) {
+                    const data = await response.json()
+                    // If logged in and admin or superadmin, redirect to dashboard
+                    if (data.user.role === 'ADMIN' || data.user.role === 'SUPERADMIN') {
+                        router.push('/admin/dashboard')
+                    }
+                }
+            } catch (error) {
+                // Not logged in, continue to login page
+            }
         }
+
+        checkSession()
     }, [router, isHydrated])
 
     const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -126,6 +138,7 @@ export default function AdminLoginPage() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                credentials: 'include',
                 body: JSON.stringify({
                     email: formData.email,
                     password: formData.password,
@@ -142,13 +155,11 @@ export default function AdminLoginPage() {
                 return
             }
 
-            // Save session to localStorage (UI state only)
+            // Cache session in localStorage for client-side checks (auth cookie remains source of truth)
             saveAdminSession({
                 user: data.user,
                 token: data.token,
             })
-
-            // Cookie is set httpOnly by the API response
 
             // Store email if remember me is checked
             if (formData.rememberMe) {
@@ -160,9 +171,9 @@ export default function AdminLoginPage() {
             }
 
             setSuccess(true)
-            // Redirect to admin dashboard
+            // Use window.location for full page reload to ensure cookie is set
             setTimeout(() => {
-                router.push('/admin/dashboard')
+                window.location.href = '/admin/dashboard'
             }, 500)
         } catch (err) {
             setError({
@@ -170,6 +181,15 @@ export default function AdminLoginPage() {
             })
             setIsLoading(false)
         }
+    }
+
+    // Prevent hydration mismatch by not rendering until client is ready
+    if (!isHydrated) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-darkbg">
+                <Loader className="w-8 h-8 animate-spin text-gray-400" />
+            </div>
+        )
     }
 
     return (

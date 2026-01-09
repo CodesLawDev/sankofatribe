@@ -1,12 +1,12 @@
 # Sankofa - Premium Fashion E-Commerce
 
-A high-end fashion e-commerce website built with **Next.js 14**, **Sanity Studio v3**, and **Stripe**, featuring a minimalist Calvin Klein-inspired design.
+A high-end fashion e-commerce website built with **Next.js 14** and **Sanity Studio v3**, featuring a minimalist Calvin Klein-inspired design.
 
 ## 🌟 Features
 
 - **Modern E-Commerce**: Full-featured shopping cart, product variants (size, color), and checkout flow
 - **Headless CMS**: Sanity Studio v3 for easy content management
-- **Payment Integration**: Stripe checkout with webhook support
+- **Payment Integration**: Paystack checkout (primary)
 - **Premium Design**: Calvin Klein-inspired minimalist aesthetic with smooth animations
 - **Fully Responsive**: Mobile-first design that works on all devices
 - **SEO Optimized**: Server-side rendering with Next.js App Router
@@ -18,7 +18,7 @@ Before you begin, ensure you have:
 
 - Node.js 18+ installed
 - A Sanity account ([create one at sanity.io](https://www.sanity.io))
-- A Stripe account ([create one at stripe.com](https://stripe.com))
+- A Paystack account ([create one at paystack.com](https://paystack.com))
 
 ## 🚀 Quick Start
 
@@ -43,7 +43,7 @@ When prompted:
 
 ### 3. Configure Environment Variables
 
-Create a `.env.local` file in the root directory:
+Create a `.env` file in the root directory:
 
 ```bash
 # Sanity
@@ -51,16 +51,13 @@ NEXT_PUBLIC_SANITY_PROJECT_ID=your_project_id_here
 NEXT_PUBLIC_SANITY_DATASET=production
 NEXT_PUBLIC_SANITY_API_VERSION=2024-01-01
 
-# Stripe
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_your_key_here
-STRIPE_SECRET_KEY=sk_test_your_key_here
-STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret_here
+# Paystack (primary payment)
+NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY=your_paystack_public_key
+PAYSTACK_SECRET_KEY=your_paystack_secret_key
 
 # Site URL
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
-
-Get your Stripe keys from the [Stripe Dashboard](https://dashboard.stripe.com/test/apikeys).
 
 ### 4. Run the Development Server
 
@@ -118,22 +115,9 @@ colors: {
 
 Modify these colors to match your brand identity.
 
-## 💳 Stripe Integration
+## 💳 Payments
 
-### Test Mode
-
-The current setup uses Stripe's test mode. Use these test cards:
-
-- **Success**: `4242 4242 4242 4242`
-- **Declined**: `4000 0000 0000 0002`
-
-Use any future expiry date and any 3-digit CVC.
-
-### Webhooks (Production)
-
-1. Install Stripe CLI: `stripe listen --forward-to localhost:3000/api/webhooks/stripe`
-2. Copy the webhook signing secret to `.env.local`
-3. For production, configure webhooks in Stripe Dashboard
+Paystack is the primary payment processor. Configure `NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY` and `PAYSTACK_SECRET_KEY` in your `.env` file. (Stripe has been removed.)
 
 ## 📦 Project Structure
 
@@ -154,7 +138,7 @@ sankofatribe/
 │   └── ...
 ├── lib/                      # Utilities
 │   ├── sanity.ts             # Sanity client & types
-│   ├── stripe.ts             # Stripe config
+│   ├── paystack.ts           # Paystack config
 │   └── cart-context.tsx      # Cart state management
 ├── sanity/                   # CMS configuration
 │   └── schemas/              # Content schemas

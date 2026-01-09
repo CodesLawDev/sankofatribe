@@ -85,6 +85,7 @@ export interface HomePage {
     collectionHeading?: string
     collectionSubheading?: string
     latestCollectionProducts?: Product[]
+    bannerDisplayMode?: 'all' | 'curated'
     bannerSections?: Array<{
         title?: string
         layout: 'two' | 'three'
@@ -131,6 +132,39 @@ export interface Campaign {
     includedCategories?: Category[]
     excludedProducts?: Product[]
     stackWithPromos?: boolean
+}
+
+export interface Customer {
+    _id: string
+    _type: 'customer'
+    email: string
+    firstName: string
+    lastName: string
+    phone?: string
+    profileImage?: SanityImage
+    registeredAt: string
+    lastLogin?: string
+    status: 'active' | 'inactive' | 'suspended' | 'deleted'
+    shippingAddresses?: Array<{
+        id: string
+        label?: string
+        street: string
+        city: string
+        region?: string
+        postalCode?: string
+        country: string
+        isDefault?: boolean
+    }>
+    orders?: string[]
+    totalOrders?: number
+    totalSpent?: number
+    loyaltyPoints?: number
+    preferences?: {
+        emailMarketing?: boolean
+        smsNotifications?: boolean
+        orderUpdates?: boolean
+    }
+    notes?: string
 }
 
 export interface SiteSettings {

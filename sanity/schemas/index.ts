@@ -10,6 +10,7 @@ import { contentPage } from './contentPage'
 import { announcement } from './announcement'
 import { order } from './order'
 import { user } from './user'
+import { customer } from './customer'
 import smsLog from './smsLog'
 import { payment } from './payment'
 import { promoCode } from './promoCode'
@@ -29,6 +30,7 @@ export const schemaTypes = [
     order,
     payment,
     user,
+    customer,
     smsLog,
     promoCode,
     campaign,

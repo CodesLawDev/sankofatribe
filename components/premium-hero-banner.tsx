@@ -121,7 +121,7 @@ export default function PremiumHeroBanner({
                         </p>
                     )}
                     {(ctaText && primaryHref) || (ctaTextSecondary && secondaryHref) ? (
-                        <div className="flex flex-wrap gap-3">
+                        <div className={`flex flex-wrap gap-3 ${textPosition === 'center' ? 'justify-center' : ''}`}>
                             {ctaText && primaryHref && (
                                 <Link href={primaryHref}>
                                     <Button

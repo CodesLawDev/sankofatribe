@@ -16,6 +16,27 @@ export const banner = defineType({
             type: 'string',
         }),
         defineField({
+            name: 'order',
+            title: 'Display Order',
+            type: 'number',
+            description: 'Lower numbers appear first (e.g., 1, 2, 3...)',
+            initialValue: 1,
+            validation: (Rule) => Rule.required().min(1),
+        }),
+        defineField({
+            name: 'displayMode',
+            title: 'Display Mode',
+            type: 'string',
+            description: 'Full width banner or card (3 cards per row)',
+            options: {
+                list: [
+                    { title: 'Full Width Banner', value: 'full' },
+                    { title: 'Card (3-up Grid)', value: 'card' },
+                ],
+            },
+            initialValue: 'full',
+        }),
+        defineField({
             name: 'image',
             title: 'Banner Image',
             type: 'image',

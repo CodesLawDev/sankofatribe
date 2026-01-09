@@ -39,19 +39,19 @@ Create `.env.local` file:
 
 ```bash
 # Copy the example file
-copy .env.local.example .env.local
+copy .env.example .env
 ```
 
-Edit `.env.local` and add your keys:
+Edit `.env` and add your keys:
 
 ```env
 NEXT_PUBLIC_SANITY_PROJECT_ID=your_actual_project_id
 NEXT_PUBLIC_SANITY_DATASET=production
 NEXT_PUBLIC_SANITY_API_VERSION=2024-01-01
 
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
-STRIPE_SECRET_KEY=sk_test_...
-STRIPE_WEBHOOK_SECRET=whsec_...
+# Paystack
+NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY=pk_test_...
+PAYSTACK_SECRET_KEY=sk_test_...
 
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
