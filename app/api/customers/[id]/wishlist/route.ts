@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken, prisma } from '@/lib/auth-utils';
+import { verifyToken, getPrisma } from '@/lib/auth-utils';
 import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic'
@@ -27,6 +27,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
+    const prisma = getPrisma();
     const wishlistItems = await prisma.wishlistItem.findMany({
       where: { userId: params.id },
       orderBy: { addedAt: 'desc' },
@@ -75,7 +76,8 @@ export async function POST(
     }
 
     // Check if already in wishlist
-    const existing = await prisma.wishlistItem.findUnique({
+    const prisma2 = getPrisma();
+    const existing = await prisma2.wishlistItem.findUnique({
       where: { userId_productId: { userId: params.id, productId } },
     });
 
@@ -86,7 +88,7 @@ export async function POST(
       );
     }
 
-    const wishlistItem = await prisma.wishlistItem.create({
+    const wishlistItem = await prisma2.wishlistItem.create({
       data: {
         userId: params.id,
         productId,

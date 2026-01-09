@@ -2,7 +2,14 @@ import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import * as jwt from 'jose';
 
-const prisma = new PrismaClient();
+let prismaInstance: PrismaClient | null = null;
+
+export function getPrisma(): PrismaClient {
+  if (!prismaInstance) {
+    prismaInstance = new PrismaClient();
+  }
+  return prismaInstance;
+}
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'your-secret-key-change-in-production'
@@ -75,6 +82,7 @@ export async function registerUser(
   password: string,
   phone?: string
 ) {
+  const prisma = getPrisma();
   // Check if user already exists
   const existingUser = await prisma.user.findUnique({
     where: { email: email.toLowerCase() },
@@ -107,6 +115,7 @@ export async function registerUser(
  * Login user
  */
 export async function loginUser(email: string, password: string) {
+  const prisma = getPrisma();
   const user = await prisma.user.findUnique({
     where: { email: email.toLowerCase() },
   });
@@ -142,4 +151,4 @@ export async function loginUser(email: string, password: string) {
   return user;
 }
 
-export { prisma };
+// Do not export a Prisma instance to avoid initializing during import/build

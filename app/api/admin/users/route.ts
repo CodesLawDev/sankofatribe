@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyToken, prisma, hashPassword } from '@/lib/auth-utils'
+import { verifyToken, getPrisma, hashPassword } from '@/lib/auth-utils'
 import { cookies } from 'next/headers'
 
 export const dynamic = 'force-dynamic'
@@ -52,6 +52,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get total count
+    const prisma = getPrisma()
     const total = await prisma.user.count({ where })
 
     // Get admin users (don't include passwordHash)
@@ -128,6 +129,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user already exists
+    const prisma = getPrisma()
     const existing = await prisma.user.findUnique({
       where: { email: email.toLowerCase() },
     })

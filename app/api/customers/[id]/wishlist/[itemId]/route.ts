@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken, prisma } from '@/lib/auth-utils';
+import { verifyToken, getPrisma } from '@/lib/auth-utils';
 import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic'
@@ -28,6 +28,7 @@ export async function DELETE(
     }
 
     // Verify the item belongs to this user
+    const prisma = getPrisma();
     const wishlistItem = await prisma.wishlistItem.findUnique({
       where: { id: params.itemId },
     });

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken, prisma } from '@/lib/auth-utils';
+import { verifyToken, getPrisma } from '@/lib/auth-utils';
 import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic'
@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
     console.log('Token verified for user:', payload.userId);
 
     // Get full user data
+    const prisma = getPrisma();
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
       select: {
