@@ -12,6 +12,8 @@ import {
     ShoppingCart,
     Package,
     Users,
+    Eye,
+    Activity,
 } from 'lucide-react'
 
 interface DashboardStats {
@@ -28,6 +30,14 @@ interface DashboardStats {
     unpaidOrders: number
 }
 
+interface AnalyticsStats {
+    totalPageViews: number
+    uniqueVisitors: number
+    newCustomers: number
+    successfulPayments: number
+    failedPayments: number
+}
+
 const initialStats: DashboardStats = {
     totalOrders: 0,
     totalRevenue: 0,
@@ -42,6 +52,14 @@ const initialStats: DashboardStats = {
     unpaidOrders: 0,
 }
 
+const initialAnalytics: AnalyticsStats = {
+    totalPageViews: 0,
+    uniqueVisitors: 0,
+    newCustomers: 0,
+    successfulPayments: 0,
+    failedPayments: 0,
+}
+
 const pickNumber = (value: any): number => {
     if (typeof value === 'number') return value
     if (typeof value === 'string') return parseFloat(value) || 0
@@ -50,7 +68,9 @@ const pickNumber = (value: any): number => {
 
 export default function AdminPage() {
     const [stats, setStats] = useState<DashboardStats>(initialStats)
+    const [analytics, setAnalytics] = useState<AnalyticsStats>(initialAnalytics)
     const [statsLoading, setStatsLoading] = useState(true)
+    const [analyticsLoading, setAnalyticsLoading] = useState(true)
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -85,7 +105,31 @@ export default function AdminPage() {
             }
         }
 
+        const fetchAnalytics = async () => {
+            try {
+                const response = await fetch('/api/admin/analytics?period=month', {
+                    credentials: 'include',
+                    cache: 'no-store' as any,
+                })
+                if (response.ok) {
+                    const data = await response.json()
+                    setAnalytics({
+                        totalPageViews: pickNumber(data.totalPageViews),
+                        uniqueVisitors: pickNumber(data.uniqueVisitors),
+                        newCustomers: pickNumber(data.newCustomers),
+                        successfulPayments: pickNumber(data.successfulPayments),
+                        failedPayments: pickNumber(data.failedPayments),
+                    })
+                }
+            } catch (error) {
+                console.error('Failed to fetch analytics:', error)
+            } finally {
+                setAnalyticsLoading(false)
+            }
+        }
+
         fetchStats()
+        fetchAnalytics()
     }, [])
 
     return (
@@ -117,46 +161,46 @@ export default function AdminPage() {
                             href: '/admin/orders',
                         },
                         {
+                            label: 'Site Visits',
+                            value: analyticsLoading ? '...' : analytics.totalPageViews.toLocaleString(),
+                            icon: Eye,
+                            color: 'bg-purple-500',
+                            href: '/admin/analytics',
+                        },
+                        {
+                            label: 'Unique Visitors',
+                            value: analyticsLoading ? '...' : analytics.uniqueVisitors.toLocaleString(),
+                            icon: Users,
+                            color: 'bg-indigo-500',
+                            href: '/admin/analytics',
+                        },
+                        {
+                            label: 'New Customers',
+                            value: analyticsLoading ? '...' : analytics.newCustomers,
+                            icon: Users,
+                            color: 'bg-cyan-500',
+                            href: '/admin/customers',
+                        },
+                        {
+                            label: 'Successful Payments',
+                            value: analyticsLoading ? '...' : analytics.successfulPayments,
+                            icon: CheckCircle,
+                            color: 'bg-emerald-500',
+                            href: '/admin/orders',
+                        },
+                        {
+                            label: 'Failed Payments',
+                            value: analyticsLoading ? '...' : analytics.failedPayments,
+                            icon: XCircle,
+                            color: 'bg-red-500',
+                            href: '/admin/orders',
+                        },
+                        {
                             label: 'Pending Orders',
                             value: statsLoading ? '...' : stats.pendingOrders,
                             icon: Clock,
                             color: 'bg-yellow-500',
                             href: '/admin/orders?status=pending',
-                        },
-                        {
-                            label: 'Processing',
-                            value: statsLoading ? '...' : stats.processingOrders,
-                            icon: Truck,
-                            color: 'bg-purple-500',
-                            href: '/admin/orders?status=processing',
-                        },
-                        {
-                            label: 'Shipped',
-                            value: statsLoading ? '...' : stats.shippedOrders,
-                            icon: TrendingUp,
-                            color: 'bg-indigo-500',
-                            href: '/admin/orders?status=shipped',
-                        },
-                        {
-                            label: 'Delivered',
-                            value: statsLoading ? '...' : stats.deliveredOrders,
-                            icon: CheckCircle,
-                            color: 'bg-emerald-500',
-                            href: '/admin/orders?status=delivered',
-                        },
-                        {
-                            label: 'Cancelled',
-                            value: statsLoading ? '...' : stats.cancelledOrders,
-                            icon: XCircle,
-                            color: 'bg-red-600',
-                            href: '/admin/orders?status=cancelled',
-                        },
-                        {
-                            label: "Today's Orders",
-                            value: statsLoading ? '...' : stats.todayOrders,
-                            icon: TrendingUp,
-                            color: 'bg-cyan-500',
-                            href: '/admin/orders?date=today',
                         },
                     ].map((stat, i) => {
                         const IconComponent = stat.icon
@@ -180,6 +224,59 @@ export default function AdminPage() {
                             </Link>
                         )
                     })}
+                </div>
+
+                {/* Monthly Analytics Summary */}
+                <div className="bg-white dark:bg-gray-900 rounded-lg shadow border border-gray-200 dark:border-gray-800 p-6 mb-8">
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                            This Month&apos;s Performance
+                        </h2>
+                        <Link 
+                            href="/admin/analytics"
+                            className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium"
+                        >
+                            View Full Analytics &rarr;
+                        </Link>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="flex flex-col">
+                            <div className="flex items-center gap-2 mb-2">
+                                <Activity className="w-5 h-5 text-purple-500" />
+                                <span className="text-gray-600 dark:text-gray-400 text-sm">Traffic</span>
+                            </div>
+                            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                                {analyticsLoading ? '...' : analytics.totalPageViews.toLocaleString()}
+                            </div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                {analyticsLoading ? '...' : analytics.uniqueVisitors.toLocaleString()} unique visitors
+                            </div>
+                        </div>
+                        <div className="flex flex-col">
+                            <div className="flex items-center gap-2 mb-2">
+                                <ShoppingCart className="w-5 h-5 text-blue-500" />
+                                <span className="text-gray-600 dark:text-gray-400 text-sm">Orders</span>
+                            </div>
+                            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                                {statsLoading ? '...' : stats.totalOrders}
+                            </div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                GH₵{statsLoading ? '...' : stats.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })} revenue
+                            </div>
+                        </div>
+                        <div className="flex flex-col">
+                            <div className="flex items-center gap-2 mb-2">
+                                <Users className="w-5 h-5 text-cyan-500" />
+                                <span className="text-gray-600 dark:text-gray-400 text-sm">Growth</span>
+                            </div>
+                            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                                {analyticsLoading ? '...' : analytics.newCustomers}
+                            </div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                new customers this month
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Quick Actions */}

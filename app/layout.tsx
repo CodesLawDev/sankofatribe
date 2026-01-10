@@ -3,6 +3,7 @@ import './globals.css'
 import Header from '@/components/header-new'
 import Footer from '@/components/footer'
 import { Providers } from './providers'
+import AnalyticsTracker from '@/components/analytics-tracker'
 
 export const viewport: Viewport = {
     width: 'device-width',
@@ -53,6 +54,7 @@ export default function RootLayout({
         <html lang="en" suppressHydrationWarning>
             <body className="dark:bg-darkbg dark:text-white bg-white text-black">
                 <Providers>
+                    <AnalyticsTracker />
                     <Header />
                     <main className="min-h-screen">{children}</main>
                     <Footer />

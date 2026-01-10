@@ -20,6 +20,7 @@
     "@sanity/client": "6.10.0",
     "@sanity/image-url": "1.0.2",
     "@sanity/vision": "3.22.0",
+    "@types/uuid": "^10.0.0",
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "0.7.0",
@@ -36,6 +37,7 @@
     "react-paystack": "5.0.0",
     "sanity": "3.22.0",
     "styled-components": "6.1.19",
+    "uuid": "^13.0.0",
     "zustand": "4.4.7"
   },
   "devDependencies": {

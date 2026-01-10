@@ -174,3 +174,51 @@ model LoginHistory {
   @@index([userId])
   @@index([loginTime])
 }
+
+// Analytics tracking for site visits
+model PageView {
+  id                    String      @id @default(cuid())
+  path                  String      @db.VarChar(500)
+  userId                String?     // Optional - tracks authenticated users
+  sessionId             String      // Unique session identifier
+  ipAddress             String?     @db.VarChar(50)
+  userAgent             String?     @db.Text
+  referrer              String?     @db.VarChar(500)
+  country               String?     @db.VarChar(100)
+  device                String?     @db.VarChar(50) // mobile, tablet, desktop
+  
+  createdAt             DateTime    @default(now())
+  
+  @@index([createdAt])
+  @@index([userId])
+  @@index([sessionId])
+  @@index([path])
+}
+
+// Monthly analytics reports
+model MonthlyReport {
+  id                    String      @id @default(cuid())
+  month                 Int         // 1-12
+  year                  Int
+  
+  totalOrders           Int         @default(0)
+  totalRevenue          Float       @default(0)
+  totalPageViews        Int         @default(0)
+  uniqueVisitors        Int         @default(0)
+  newCustomers          Int         @default(0)
+  
+  // Payment stats
+  successfulPayments    Int         @default(0)
+  failedPayments        Int         @default(0)
+  paymentRevenue        Float       @default(0)
+  
+  // SMS sent status
+  smsSent               Boolean     @default(false)
+  smsRecipients         String[]    @default([])
+  smsSentAt             DateTime?
+  
+  createdAt             DateTime    @default(now())
+  
+  @@unique([month, year])
+  @@index([createdAt])
+}
