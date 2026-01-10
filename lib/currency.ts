@@ -13,7 +13,7 @@ export interface GeoSettings {
  * Convert GHS to USD using exchange rate
  */
 export function convertGHSToUSD(amount: number, exchangeRate: number): number {
-  // Round USD to nearest whole number per requirement
+  // Round to nearest whole USD as requested
   return Math.round(amount * exchangeRate)
 }
 

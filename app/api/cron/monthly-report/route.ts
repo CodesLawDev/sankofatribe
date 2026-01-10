@@ -3,9 +3,9 @@ import { NextRequest, NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 
 /**
- * Vercel Cron Job - Runs monthly to send analytics SMS
- * Triggered automatically on the 1st of each month at 9 AM
- * Configure schedule in vercel.json
+ * Cron Endpoint - Runs monthly to send analytics SMS
+ * Intended to be triggered by GitHub Actions (or any scheduler)
+ * Schedule is defined in .github/workflows/monthly-report.yml
  */
 export async function GET(request: NextRequest) {
   try {
