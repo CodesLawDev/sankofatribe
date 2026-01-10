@@ -29,129 +29,110 @@ This will create two new tables:
 
 ---
 
-## 📱 Twilio SMS Configuration
+## 📱 BMS SMS Configuration
 
-### 1. Sign Up for Twilio
+### Using Your Existing BMS Integration
 
-1. Go to [https://www.twilio.com/](https://www.twilio.com/)
-2. Sign up for a free account (you get $15.50 in free credit)
-3. Get a Twilio phone number (free with trial)
-4. Note down your **Account SID** and **Auth Token**
+The analytics SMS reports use your **existing BMS SMS service** - no additional configuration needed!
 
-### 2. Add Environment Variables
+**Already Configured:**
+- ✅ `BMS_API_KEY` is set in your environment
+- ✅ BMS endpoint: `bms.codeslaw.dev`
+- ✅ API integration is active via `lib/sms-service.ts`
 
-Create or update your `.env.local` file with:
+### Admin Phone Configuration
 
-```env
-# Twilio SMS Configuration
-TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxx
-TWILIO_AUTH_TOKEN=your_auth_token_here
-TWILIO_PHONE_NUMBER=+1234567890
+Admin phone numbers are now pulled directly from **Sanity CMS**:
 
-# Admin Phone Number(s) - comma-separated for multiple admins
-ADMIN_PHONE_NUMBER=+233123456789,+233987654321
-```
+1. Go to `/studio` → Site Settings
+2. Find the **Admin Phone Number** field
+3. Enter your phone number(s) with country code: `+233123456789`
+4. For multiple admins, separate with commas: `+233123456789,+233987654321`
 
 **Important Notes:**
 - Phone numbers must include country code (e.g., +233 for Ghana)
 - Use commas to add multiple admin phone numbers
-- Twilio trial accounts can only send to verified phone numbers
-
-### 3. Verify Phone Numbers (Trial Account)
-
-If using a trial account:
-1. Go to Twilio Console → Phone Numbers → Verified Caller IDs
-2. Add and verify each admin phone number
-3. You'll receive a verification code via SMS
+- Changes in Sanity are instantly reflected in SMS reports
+- No environment variables needed - all config is in Sanity
 
 ---
 
-## 🔄 Automated Monthly Reports
+## 🔄 Automated Monthly Reports via GitHub Actions
 
-### Option 1: Vercel Cron Jobs (Recommended)
+### Setup GitHub Actions Cron
 
-Create `app/api/cron/monthly-report/route.ts`:
+The monthly analytics report is automated using **GitHub Actions**, which runs reliably and is free for public/private repos.
 
-```typescript
-import { NextRequest, NextResponse } from 'next/server'
+The workflow `.github/workflows/monthly-report.yml` is already created and scheduled to:
+- Run on the **1st of every month at 9 AM UTC**
+- Trigger your `/api/cron/monthly-report` endpoint
+- Generate and send the monthly SMS report
 
-export const dynamic = 'force-dynamic'
+### Configure GitHub Secrets
 
-/**
- * Vercel Cron Job - Runs monthly
- * Configure in vercel.json
- */
-export async function GET(request: NextRequest) {
-  try {
-    // Verify cron secret to prevent unauthorized access
-    const authHeader = request.headers.get('authorization')
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+GitHub Actions needs two secrets to call your production endpoint:
 
-    // Call the monthly report API
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/api/admin/analytics/monthly-report`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.ADMIN_API_KEY}`,
-        },
-      }
-    )
+1. **Navigate to your repository settings:**
+   - Go to your GitHub repo → Settings → Secrets and variables → Actions
 
-    const data = await response.json()
-    return NextResponse.json(data)
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: error.message },
-      { status: 500 }
-    )
-  }
-}
+2. **Create two secrets:**
+
+   **`BASE_URL`** (Production domain)
+   ```
+   https://sankofatribe.com
+   ```
+   
+   **`CRON_SECRET`** (Authorization token)
+   ```
+   your_random_secret_min_32_characters
+   ```
+
+3. **Ensure your production `.env` has matching `CRON_SECRET`:**
+   ```env
+   CRON_SECRET=your_random_secret_min_32_characters
+   ```
+
+### How It Works
+
+1. GitHub Actions scheduler triggers on 1st of month at 9 AM UTC
+2. Workflow makes HTTP GET request to `/api/cron/monthly-report`
+3. Request includes: `Authorization: Bearer {CRON_SECRET}`
+4. Your endpoint validates the token
+5. Analytics are aggregated from the database
+6. SMS is sent to admin phone numbers (from Sanity CMS)
+7. Report is saved to `MonthlyReport` table
+
+### View Execution Logs
+
+To check if the cron job ran successfully:
+
+1. Go to your GitHub repo → **Actions** tab
+2. Find **"Monthly Analytics Report"** workflow
+3. View the latest run
+4. Check logs for success or errors
+
+### Manual Trigger (Testing)
+
+You can manually trigger the workflow:
+
+1. Go to GitHub repo → **Actions** tab
+2. Click **"Monthly Analytics Report"** workflow
+3. Click **"Run workflow"** button
+4. Monitor logs to verify it worked
+
+### Change Schedule (Optional)
+
+To modify when reports run, edit `.github/workflows/monthly-report.yml`:
+
+```yaml
+schedule:
+  - cron: '0 9 1 * *'  # Change this line
 ```
 
-Create `vercel.json`:
-
-```json
-{
-  "crons": [
-    {
-      "path": "/api/cron/monthly-report",
-      "schedule": "0 9 1 * *"
-    }
-  ]
-}
-```
-
-Add to `.env.local`:
-
-```env
-CRON_SECRET=your_random_secret_here
-ADMIN_API_KEY=your_admin_api_key_here
-NEXT_PUBLIC_BASE_URL=https://your-domain.com
-```
-
-**Schedule Explanation:**
-- `0 9 1 * *` = 9:00 AM on the 1st day of every month
-- Adjust as needed (use [crontab.guru](https://crontab.guru) to help)
-
-### Option 2: External Cron Service (Alternative)
-
-Use a service like [cron-job.org](https://cron-job.org) or [EasyCron](https://easycron.com):
-
-1. Create an endpoint URL: `https://your-site.com/api/admin/analytics/monthly-report`
-2. Set authentication header with your admin token
-3. Schedule to run monthly (1st of each month at 9 AM)
-
-### Option 3: Manual Trigger
-
-Admins can manually trigger the monthly report from the dashboard:
-
-1. Go to Admin Dashboard → Analytics
-2. Click "Send Monthly Report"
-3. Report will be generated and SMS sent immediately
+**Cron format:** `minute hour day month dayofweek`
+- `0 9 1 * *` = 9 AM on 1st of each month
+- `0 14 * * 0` = 2 PM every Sunday
+- Use [crontab.guru](https://crontab.guru) for reference
 
 ---
 
@@ -225,10 +206,10 @@ Keep up the great work! 🚀
 
 ### SMS Not Sending
 
-1. **Check Twilio credentials**: Verify `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, and `TWILIO_PHONE_NUMBER`
-2. **Check admin phone numbers**: Ensure `ADMIN_PHONE_NUMBER` is set with country code
-3. **Trial account**: Verify recipient phone numbers in Twilio Console
-4. **Check Twilio logs**: Go to Twilio Console → Messaging → Logs
+1. **Check BMS API key**: Verify `BMS_API_KEY` is set in production environment
+2. **Check admin phone in Sanity**: Go to `/studio` → Site Settings → Admin Phone Number
+3. **Phone number format**: Ensure numbers include country code (+233...)
+4. **Check SMS logs**: Contact BMS support for delivery logs
 
 ### Analytics Not Tracking
 
@@ -239,10 +220,10 @@ Keep up the great work! 🚀
 
 ### Cron Job Not Running
 
-1. **Verify vercel.json**: Ensure cron configuration is correct
-2. **Check Vercel logs**: Go to Vercel Dashboard → Deployments → Logs
-3. **Authentication**: Verify `CRON_SECRET` matches in both places
-4. **Base URL**: Ensure `NEXT_PUBLIC_BASE_URL` is your production URL
+1. **Check GitHub Actions logs**: Repository → Actions → Monthly Analytics Report
+2. **Verify GitHub Secrets**: Ensure `BASE_URL` and `CRON_SECRET` are set correctly
+3. **Verify production env**: Ensure `CRON_SECRET` matches between GitHub Secrets and production `.env`
+4. **Check workflow file**: Ensure `.github/workflows/monthly-report.yml` is committed
 
 ---
 
@@ -256,33 +237,44 @@ curl -X POST https://your-site.com/api/analytics/track \
   -d '{"path": "/products", "referrer": "https://google.com"}'
 ```
 
-### Test Monthly Report (Manual)
+### Test Monthly Report (Manual via GitHub Actions)
 
-1. Log in to admin dashboard
-2. Open browser console
-3. Run:
+1. Go to GitHub repo → **Actions** → **Monthly Analytics Report**
+2. Click **"Run workflow"** → **"Run workflow"**
+3. Wait for it to complete
+4. Check your phone for the SMS message
 
-```javascript
-fetch('/api/admin/analytics/monthly-report', {
-  method: 'POST',
-  credentials: 'include',
-}).then(r => r.json()).then(console.log)
+### Test Monthly Report (Manual via Curl)
+
+```bash
+curl -X GET https://your-site.com/api/cron/monthly-report \
+  -H "Authorization: Bearer your_cron_secret"
 ```
 
 ### Test SMS Service
 
-Create `app/api/test-sms/route.ts`:
+Create a test endpoint `app/api/test-sms/route.ts`:
 
 ```typescript
 import { NextResponse } from 'next/server'
 import { sendSMS } from '@/lib/sms-service'
 
 export async function GET() {
-  const result = await sendSMS(
-    process.env.ADMIN_PHONE_NUMBER!,
-    'Test message from Sankofa Tribe'
-  )
-  return NextResponse.json(result)
+  try {
+    // Get admin phone from Sanity
+    const { serverClient } = await import('@/sanity/lib/client')
+    const settings = await serverClient.fetch<{ adminPhone?: string }>(
+      `*[_type == "siteSettings"][0]{adminPhone}`
+    )
+    
+    const result = await sendSMS(
+      settings?.adminPhone || '',
+      'Test message from Sankofa Tribe Analytics'
+    )
+    return NextResponse.json(result)
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
 }
 ```
 
@@ -292,11 +284,17 @@ Visit: `https://your-site.com/api/test-sms`
 
 ## 💰 Cost Estimates
 
-### Twilio SMS Pricing (Ghana)
+### BMS SMS Pricing
 
-- **Outbound SMS**: ~$0.045 per message to Ghana
-- **Monthly cost**: $0.045 × 12 months = **$0.54/year** per admin
-- **For 3 admins**: ~$1.62/year
+Your existing BMS plan covers the monthly analytics SMS reports - **no additional costs!**
+
+Check your current BMS pricing with their support for details on per-message rates.
+
+### GitHub Actions
+
+- **Cost**: **FREE** ✅
+- **Free tier**: Thousands of free runs per month
+- **Reliability**: 99.9% uptime SLA
 
 ### Database Storage
 
@@ -309,11 +307,10 @@ Visit: `https://your-site.com/api/test-sms`
 ## 📝 Next Steps
 
 1. ✅ Run database migration
-2. ✅ Configure Twilio credentials
-3. ✅ Add admin phone number(s)
-4. ✅ Set up Vercel cron job
-5. ✅ Test SMS delivery
-6. ✅ Monitor analytics dashboard
+2. ✅ Configure admin phone in Sanity
+3. ✅ Set up GitHub Secrets (`BASE_URL`, `CRON_SECRET`)
+4. ✅ Test SMS delivery
+5. ✅ Monitor analytics dashboard
 
 ---
 
@@ -329,8 +326,8 @@ Visit: `https://your-site.com/api/test-sms`
 ## 📞 Support
 
 If you need help:
-1. Check Twilio Console logs for SMS issues
-2. Check Vercel deployment logs for cron job issues
+1. Check GitHub Actions logs for cron job issues: Repository → Actions → Monthly Analytics Report
+2. Check BMS dashboard for SMS delivery logs
 3. Check browser console for tracking issues
 4. Review database for stored PageView records
 
