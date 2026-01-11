@@ -33,30 +33,57 @@ export function formatPrice(amount: number, currency: 'GHS' | 'USD'): string {
 }
 
 /**
- * Detect user's country code from IP or browser locale
+ * Detect user's country code from IP geolocation, timezone, or browser locale
+ * Uses multiple methods for accuracy with fallback to default
  */
 export async function detectUserCountry(): Promise<string> {
   try {
-    // Prefer timezone when available (helps when device language isn't region-specific)
+    // Method 1: IP-based geolocation (most accurate)
+    try {
+      const geoResponse = await fetch('https://ip-api.com/json/?fields=countryCode', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      })
+      
+      if (geoResponse.ok) {
+        const geoData = await geoResponse.json() as { countryCode?: string }
+        if (geoData.countryCode) {
+          console.log('Location detected via IP:', geoData.countryCode)
+          return geoData.countryCode.toUpperCase()
+        }
+      }
+    } catch (ipError) {
+      console.debug('IP geolocation failed, trying alternative methods:', ipError)
+    }
+
+    // Method 2: Timezone detection (good for accuracy)
     if (typeof Intl !== 'undefined') {
       const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
-      if (tz && tz.toLowerCase().includes('accra')) {
-        return 'GH'
+      if (tz) {
+        // Check for Ghana timezones
+        if (tz.toLowerCase().includes('accra') || tz.includes('Africa/Accra')) {
+          console.log('Location detected via timezone:', tz)
+          return 'GH'
+        }
       }
     }
 
-    // Try to get from browser locale
+    // Method 3: Browser locale (fallback)
     if (typeof navigator !== 'undefined') {
       const locales = navigator.languages && navigator.languages.length > 0 ? navigator.languages : [navigator.language]
       const locale = locales.find((loc) => loc && loc.includes('-')) || locales[0]
       const country = locale?.split('-')[1]
-      if (country) return country.toUpperCase()
+      if (country) {
+        console.log('Location detected via browser locale:', country)
+        return country.toUpperCase()
+      }
     }
     
-    // Fallback: could integrate with IP geolocation service
-    // For now, return default
+    // Fallback: default to Ghana
+    console.log('Could not detect location, defaulting to GH')
     return 'GH'
-  } catch {
+  } catch (error) {
+    console.error('Country detection error:', error)
     return 'GH'
   }
 }

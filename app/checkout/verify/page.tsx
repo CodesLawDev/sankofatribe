@@ -38,6 +38,7 @@ function VerifyPaymentContent() {
     }
 
     verifyPayment();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reference]);
 
   const verifyPayment = async () => {
@@ -162,9 +163,9 @@ function VerifyPaymentContent() {
       >
         {status === 'verifying' && (
           <>
-            <div className="w-20 h-20 border-4 border-black dark:border-white border-t-transparent dark:border-t-transparent rounded-full animate-spin mx-auto mb-8"></div>
+            <div className="w-20 h-20 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto mb-8"></div>
             <h1 className="text-3xl md:text-4xl font-light mb-4">Verifying Payment</h1>
-            <p className="text-lg font-light text-gray-600 dark:text-gray-400">
+            <p className="text-lg font-light text-gray-600">
               Please wait while we confirm your payment...
             </p>
           </>
@@ -174,10 +175,10 @@ function VerifyPaymentContent() {
           <>
             <CheckCircleIcon className="w-20 h-20 mx-auto mb-8 text-green-500" />
             <h1 className="text-3xl md:text-4xl font-light mb-4">Payment Successful!</h1>
-            <p className="text-lg font-light text-gray-600 dark:text-gray-400 mb-8">
+            <p className="text-lg font-light text-gray-600 mb-8">
               {message}
             </p>
-            <p className="text-sm font-light text-gray-500 dark:text-gray-500">
+            <p className="text-sm font-light text-gray-500">
               Redirecting to confirmation page...
             </p>
           </>
@@ -187,19 +188,19 @@ function VerifyPaymentContent() {
           <>
             <XCircleIcon className="w-20 h-20 mx-auto mb-8 text-red-500" />
             <h1 className="text-3xl md:text-4xl font-light mb-4">Payment Failed</h1>
-            <p className="text-lg font-light text-gray-600 dark:text-gray-400 mb-8">
+            <p className="text-lg font-light text-gray-600 mb-8">
               {message}
             </p>
             <div className="flex gap-4 justify-center">
               <button
                 onClick={() => router.push('/checkout')}
-                className="px-8 py-4 bg-black dark:bg-white text-white dark:text-black font-light uppercase text-sm tracking-wide hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
+                className="px-8 py-4 bg-black text-white font-light uppercase text-sm tracking-wide hover:bg-gray-800 transition-colors"
               >
                 Try Again
               </button>
               <button
                 onClick={() => router.push('/')}
-                className="px-8 py-4 border border-black dark:border-white font-light uppercase text-sm tracking-wide hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-colors"
+                className="px-8 py-4 border border-black font-light uppercase text-sm tracking-wide hover:bg-black hover:text-white transition-colors"
               >
                 Back to Home
               </button>
@@ -216,7 +217,7 @@ export default function VerifyPaymentPage() {
     <Suspense fallback={
       <main className="min-h-screen pt-24 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+          <p className="text-gray-600">Loading...</p>
         </div>
       </main>
     }>

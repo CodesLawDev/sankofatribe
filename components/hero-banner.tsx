@@ -59,8 +59,7 @@ export default function HeroBanner({ banner }: HeroBannerProps) {
                                 <Link href={banner.ctaLinkSecondary}>
                                     <Button
                                         size="lg"
-                                        variant={banner.textColor === 'white' ? 'secondary' : 'default'}
-                                        className="min-w-[200px]"
+                                        className={`bg-transparent border-2 ${banner.textColor === 'white' ? 'border-white text-white hover:bg-white hover:text-black' : 'border-black text-black hover:bg-black hover:text-white'} transition-all duration-300 min-w-[200px]`}
                                     >
                                         {banner.ctaTextSecondary}
                                     </Button>

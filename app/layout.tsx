@@ -10,10 +10,7 @@ export const viewport: Viewport = {
     initialScale: 1,
     minimumScale: 1,
     maximumScale: 5,
-    themeColor: [
-        { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-        { media: '(prefers-color-scheme: dark)', color: '#0f0f0f' },
-    ],
+    themeColor: '#ffffff',
 }
 
 export const metadata: Metadata = {
@@ -52,7 +49,7 @@ export default function RootLayout({
 }) {
     return (
         <html lang="en" suppressHydrationWarning>
-            <body className="dark:bg-darkbg dark:text-white bg-white text-black">
+            <body className="bg-white text-black">
                 <Providers>
                     <AnalyticsTracker />
                     <Header />

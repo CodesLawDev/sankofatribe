@@ -129,43 +129,43 @@ export default function CustomerLoginPage() {
 
     if (!isHydrated) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-                <div className="text-gray-600 dark:text-gray-400">Loading...</div>
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <div className="text-gray-600">Loading...</div>
             </div>
         )
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
             <div className="w-full max-w-md">
                 {/* Header */}
                 <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                    <h1 className="text-3xl font-bold text-gray-900 mb-2">
                         SANKOFA TRIBE
                     </h1>
-                    <p className="text-gray-600 dark:text-gray-400">Customer Account</p>
+                    <p className="text-gray-600">Customer Account</p>
                 </div>
 
                 {/* Login Card */}
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
+                <div className="bg-white rounded-lg shadow-lg p-8">
                     {error && (
-                        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg flex items-start gap-3">
-                            <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
-                            <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+                        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+                            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                            <p className="text-sm text-red-700">{error}</p>
                         </div>
                     )}
 
                     {success && (
-                        <div className="mb-6 p-4 bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-lg flex items-start gap-3">
-                            <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
-                            <p className="text-sm text-green-700 dark:text-green-300">Login successful! Redirecting...</p>
+                        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start gap-3">
+                            <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                            <p className="text-sm text-green-700">Login successful! Redirecting...</p>
                         </div>
                     )}
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {/* Email Field */}
                         <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                                 Email Address
                             </label>
                             <input
@@ -175,14 +175,14 @@ export default function CustomerLoginPage() {
                                 value={formData.email}
                                 onChange={handleInputChange}
                                 disabled={isLoading}
-                                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent dark:bg-gray-700 dark:text-white disabled:opacity-50"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent disabled:opacity-50"
                                 placeholder="your@email.com"
                             />
                         </div>
 
                         {/* Password Field */}
                         <div>
-                            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                                 Password
                             </label>
                             <input
@@ -192,7 +192,7 @@ export default function CustomerLoginPage() {
                                 value={formData.password}
                                 onChange={handleInputChange}
                                 disabled={isLoading}
-                                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent dark:bg-gray-700 dark:text-white disabled:opacity-50"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent disabled:opacity-50"
                                 placeholder="Enter your password"
                             />
                         </div>
@@ -207,13 +207,13 @@ export default function CustomerLoginPage() {
                                     checked={formData.rememberMe}
                                     onChange={handleInputChange}
                                     disabled={isLoading}
-                                    className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black dark:bg-gray-700 dark:border-gray-600"
+                                    className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black"
                                 />
-                                <label htmlFor="rememberMe" className="ml-2 text-sm text-gray-600 dark:text-gray-400">
+                                <label htmlFor="rememberMe" className="ml-2 text-sm text-gray-600">
                                     Remember me
                                 </label>
                             </div>
-                            <Link href="/forgot-password" className="text-sm text-black dark:text-white hover:underline">
+                            <Link href="/forgot-password" className="text-sm text-black hover:underline">
                                 Forgot password?
                             </Link>
                         </div>
@@ -222,7 +222,7 @@ export default function CustomerLoginPage() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full py-2 px-4 bg-black dark:bg-white text-white dark:text-black rounded-lg font-medium hover:bg-gray-900 dark:hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            className="w-full py-2 px-4 bg-black text-white rounded-lg font-medium hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
                             {isLoading ? 'Signing in...' : 'Sign In'}
                         </button>
@@ -230,15 +230,15 @@ export default function CustomerLoginPage() {
 
                     {/* Footer Links */}
                     <div className="mt-6 text-center space-y-2">
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                        <p className="text-sm text-gray-600">
                             Don't have an account?{' '}
-                            <Link href="/register" className="text-black dark:text-white font-medium hover:underline">
+                            <Link href="/register" className="text-black font-medium hover:underline">
                                 Sign up
                             </Link>
                         </p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                        <p className="text-sm text-gray-600">
                             Admin?{' '}
-                            <Link href="/admin/login" className="text-black dark:text-white font-medium hover:underline">
+                            <Link href="/admin/login" className="text-black font-medium hover:underline">
                                 Admin login
                             </Link>
                         </p>

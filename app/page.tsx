@@ -5,6 +5,7 @@ import RewardsCallout from '@/components/rewards-callout'
 import FeaturedCategories from '@/components/featured-categories'
 import Spotlight from '@/components/spotlight'
 import ProductGrid from '@/components/product-grid'
+import CampaignBanner from '@/components/campaign-banner'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
@@ -90,6 +91,23 @@ async function getHomePageData() {
     return homePage
 }
 
+async function getActiveCampaigns() {
+    const now = new Date().toISOString()
+    const query = `*[_type == "campaign" && isActive == true && showOnHomepage == true && startDate <= "${now}" && endDate >= "${now}"] | order(_createdAt desc)[0] {
+      _id,
+      name,
+      slug,
+      bannerImage,
+      bannerTitle,
+      bannerSubtitle,
+      "includedProducts": includedProducts[]-> {_id, slug},
+      "includedCategories": includedCategories[]-> {_id, slug}
+    }`
+    
+    const campaign = await client.fetch(query, {}, { next: { revalidate: 300 } })
+    return campaign
+}
+
 async function getCategories() {
     const query = `*[_type == "category" && !defined(parentCategory)] | order(name asc)[0...6] {
       _id,
@@ -132,6 +150,7 @@ async function getFeaturedProducts() {
 
 export default async function HomePage() {
     const homePageData = await getHomePageData()
+    const activeCampaign = await getActiveCampaigns()
 
     const [categories, featuredProducts] = await Promise.all([
         getCategories(),
@@ -168,6 +187,13 @@ export default async function HomePage() {
 
     return (
         <div className="bg-white text-black">
+            {/* Campaign Banner - Shows active sales campaign at top */}
+            {activeCampaign && activeCampaign._id && (
+                <div className="px-4 sm:px-6 lg:px-12 mx-auto max-w-7xl">
+                    <CampaignBanner campaign={activeCampaign} />
+                </div>
+            )}
+
             {/* Hero Banners - Mixed full-width and cards */}
             {homePageData?.heroBanners && homePageData.heroBanners.length > 0 ? (
                 <div className="space-y-8 md:space-y-12 lg:space-y-16">

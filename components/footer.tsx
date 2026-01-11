@@ -39,6 +39,9 @@ interface FooterData {
 export default function Footer() {
     const currentYear = new Date().getFullYear()
     const [footerData, setFooterData] = useState<FooterData | null>(null)
+    const [newsletterEmail, setNewsletterEmail] = useState('')
+    const [newsletterStatus, setNewsletterStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+    const [newsletterMessage, setNewsletterMessage] = useState('')
 
     useEffect(() => {
         async function fetchFooterData() {
@@ -52,6 +55,44 @@ export default function Footer() {
         }
         fetchFooterData()
     }, [])
+
+    const handleNewsletterSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setNewsletterStatus('loading')
+
+        try {
+            const response = await fetch('/api/newsletter/subscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: newsletterEmail,
+                    source: 'footer',
+                }),
+            })
+
+            const data = await response.json()
+
+            if (!response.ok) {
+                setNewsletterStatus('error')
+                setNewsletterMessage(data.error || 'Failed to subscribe. Please try again.')
+                return
+            }
+
+            setNewsletterStatus('success')
+            setNewsletterMessage(data.message || 'Successfully subscribed! Check your email.')
+            setNewsletterEmail('')
+
+            // Reset success message after 5 seconds
+            setTimeout(() => {
+                setNewsletterStatus('idle')
+                setNewsletterMessage('')
+            }, 5000)
+        } catch (error) {
+            console.error('Newsletter subscription error:', error)
+            setNewsletterStatus('error')
+            setNewsletterMessage('An error occurred. Please try again.')
+        }
+    }
 
     // Default fallback data
     const defaultData: FooterData = {
@@ -171,7 +212,18 @@ export default function Footer() {
                         <p className="text-xs text-gray-400 mb-4">
                             {newsletter.description}
                         </p>
-                        <form className="flex gap-2">
+                        
+                        {newsletterStatus === 'success' ? (
+                            <div className="p-3 bg-green-900/20 border border-green-800 rounded text-xs text-green-400 mb-4">
+                                ✅ {newsletterMessage}
+                            </div>
+                        ) : newsletterStatus === 'error' ? (
+                            <div className="p-3 bg-red-900/20 border border-red-800 rounded text-xs text-red-400 mb-4">
+                                ❌ {newsletterMessage}
+                            </div>
+                        ) : null}
+
+                        <form className="flex gap-2" onSubmit={handleNewsletterSubmit}>
                             <label htmlFor="newsletter-email" className="sr-only">
                                 Email address
                             </label>
@@ -182,13 +234,17 @@ export default function Footer() {
                                 required
                                 aria-required="true"
                                 placeholder="Enter your email"
-                                className="flex-1 px-3 py-2 text-xs bg-gray-900 text-white border border-gray-700 focus:outline-none focus:border-white transition-colors"
+                                value={newsletterEmail}
+                                onChange={(e) => setNewsletterEmail(e.target.value)}
+                                disabled={newsletterStatus === 'loading'}
+                                className="flex-1 px-3 py-2 text-xs bg-gray-900 text-white border border-gray-700 focus:outline-none focus:border-white transition-colors disabled:opacity-50"
                             />
                             <button 
-                                type="submit" 
-                                className="bg-white text-black px-4 py-2 text-xs font-bold hover:bg-gray-200 transition-colors focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
+                                type="submit"
+                                disabled={newsletterStatus === 'loading'}
+                                className="bg-white text-black px-4 py-2 text-xs font-bold hover:bg-gray-200 transition-colors focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black disabled:opacity-50"
                             >
-                                {newsletter.buttonText}
+                                {newsletterStatus === 'loading' ? 'Subscribing...' : newsletter.buttonText}
                             </button>
                         </form>
                     </div>

@@ -10,9 +10,12 @@ interface CurrencyContextType {
   convertPrice: (priceGHS: number) => number
   formatPrice: (price: number) => string
   isLoading: boolean
+  setCurrencyPreference: (currency: 'GHS' | 'USD') => void
 }
 
 const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined)
+
+const CURRENCY_PREFERENCE_KEY = 'sankofatribe_currency_preference'
 
 export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   const [currency, setCurrency] = useState<'GHS' | 'USD'>('GHS')
@@ -20,19 +23,41 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   const [userCountry, setUserCountry] = useState('GH')
   const [isLoading, setIsLoading] = useState(true)
 
+  // Initialize currency on mount
   useEffect(() => {
     const initCurrency = async () => {
       try {
-        // Detect user country
+        // Always fetch exchange rate from settings first
+        let rate = 0.082 // hardcoded fallback only
+        try {
+          const response = await fetch('/api/admin/settings')
+          if (response.ok) {
+            const settings = await response.json()
+            if (settings.currency?.exchangeRate) {
+              rate = settings.currency.exchangeRate
+              console.log('Exchange rate loaded from settings:', rate)
+            }
+          }
+        } catch (err) {
+          console.warn('Failed to fetch exchange rate from settings, using fallback:', err)
+        }
+        
+        setExchangeRate(rate)
+
+        // Check for saved preference first
+        if (typeof window !== 'undefined') {
+          const savedPreference = localStorage.getItem(CURRENCY_PREFERENCE_KEY) as 'GHS' | 'USD' | null
+          if (savedPreference) {
+            console.log('Using saved currency preference:', savedPreference)
+            setCurrency(savedPreference)
+            setIsLoading(false)
+            return
+          }
+        }
+
+        // No saved preference, detect user country
         const country = await detectUserCountry()
         setUserCountry(country)
-
-        // Fetch exchange rate from settings
-        const response = await fetch('/api/admin/settings')
-        if (response.ok) {
-          const settings = await response.json()
-          setExchangeRate(settings.currency?.exchangeRate || 0.082)
-        }
 
         // Determine currency based on country
         const userCurr = getUserCurrency(country)
@@ -58,6 +83,14 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
     return formatPrice(price, currency)
   }
 
+  const setCurrencyPreference = (newCurrency: 'GHS' | 'USD') => {
+    setCurrency(newCurrency)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(CURRENCY_PREFERENCE_KEY, newCurrency)
+      console.log('Currency preference saved:', newCurrency)
+    }
+  }
+
   return (
     <CurrencyContext.Provider
       value={{
@@ -67,6 +100,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
         convertPrice,
         formatPrice: formatPriceStr,
         isLoading,
+        setCurrencyPreference,
       }}
     >
       {children}

@@ -14,22 +14,22 @@ export default function CheckoutSuccess() {
       >
         <CheckCircleIcon className="w-20 h-20 mx-auto mb-8 text-green-500" />
         <h1 className="text-4xl md:text-5xl font-light mb-6">Order Placed Successfully!</h1>
-        <p className="text-lg font-light text-gray-600 dark:text-gray-400 mb-8">
+        <p className="text-lg font-light text-gray-600 mb-8">
           Thank you for your order. We&apos;ve sent a confirmation email with your order details.
         </p>
-        <p className="text-sm font-light text-gray-600 dark:text-gray-400 mb-12">
+        <p className="text-sm font-light text-gray-600 mb-12">
           You&apos;ll receive another email when your order ships.
         </p>
         <div className="flex gap-4 justify-center">
           <Link
             href="/products"
-            className="px-8 py-4 bg-black dark:bg-white text-white dark:text-black font-light uppercase text-sm tracking-wide hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
+            className="px-8 py-4 bg-black text-white font-light uppercase text-sm tracking-wide hover:bg-gray-800 transition-colors"
           >
             Continue Shopping
           </Link>
           <Link
             href="/"
-            className="px-8 py-4 border border-black dark:border-white font-light uppercase text-sm tracking-wide hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-colors"
+            className="px-8 py-4 border border-black font-light uppercase text-sm tracking-wide hover:bg-black hover:text-white transition-colors"
           >
             Back to Home
           </Link>

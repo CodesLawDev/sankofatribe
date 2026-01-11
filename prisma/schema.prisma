@@ -222,3 +222,37 @@ model MonthlyReport {
   @@unique([month, year])
   @@index([createdAt])
 }
+model NewsletterSubscriber {
+  id                    String      @id @default(cuid())
+  email                 String      @unique @db.VarChar(255)
+  firstName             String?     @db.VarChar(100)
+  lastName              String?     @db.VarChar(100)
+  phone                 String?     @db.VarChar(20)
+  
+  // Subscription status
+  status                String      @default("active") // active, unsubscribed, bounced, invalid
+  
+  // Mailchimp integration
+  mailchimpId           String?     @db.VarChar(255)
+  mailchimpListId       String?     @db.VarChar(255)
+  
+  // Engagement metrics
+  tags                  String[]    @default([])
+  preferences           Json        @default("{\"productUpdates\": true, \"offers\": true, \"smsOptIn\": false}")
+  
+  // Timestamps
+  subscribedAt          DateTime    @default(now())
+  confirmedAt           DateTime?
+  unsubscribedAt        DateTime?
+  updatedAt             DateTime    @updatedAt
+  
+  // Metadata
+  source                String?     // "footer", "checkout", "registration", etc.
+  ipAddress             String?
+  userAgent             String?     @db.Text
+  
+  @@index([email])
+  @@index([status])
+  @@index([subscribedAt])
+  @@index([mailchimpId])
+}

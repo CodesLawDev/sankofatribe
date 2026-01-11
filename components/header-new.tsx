@@ -5,6 +5,7 @@ import { useCart } from '@/lib/cart-context'
 import { ShoppingBag, Search, Menu, X, Heart, User } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import SearchModal from './search-modal'
+import CurrencySelector from './currency-selector'
 import { client } from '@/lib/sanity'
 
 interface NavItem {
@@ -90,36 +91,41 @@ export default function Header() {
     return (
         <>
             <header className="sticky top-0 z-50 bg-white text-black shadow-sm">
-                {/* Announcement Bar */}
+                {/* Announcement Bar - Scrolling */}
                 {announcement && (
-                    <div className={`${bgColorMap[announcement.backgroundColor] || 'bg-black'} ${textColorMap[announcement.textColor] || 'text-white'} text-center py-2 px-4`}>
+                    <div className={`${bgColorMap[announcement.backgroundColor] || 'bg-black'} ${textColorMap[announcement.textColor] || 'text-white'} py-2 px-4 overflow-hidden`}>
+                        <style>{`
+                            @keyframes scroll-left {
+                                0% {
+                                    transform: translateX(100%);
+                                }
+                                100% {
+                                    transform: translateX(-100%);
+                                }
+                            }
+                            .scroll-text {
+                                display: inline-block;
+                                animation: scroll-left 20s linear infinite;
+                                white-space: nowrap;
+                                padding-right: 50px;
+                            }
+                        `}</style>
                         {announcement.link ? (
-                            <Link href={announcement.link} className="text-xs sm:text-sm font-medium hover:opacity-80 transition-opacity inline-block">
-                                {announcement.text}
+                            <Link href={announcement.link} className="text-xs sm:text-sm font-medium hover:opacity-80 transition-opacity">
+                                <span className="scroll-text">{announcement.text}</span>
                             </Link>
                         ) : (
-                            <p className="text-xs sm:text-sm font-medium">{announcement.text}</p>
+                            <p className="text-xs sm:text-sm font-medium">
+                                <span className="scroll-text">{announcement.text}</span>
+                            </p>
                         )}
                     </div>
                 )}
 
                 {/* Main Navigation */}
-                <nav className="border-b border-gray-100">
+                <nav className="border-b border-gray-100 relative">
                     <div className="mx-auto px-4 sm:px-6 lg:px-8 w-full">
                         <div className="flex h-14 sm:h-16 items-center justify-between gap-2 sm:gap-4">
-                            {/* Mobile Menu Button - Left */}
-                            <button
-                                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                                className="lg:hidden flex-shrink-0 p-2 hover:bg-gray-50 rounded-lg transition-colors -ml-2"
-                                aria-label="Toggle menu"
-                            >
-                                {mobileMenuOpen ? (
-                                    <X className="h-6 w-6" strokeWidth={1.5} />
-                                ) : (
-                                    <Menu className="h-6 w-6" strokeWidth={1.5} />
-                                )}
-                            </button>
-
                             {/* Logo */}
                             <Link 
                                 href="/" 
@@ -143,9 +149,13 @@ export default function Header() {
                                     ))
                                 ) : null}
                             </div>
-
                             {/* Right Actions */}
-                            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0 pr-12 lg:pr-0">
+                                {/* Currency Selector - Desktop only */}
+                                <div className="hidden sm:flex">
+                                    <CurrencySelector />
+                                </div>
+
                                 {/* Search - Hide on very small screens */}
                                 <button 
                                     onClick={() => setSearchOpen(true)}
@@ -191,6 +201,20 @@ export default function Header() {
                                     )}
                                 </Link>
                             </div>
+
+                            {/* Mobile Menu Button - Absolute Right */}
+                            <button
+                                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                                className="absolute right-4 lg:hidden p-2 hover:bg-gray-50 rounded-lg transition-colors"
+                                aria-label="Toggle menu"
+                                title="Menu"
+                            >
+                                {mobileMenuOpen ? (
+                                    <X className="h-6 w-6" strokeWidth={1.5} />
+                                ) : (
+                                    <Menu className="h-6 w-6" strokeWidth={1.5} />
+                                )}
+                            </button>
                         </div>
                     </div>
                 </nav>
@@ -217,6 +241,12 @@ export default function Header() {
 
                             {/* Mobile Additional Actions */}
                             <div className="space-y-1">
+                                {/* Currency Selector - Mobile */}
+                                <div className="px-3 py-3 sm:hidden">
+                                    <p className="text-xs font-medium text-gray-600 mb-2">Currency</p>
+                                    <CurrencySelector />
+                                </div>
+
                                 <button 
                                     onClick={() => {
                                         setSearchOpen(true)

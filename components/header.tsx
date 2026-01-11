@@ -25,17 +25,8 @@ export default function Header() {
             </div>
 
             <header className="sticky top-0 z-50 bg-brand-cream">
-                <nav className="mx-auto px-4 sm:px-6 lg:px-12">
+                <nav className="border-b border-gray-100 relative">
                     <div className="flex h-20 items-center justify-between">
-                        {/* Left - Mobile menu button */}
-                        <button
-                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                            className="lg:hidden p-2 -ml-2 hover:opacity-60 transition-opacity"
-                            aria-label="Toggle menu"
-                        >
-                            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-                        </button>
-
                         {/* Center - Logo */}
                         <div className="absolute left-1/2 transform -translate-x-1/2">
                             <Link href="/" className="flex items-center">
@@ -47,7 +38,7 @@ export default function Header() {
                         <div className="flex-1" />
 
                         {/* Right icons */}
-                        <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-6 pr-12 lg:pr-0">
                             <button 
                                 onClick={() => setSearchOpen(true)}
                                 className="hidden sm:block hover:opacity-60 transition-opacity" 
@@ -74,6 +65,24 @@ export default function Header() {
                                 )}
                             </Link>
                         </div>
+                        
+                        {/* Mobile menu button - Absolute Right */}
+                        <button
+                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                            className="absolute right-4 lg:hidden p-2 hover:opacity-60 transition-opacity"
+                            aria-label="Toggle menu"
+                        >
+                            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                        </button>
+                            
+                            {/* Mobile menu button - Extreme Right */}
+                            <button
+                                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                                className="lg:hidden p-2 hover:opacity-60 transition-opacity ml-auto"
+                                aria-label="Toggle menu"
+                            >
+                                {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                            </button>
                     </div>
 
                     {/* Secondary Desktop Navigation */}

@@ -214,7 +214,7 @@ export default function AdminLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="dark:bg-darkbg dark:text-white bg-white text-black">
+      <body className="bg-white text-black">
         <Providers>
           <AdminShell>{children}</AdminShell>
         </Providers>
