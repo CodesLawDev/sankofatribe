@@ -34,17 +34,16 @@ export const event = defineType({
             name: 'summary',
             title: 'Short Summary',
             type: 'text',
-            rows: 3,
             description: 'Brief description for event listing and social media previews',
             validation: (Rule) => Rule.required().max(200),
         }),
-        defineField({
+        {
             name: 'description',
             title: 'Event Description',
             type: 'array',
             of: [{ type: 'block' }],
             description: 'Full event details',
-        }),
+        },
         defineField({
             name: 'eventDate',
             title: 'Event Date',
@@ -62,36 +61,35 @@ export const event = defineType({
             title: 'Location',
             type: 'object',
             fields: [
-                {
+                defineField({
                     name: 'venue',
                     title: 'Venue Name',
                     type: 'string',
-                },
-                {
+                }),
+                defineField({
                     name: 'address',
                     title: 'Address',
                     type: 'text',
-                    rows: 2,
-                },
-                {
+                }),
+                defineField({
                     name: 'city',
                     title: 'City',
                     type: 'string',
-                },
-                {
+                }),
+                defineField({
                     name: 'isVirtual',
                     title: 'Virtual Event',
                     type: 'boolean',
                     initialValue: false,
-                },
-                {
+                }),
+                defineField({
                     name: 'virtualLink',
                     title: 'Virtual Event Link',
                     type: 'url',
                     hidden: ({ parent }) => !parent?.isVirtual,
-                },
+                }),
             ],
-        }),
+        } as any),
         defineField({
             name: 'category',
             title: 'Event Category',
@@ -113,33 +111,33 @@ export const event = defineType({
             title: 'Ticket Information',
             type: 'object',
             fields: [
-                {
+                defineField({
                     name: 'isFree',
                     title: 'Free Event',
                     type: 'boolean',
                     initialValue: true,
-                },
-                {
+                }),
+                defineField({
                     name: 'price',
                     title: 'Ticket Price',
                     type: 'number',
                     hidden: ({ parent }) => parent?.isFree,
-                },
-                {
+                }),
+                defineField({
                     name: 'currency',
                     title: 'Currency',
                     type: 'string',
                     initialValue: 'GHS',
                     hidden: ({ parent }) => parent?.isFree,
-                },
-                {
+                }),
+                defineField({
                     name: 'ticketUrl',
                     title: 'Ticket Purchase URL',
                     type: 'url',
                     hidden: ({ parent }) => parent?.isFree,
-                },
+                }),
             ],
-        }),
+        } as any),
         defineField({
             name: 'registrationUrl',
             title: 'Registration/RSVP URL',
@@ -168,13 +166,13 @@ export const event = defineType({
             initialValue: false,
             description: 'Show this event prominently on the events page',
         }),
-        defineField({
+        {
             name: 'gallery',
             title: 'Event Gallery',
             type: 'array',
             of: [{ type: 'image' }],
             description: 'Additional event photos',
-        }),
+        },
         defineField({
             name: 'publishedAt',
             title: 'Published At',
