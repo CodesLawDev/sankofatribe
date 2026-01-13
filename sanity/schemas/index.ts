@@ -6,7 +6,6 @@ import { siteSettings } from './siteSettings'
 import review from './review'
 import { navigation } from './navigation'
 import { footerSettings } from './footerSettings'
-import { contentPage } from './contentPage'
 import { announcement } from './announcement'
 import { order } from './order'
 import { user } from './user'
@@ -16,6 +15,9 @@ import { payment } from './payment'
 import { promoCode } from './promoCode'
 import { campaign } from './campaign'
 import { career } from './career'
+import { newsletterSubscriber } from './newsletterSubscriber'
+import { aboutPage } from './aboutPage'
+import { event } from './event'
 
 export const schemaTypes = [
     product,
@@ -26,7 +28,6 @@ export const schemaTypes = [
     review,
     navigation,
     footerSettings,
-    contentPage,
     announcement,
     order,
     payment,
@@ -36,4 +37,8 @@ export const schemaTypes = [
     promoCode,
     campaign,
     career,
+    newsletterSubscriber,
+    aboutPage,
+    event,
 ]
+

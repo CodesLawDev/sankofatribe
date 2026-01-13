@@ -31,6 +31,7 @@ export default function Header() {
         { name: 'Women', href: '/category/women' },
         { name: 'Kids', href: '/products' },
         { name: 'Sale', href: '/products' },
+        { name: 'Events', href: '/events' },
     ])
     const [announcement, setAnnouncement] = useState<AnnouncementData | null>(null)
 
@@ -42,6 +43,7 @@ export default function Header() {
             { name: 'Women', href: '/category/women' },
             { name: 'Kids', href: '/products' },
             { name: 'Sale', href: '/products' },
+            { name: 'Events', href: '/events' },
         ])
 
         async function fetchNavigation() {

@@ -205,3 +205,34 @@ export interface Career {
     closingDate?: string
     featured?: boolean
 }
+
+export interface Event {
+    _id: string
+    _type: 'event'
+    title: string
+    slug: { current: string }
+    image: SanityImage
+    summary: string
+    description?: any
+    eventDate: string
+    endDate?: string
+    location?: {
+        venue?: string
+        address?: string
+        city?: string
+        isVirtual?: boolean
+        virtualLink?: string
+    }
+    category?: 'fashion-show' | 'popup' | 'workshop' | 'launch' | 'sale' | 'community' | 'other'
+    ticketInfo?: {
+        isFree?: boolean
+        price?: number
+        currency?: string
+        ticketUrl?: string
+    }
+    registrationUrl?: string
+    status: 'upcoming' | 'ongoing' | 'completed' | 'cancelled'
+    featured?: boolean
+    gallery?: SanityImage[]
+    publishedAt?: string
+}
