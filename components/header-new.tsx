@@ -109,18 +109,8 @@ export default function Header() {
                 <nav className="border-b border-gray-100">
                     <div className="mx-auto px-4 sm:px-6 lg:px-8 w-full">
                         <div className="flex h-14 sm:h-16 items-center justify-between gap-2 sm:gap-4">
-                            {/* Mobile Menu Button - Left */}
-                            <button
-                                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                                className="lg:hidden flex-shrink-0 p-2 hover:bg-gray-50 rounded-lg transition-colors -ml-2"
-                                aria-label="Toggle menu"
-                            >
-                                {mobileMenuOpen ? (
-                                    <X className="h-6 w-6" strokeWidth={1.5} />
-                                ) : (
-                                    <Menu className="h-6 w-6" strokeWidth={1.5} />
-                                )}
-                            </button>
+                            {/* Mobile Menu Button - Left (moved to right) */}
+                            {/* Removed from left to place in right actions */}
 
                             {/* Logo */}
                             <Link 
@@ -148,6 +138,18 @@ export default function Header() {
 
                             {/* Right Actions */}
                             <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                                {/* Mobile Menu Button - Right */}
+                                <button
+                                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                                    className="lg:hidden flex-shrink-0 p-2 hover:bg-gray-50 rounded-lg transition-colors"
+                                    aria-label="Toggle menu"
+                                >
+                                    {mobileMenuOpen ? (
+                                        <X className="h-6 w-6" strokeWidth={1.5} />
+                                    ) : (
+                                        <Menu className="h-6 w-6" strokeWidth={1.5} />
+                                    )}
+                                </button>
                                 {/* Search - Hide on very small screens */}
                                 <button 
                                     onClick={() => setSearchOpen(true)}
