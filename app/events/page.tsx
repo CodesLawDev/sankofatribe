@@ -14,6 +14,9 @@ export const metadata: Metadata = {
     },
 }
 
+// Revalidate the events page every 60 seconds (ISR)
+export const revalidate = 60
+
 async function getEvents(): Promise<{ featured: Event[], upcoming: Event[], past: Event[] }> {
     const now = new Date().toISOString()
     
@@ -32,9 +35,9 @@ async function getEvents(): Promise<{ featured: Event[], upcoming: Event[], past
         }
     }`
     
-    const featuredQuery = `*[_type == "event" && featured == true && eventDate >= $now] | order(eventDate asc) [0...3]${projection}`
-    const upcomingQuery = `*[_type == "event" && status == "upcoming" && eventDate >= $now] | order(eventDate asc)${projection}`
-    const pastQuery = `*[_type == "event" && (status == "completed" || eventDate < $now)] | order(eventDate desc) [0...6]${projection}`
+    const featuredQuery = `*[_type == "event" && featured == true && coalesce(endDate, eventDate) >= $now] | order(eventDate asc) [0...3]${projection}`
+    const upcomingQuery = `*[_type == "event" && status in ["upcoming","ongoing"] && coalesce(endDate, eventDate) >= $now] | order(eventDate asc)${projection}`
+    const pastQuery = `*[_type == "event" && (status in ["completed","cancelled"] || coalesce(endDate, eventDate) < $now)] | order(eventDate desc) [0...6]${projection}`
     
     const [featured, upcoming, past] = await Promise.all([
         client.fetch<Event[]>(featuredQuery, { now }),
