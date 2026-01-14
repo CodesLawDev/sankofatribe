@@ -4,6 +4,7 @@ import Header from '@/components/header-new'
 import Footer from '@/components/footer'
 import { Providers } from './providers'
 import AnalyticsTracker from '@/components/analytics-tracker'
+import PullToRefresh from '@/components/pull-to-refresh'
 
 export const viewport: Viewport = {
     width: 'device-width',
@@ -55,6 +56,7 @@ export default function RootLayout({
             <body className="dark:bg-darkbg dark:text-white bg-white text-black">
                 <Providers>
                     <AnalyticsTracker />
+                    <PullToRefresh />
                     <Header />
                     <main className="min-h-screen">{children}</main>
                     <Footer />
