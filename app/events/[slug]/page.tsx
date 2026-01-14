@@ -6,13 +6,27 @@ import { client, Event, urlFor } from '@/lib/sanity'
 import { Calendar, MapPin, Clock, ExternalLink, Globe, Ticket } from 'lucide-react'
 import { PortableText } from '@portabletext/react'
 import ShareButton from '@/components/share-button'
+import EventTicketButton from '@/components/event-ticket-button'
 
 interface Props {
     params: { slug: string }
 }
 
 async function getEvent(slug: string): Promise<Event | null> {
-    const query = `*[_type == "event" && slug.current == $slug][0]`
+    const query = `*[_type == "event" && slug.current == $slug][0]{
+        ...,
+        "ticketInfo": ticketInfo{
+            ...,
+            ticketTiers[]{
+                _key,
+                name,
+                description,
+                price,
+                quantity,
+                sold
+            }
+        }
+    }`
     return client.fetch<Event>(query, { slug })
 }
 
@@ -105,6 +119,12 @@ export default async function EventPage({ params }: Props) {
     }
     
     const isPastEvent = new Date(event.eventDate) < new Date()
+    
+    // Check if tickets are available and calculate sold out status
+    const hasTicketTiers = event.ticketInfo?.ticketTiers && event.ticketInfo.ticketTiers.length > 0
+    const isSoldOut = hasTicketTiers && event.ticketInfo?.ticketTiers?.every(
+        (tier: any) => tier.sold >= tier.quantity
+    ) || false
     
     return (
         <div className="min-h-screen bg-white">
@@ -256,8 +276,12 @@ export default async function EventPage({ params }: Props) {
                                                 <p className="text-gray-600 text-sm">
                                                     {event.ticketInfo.isFree ? (
                                                         'Free Event'
-                                                    ) : (
+                                                    ) : hasTicketTiers && event.ticketInfo.ticketTiers && event.ticketInfo.ticketTiers.length > 0 ? (
+                                                        `Starting from ${event.ticketInfo.currency || 'GHS'} ${Math.min(...event.ticketInfo.ticketTiers.map((t: any) => t.price))}`
+                                                    ) : event.ticketInfo.price ? (
                                                         `${event.ticketInfo.currency || 'GHS'} ${event.ticketInfo.price}`
+                                                    ) : (
+                                                        'Ticket information available'
                                                     )}
                                                 </p>
                                             </div>
@@ -268,7 +292,27 @@ export default async function EventPage({ params }: Props) {
                             
                             {/* Action Buttons */}
                             <div className="space-y-3">
-                                {!isPastEvent && event.registrationUrl && (
+                                {/* Ticket Purchase - New Integrated System */}
+                                {hasTicketTiers && event.ticketInfo?.ticketTiers && (
+                                    <EventTicketButton
+                                        eventId={event._id}
+                                        eventTitle={event.title}
+                                        ticketTiers={event.ticketInfo.ticketTiers.map((tier: any) => ({
+                                            id: tier._key,
+                                            name: tier.name,
+                                            description: tier.description,
+                                            price: tier.price || 0,
+                                            quantity: tier.quantity,
+                                            sold: tier.sold || 0,
+                                        }))}
+                                        currency={event.ticketInfo.currency || 'GHS'}
+                                        isPastEvent={isPastEvent}
+                                        isSoldOut={isSoldOut}
+                                    />
+                                )}
+                                
+                                {/* External Registration (if no ticket tiers) */}
+                                {!hasTicketTiers && !isPastEvent && event.registrationUrl && (
                                     <a
                                         href={event.registrationUrl}
                                         target="_blank"
@@ -280,7 +324,8 @@ export default async function EventPage({ params }: Props) {
                                     </a>
                                 )}
                                 
-                                {!isPastEvent && event.ticketInfo?.ticketUrl && !event.ticketInfo.isFree && (
+                                {/* External Ticket URL (fallback if no ticket tiers) */}
+                                {!hasTicketTiers && !isPastEvent && event.ticketInfo?.ticketUrl && !event.ticketInfo.isFree && (
                                     <a
                                         href={event.ticketInfo.ticketUrl}
                                         target="_blank"
@@ -310,7 +355,7 @@ export default async function EventPage({ params }: Props) {
                             {/* Back to Events */}
                             <Link
                                 href="/events"
-                                className="block text-center px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                                className="block text-center px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-gray-700 font-medium"
                             >
                                 ← Back to All Events
                             </Link>

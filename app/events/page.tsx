@@ -17,9 +17,24 @@ export const metadata: Metadata = {
 async function getEvents(): Promise<{ featured: Event[], upcoming: Event[], past: Event[] }> {
     const now = new Date().toISOString()
     
-    const featuredQuery = `*[_type == "event" && featured == true && eventDate >= $now] | order(eventDate asc) [0...3]`
-    const upcomingQuery = `*[_type == "event" && status == "upcoming" && eventDate >= $now] | order(eventDate asc)`
-    const pastQuery = `*[_type == "event" && (status == "completed" || eventDate < $now)] | order(eventDate desc) [0...6]`
+    const projection = `{
+        ...,
+        "ticketInfo": ticketInfo{
+            ...,
+            ticketTiers[]{
+                _key,
+                name,
+                description,
+                price,
+                quantity,
+                sold
+            }
+        }
+    }`
+    
+    const featuredQuery = `*[_type == "event" && featured == true && eventDate >= $now] | order(eventDate asc) [0...3]${projection}`
+    const upcomingQuery = `*[_type == "event" && status == "upcoming" && eventDate >= $now] | order(eventDate asc)${projection}`
+    const pastQuery = `*[_type == "event" && (status == "completed" || eventDate < $now)] | order(eventDate desc) [0...6]${projection}`
     
     const [featured, upcoming, past] = await Promise.all([
         client.fetch<Event[]>(featuredQuery, { now }),
@@ -138,13 +153,25 @@ function EventCard({ event, featured = false }: { event: Event, featured?: boole
                 {/* Ticket Info */}
                 {event.ticketInfo && (
                     <div className="mt-4 pt-4 border-t border-gray-200">
-                        <p className="text-sm font-semibold text-gray-900">
-                            {event.ticketInfo.isFree ? (
-                                'Free Event'
-                            ) : (
-                                `${event.ticketInfo.currency || 'GHS'} ${event.ticketInfo.price}`
-                            )}
-                        </p>
+                        {event.ticketInfo.isFree ? (
+                            <p className="text-sm font-semibold text-gray-900 mb-2">Free Event</p>
+                        ) : (
+                            <p className="text-sm font-semibold text-gray-900 mb-2">
+                                From {event.ticketInfo.currency || 'GHS'} {Math.min(...(event.ticketInfo.ticketTiers?.map((t: any) => t.price) || [0]))}
+                            </p>
+                        )}
+                        {event.ticketInfo.ticketTiers && event.ticketInfo.ticketTiers.length > 0 && (
+                            <div className="text-xs text-gray-500">
+                                {event.ticketInfo.ticketTiers.map((tier: any) => {
+                                    const available = tier.quantity - (tier.sold || 0);
+                                    return (
+                                        <div key={tier._key || tier.name}>
+                                            {tier.name}: {available > 0 ? `${available} available` : 'Sold out'}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
                 )}
                 

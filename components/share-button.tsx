@@ -41,7 +41,7 @@ export default function ShareButton({ event, slug }: ShareButtonProps) {
     return (
         <button
             onClick={handleShare}
-            className="flex items-center justify-center gap-2 w-full px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="flex items-center justify-center gap-2 w-full px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-gray-700 font-medium"
         >
             <Share2 className="w-5 h-5" />
             <span>{copied ? 'Link Copied!' : 'Share Event'}</span>

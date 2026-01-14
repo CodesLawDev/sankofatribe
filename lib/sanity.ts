@@ -229,6 +229,15 @@ export interface Event {
         price?: number
         currency?: string
         ticketUrl?: string
+        ticketTiers?: Array<{
+            _key: string
+            name: string
+            description?: string
+            price: number
+            quantity: number
+            sold?: number
+        }>
+        maxCapacity?: number
     }
     registrationUrl?: string
     status: 'upcoming' | 'ongoing' | 'completed' | 'cancelled'

@@ -27,8 +27,8 @@ export const metadata: Metadata = {
         title: 'SANKOFA TRIBE',
     },
     icons: {
-        icon: '/icon-192x192.png',
-        apple: '/icon-192x192.png',
+        icon: '/logo.svg',
+        apple: '/logo.svg',
     },
     openGraph: {
         type: 'website',
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
         description: 'Discover timeless style and premium quality. Shop the latest collections from SANKOFA TRIBE.',
         images: [
             {
-                url: '/og-image.jpg',
+                url: '/logo.svg',
                 width: 1200,
                 height: 630,
             },

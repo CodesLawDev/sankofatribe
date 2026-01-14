@@ -222,3 +222,127 @@ model MonthlyReport {
   @@unique([month, year])
   @@index([createdAt])
 }
+
+// Event Ticket System
+enum TicketStatus {
+  AVAILABLE
+  USED
+  CANCELLED
+}
+
+model EventTicketTier {
+  id                    String      @id @default(cuid())
+  eventId               String      // Reference to Sanity event
+  name                  String      @db.VarChar(100) // e.g., "VIP", "Standard", "Early Bird"
+  description           String?     @db.Text
+  price                 Float       // 0 for free events
+  quantity              Int         // Total tickets available for this tier
+  sold                  Int         @default(0) // Tickets already sold
+  
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+  
+  // Relations
+  ticketOrders          EventTicketOrder[] @relation("TierOrders")
+  
+  @@index([eventId])
+}
+
+model EventTicketOrder {
+  id                    String      @id @default(cuid())
+  orderId               String      @unique // Unique reference for this order
+  eventId               String      // Reference to Sanity event
+  tierId                String
+  tier                  EventTicketTier @relation("TierOrders", fields: [tierId], references: [id], onDelete: Cascade)
+  
+  // Buyer information
+  buyerEmail            String      @db.VarChar(255)
+  buyerPhone            String?     @db.VarChar(20)
+  buyerName             String      @db.VarChar(255)
+  
+  // Order details
+  ticketCount           Int         // Number of tickets in this order
+  totalAmount           Float       // Total price
+  currency              String      @default("GHS") @db.VarChar(3)
+  
+  // Payment info
+  paymentStatus         String      @default("pending") // pending, completed, failed
+  paymentReference      String?     // Paystack reference
+  paymentMethod         String?     @default("paystack")
+  
+  // Ticket info
+  status                String      @default("pending") // pending, completed, cancelled
+  
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+  
+  // Relations
+  tickets               EventTicket[] @relation("OrderTickets")
+  
+  @@index([eventId])
+  @@index([paymentStatus])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model EventTicket {
+  id                    String      @id @default(cuid())
+  ticketId              String      @unique // Unique ticket identifier (e.g., "EVT-001-TK-12345")
+  orderId               String
+  order                 EventTicketOrder @relation("OrderTickets", fields: [orderId], references: [id], onDelete: Cascade)
+  
+  eventId               String      // Reference to Sanity event
+  tierId                String      // Reference to ticket tier
+  
+  // Attendee information (person using the ticket)
+  attendeeEmail         String      @db.VarChar(255)
+  attendeePhone         String?     @db.VarChar(20)
+  attendeeName          String      @db.VarChar(255)
+  
+  // Ticket details
+  status                TicketStatus @default(AVAILABLE) // AVAILABLE, USED, CANCELLED
+  usedAt                DateTime?   // When the ticket was scanned/validated
+  
+  // QR Code for scanning at entry
+  qrCode                String?     @db.Text // QR code data URL containing ticket verification data
+  
+  // Download/wallet
+  walletPassUrl         String?     // URL to Apple Wallet pass (.pkpass)
+  imageUrl              String?     // URL to downloadable ticket image
+  
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+  
+  @@index([eventId])
+  @@index([orderId])
+  @@index([status])
+  @@index([attendeeEmail])
+}
+
+// Mirror of Sanity events for DB queries and joins
+model EventRecord {
+  id          String   @id @default(cuid())
+  sanityId    String   @unique
+  slug        String?  @unique
+  title       String
+
+  eventDate   DateTime
+  endDate     DateTime?
+
+  // Location fields
+  venue       String?
+  address     String?
+  city        String?
+  isVirtual   Boolean  @default(false)
+  virtualLink String?
+
+  status      String   @default("upcoming")
+  featured    Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([sanityId])
+  @@index([eventDate])
+}
+
