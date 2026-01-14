@@ -1,4 +1,49 @@
 import { NextRequest, NextResponse } from 'next/server'
+
+export async function GET(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url)
+    const reference = searchParams.get('reference')
+
+    if (!reference) {
+      return NextResponse.json({ error: 'Missing reference' }, { status: 400 })
+    }
+
+    const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY
+    if (!paystackSecretKey) {
+      return NextResponse.json({ error: 'Paystack secret key not configured' }, { status: 500 })
+    }
+
+    const verifyResponse = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
+      headers: { Authorization: `Bearer ${paystackSecretKey}` },
+    })
+
+    const verificationData = await verifyResponse.json()
+
+    // Normalize response for client usage
+    const success = Boolean(verificationData?.status) && verificationData?.data?.status === 'success'
+
+    if (!success) {
+      return NextResponse.json({ success: false, error: 'Payment verification failed', data: verificationData }, { status: 400 })
+    }
+
+    const data = verificationData.data
+
+    return NextResponse.json({
+      success: true,
+      amount: typeof data.amount === 'number' ? data.amount / 100 : undefined,
+      channel: data.channel,
+      paidAt: data.paid_at,
+      currency: data.currency,
+      metadata: data.metadata || {},
+      reference: data.reference,
+      customer: data.customer || undefined,
+    })
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error?.message || 'Error verifying payment' }, { status: 500 })
+  }
+}
+import { NextRequest, NextResponse } from 'next/server'
 import paymentService from '@/lib/payment'
 import { serverClient, assertSanityToken, decrementStock } from '@/lib/sanity-server'
 

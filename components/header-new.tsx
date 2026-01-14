@@ -138,18 +138,6 @@ export default function Header() {
 
                             {/* Right Actions */}
                             <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-                                {/* Mobile Menu Button - Right */}
-                                <button
-                                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                                    className="lg:hidden flex-shrink-0 p-2 hover:bg-gray-50 rounded-lg transition-colors"
-                                    aria-label="Toggle menu"
-                                >
-                                    {mobileMenuOpen ? (
-                                        <X className="h-6 w-6" strokeWidth={1.5} />
-                                    ) : (
-                                        <Menu className="h-6 w-6" strokeWidth={1.5} />
-                                    )}
-                                </button>
                                 {/* Search - Hide on very small screens */}
                                 <button 
                                     onClick={() => setSearchOpen(true)}
@@ -194,6 +182,20 @@ export default function Header() {
                                         </span>
                                     )}
                                 </Link>
+
+                                {/* Mobile Menu Toggle - placed last so it's first from the right */}
+                                <button
+                                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                                    className="lg:hidden flex-shrink-0 p-2 hover:bg-gray-50 rounded-lg transition-colors"
+                                    aria-label="Toggle menu"
+                                    title="Menu"
+                                >
+                                    {mobileMenuOpen ? (
+                                        <X className="h-6 w-6" strokeWidth={1.5} />
+                                    ) : (
+                                        <Menu className="h-6 w-6" strokeWidth={1.5} />
+                                    )}
+                                </button>
                             </div>
                         </div>
                     </div>
