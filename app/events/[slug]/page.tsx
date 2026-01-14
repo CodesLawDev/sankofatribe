@@ -133,7 +133,7 @@ export default async function EventPage({ params }: Props) {
                 {event.image && (
                     <>
                         <Image
-                            src={urlFor(event.image).width(1920).height(1080).url()}
+                            src={urlFor(event.image).width(1920).fit('max').url()}
                             alt={event.title}
                             fill
                             className="object-cover opacity-80"

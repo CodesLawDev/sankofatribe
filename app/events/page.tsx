@@ -85,10 +85,10 @@ function EventCard({ event, featured = false }: { event: Event, featured?: boole
             <div className={`relative ${imageHeight} overflow-hidden bg-gray-100`}>
                 {event.image && (
                     <Image
-                        src={urlFor(event.image).width(800).height(600).url()}
+                        src={urlFor(event.image).width(800).fit('max').url()}
                         alt={event.title}
                         fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        className="object-contain group-hover:scale-105 transition-transform duration-500"
                     />
                 )}
                 
