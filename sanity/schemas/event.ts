@@ -215,6 +215,13 @@ export const event = defineType({
             initialValue: false,
             description: 'Show this event prominently on the events page',
         }),
+        defineField({
+            name: 'showAsPopup',
+            title: 'Show as Modal Popup',
+            type: 'boolean',
+            initialValue: false,
+            description: 'Display this event as a popup modal on the homepage when users visit',
+        }),
         {
             name: 'gallery',
             title: 'Event Gallery',

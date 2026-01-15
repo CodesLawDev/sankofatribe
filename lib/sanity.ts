@@ -128,6 +128,7 @@ export interface Campaign {
     bannerTitle?: string
     bannerSubtitle?: string
     showOnHomepage?: boolean
+    showAsPopup?: boolean
     discountType: 'percentage' | 'fixed' | 'custom'
     discountValue?: number
     includedProducts?: Product[]
@@ -242,6 +243,7 @@ export interface Event {
     registrationUrl?: string
     status: 'upcoming' | 'ongoing' | 'completed' | 'cancelled'
     featured?: boolean
+    showAsPopup?: boolean
     gallery?: SanityImage[]
     publishedAt?: string
 }
