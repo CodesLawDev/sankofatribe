@@ -7,6 +7,7 @@ import { Calendar, MapPin, Clock, ExternalLink, Globe, Ticket } from 'lucide-rea
 import { PortableText } from '@portabletext/react'
 import ShareButton from '@/components/share-button'
 import EventTicketButton from '@/components/event-ticket-button'
+import { getPrisma } from '@/lib/auth-utils'
 
 interface Props {
     params: { slug: string }
@@ -120,9 +121,29 @@ export default async function EventPage({ params }: Props) {
     
     const isPastEvent = new Date(event.eventDate) < new Date()
     
+    // Fetch ticket tiers from database for accurate sold counts
+    const prisma = getPrisma()
+    const dbTiers = await prisma.eventTicketTier.findMany({
+        where: { eventId: event._id },
+        orderBy: { createdAt: 'asc' }
+    })
+    
+    // Merge Sanity data with database data (db data takes precedence for sold count)
+    const mergedTiers = event.ticketInfo?.ticketTiers?.map((sanityTier: any) => {
+        const dbTier = dbTiers.find(t => t.name === sanityTier.name)
+        return {
+            _key: sanityTier._key,
+            name: sanityTier.name,
+            description: sanityTier.description,
+            price: sanityTier.price || 0,
+            quantity: sanityTier.quantity,
+            sold: dbTier?.sold ?? sanityTier.sold ?? 0, // Use database sold count
+        }
+    }) || []
+    
     // Check if tickets are available and calculate sold out status
-    const hasTicketTiers = event.ticketInfo?.ticketTiers && event.ticketInfo.ticketTiers.length > 0
-    const isSoldOut = hasTicketTiers && event.ticketInfo?.ticketTiers?.every(
+    const hasTicketTiers = mergedTiers && mergedTiers.length > 0
+    const isSoldOut = hasTicketTiers && mergedTiers.every(
         (tier: any) => tier.sold >= tier.quantity
     ) || false
     
@@ -271,19 +292,30 @@ export default async function EventPage({ params }: Props) {
                                     {event.ticketInfo && (
                                         <div className="flex gap-3">
                                             <Ticket className="w-5 h-5 text-amber-600 flex-shrink-0 mt-1" />
-                                            <div>
-                                                <p className="font-semibold text-gray-900">Ticket</p>
-                                                <p className="text-gray-600 text-sm">
-                                                    {event.ticketInfo.isFree ? (
-                                                        'Free Event'
-                                                    ) : hasTicketTiers && event.ticketInfo.ticketTiers && event.ticketInfo.ticketTiers.length > 0 ? (
-                                                        `Starting from ${event.ticketInfo.currency || 'GHS'} ${Math.min(...event.ticketInfo.ticketTiers.map((t: any) => t.price))}`
-                                                    ) : event.ticketInfo.price ? (
-                                                        `${event.ticketInfo.currency || 'GHS'} ${event.ticketInfo.price}`
-                                                    ) : (
-                                                        'Ticket information available'
-                                                    )}
-                                                </p>
+                                            <div className="w-full">
+                                                <p className="font-semibold text-gray-900">Tickets</p>
+                                                {event.ticketInfo.isFree ? (
+                                                    <p className="text-gray-600 text-sm">Free Event</p>
+                                                ) : hasTicketTiers && mergedTiers.length > 0 ? (
+                                                    <div className="space-y-2 mt-2">
+                                                        {mergedTiers.map((tier: any) => {
+                                                            const available = Math.max(0, tier.quantity - tier.sold)
+                                                            return (
+                                                                <div key={tier.name} className="text-xs text-gray-600">
+                                                                    <div className="flex justify-between">
+                                                                        <span className="font-medium">{tier.name}</span>
+                                                                        <span>{available > 0 ? `${available} available` : 'Sold out'}</span>
+                                                                    </div>
+                                                                    <div className="text-gray-500">{event.ticketInfo?.currency || 'GHS'} {tier.price}</div>
+                                                                </div>
+                                                            )
+                                                        })}
+                                                    </div>
+                                                ) : event.ticketInfo.price ? (
+                                                    <p className="text-gray-600 text-sm">${event.ticketInfo.price}</p>
+                                                ) : (
+                                                    <p className="text-gray-600 text-sm">Ticket information available</p>
+                                                )}
                                             </div>
                                         </div>
                                     )}
@@ -293,19 +325,19 @@ export default async function EventPage({ params }: Props) {
                             {/* Action Buttons */}
                             <div className="space-y-3">
                                 {/* Ticket Purchase - New Integrated System */}
-                                {hasTicketTiers && event.ticketInfo?.ticketTiers && (
+                                {hasTicketTiers && mergedTiers.length > 0 && (
                                     <EventTicketButton
                                         eventId={event._id}
                                         eventTitle={event.title}
-                                        ticketTiers={event.ticketInfo.ticketTiers.map((tier: any) => ({
+                                        ticketTiers={mergedTiers.map((tier: any) => ({
                                             id: tier._key,
                                             name: tier.name,
                                             description: tier.description,
                                             price: tier.price || 0,
                                             quantity: tier.quantity,
-                                            sold: tier.sold || 0,
+                                            sold: tier.sold,
                                         }))}
-                                        currency={event.ticketInfo.currency || 'GHS'}
+                                        currency={event.ticketInfo?.currency || 'GHS'}
                                         isPastEvent={isPastEvent}
                                         isSoldOut={isSoldOut}
                                     />
