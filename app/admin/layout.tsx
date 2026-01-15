@@ -64,9 +64,14 @@ function AdminShell({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null)
     const [isSidebarOpen, setIsSidebarOpen] = useState(true)
     const [isLoading, setIsLoading] = useState(true)
+    const [isMounted, setIsMounted] = useState(false)
 
     // Check if current route should show sidebar
     const isLoginPage = pathname === '/admin/login' || pathname === '/admin/reset-password'
+
+    useEffect(() => {
+        setIsMounted(true)
+    }, [])
 
     useEffect(() => {
         if (isLoginPage) {
@@ -124,6 +129,23 @@ function AdminShell({ children }: { children: ReactNode }) {
                 <div className="text-center">
                     <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-black dark:border-white"></div>
                     <p className="mt-4 text-gray-600 dark:text-gray-400">Loading...</p>
+                </div>
+            </div>
+        )
+    }
+
+    // Don't render sidebar content until client-side hydration is complete
+    if (!isMounted) {
+        return (
+            <div className="min-h-screen bg-gray-50 dark:bg-darkbg flex">
+                {/* Server-side render: empty sidebar placeholder */}
+                <div className="w-64 bg-black dark:bg-gray-900 text-white transition-all duration-300 flex flex-col fixed h-screen left-0 top-0 z-40" />
+                {/* Main content area with margin for sidebar */}
+                <div className="ml-64 flex-1">
+                    <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between sticky top-0 z-30">
+                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Loading...</h1>
+                    </div>
+                    <div className="p-6">{children}</div>
                 </div>
             </div>
         )

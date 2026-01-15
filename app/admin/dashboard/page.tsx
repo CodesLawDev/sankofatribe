@@ -89,6 +89,12 @@ export default function AdminDashboard() {
     const [statsLoading, setStatsLoading] = useState(true)
     const [smsBalance, setSmsBalance] = useState<SMSBalance>(initialSMSBalance)
     const [smsLoading, setSmsLoading] = useState(true)
+    const [isMounted, setIsMounted] = useState(false)
+
+    // Track client-side mount to prevent hydration mismatch
+    useEffect(() => {
+        setIsMounted(true)
+    }, [])
 
     // Helper function to fetch stats
     const fetchStats = async () => {
@@ -246,6 +252,23 @@ export default function AdminDashboard() {
         },
     ]
 
+    // Only render interactive UI after client hydration
+    if (!isMounted) {
+        return (
+            <div className="min-h-screen bg-gray-50 dark:bg-darkbg flex">
+                {/* Server-side render: placeholder sidebar */}
+                <div className="w-64 bg-black dark:bg-gray-900 text-white transition-all duration-300 flex flex-col fixed h-screen left-0 top-0 z-40" />
+                {/* Main content area */}
+                <div className="ml-64 flex-1">
+                    <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-4">
+                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+                    </div>
+                    <div className="p-6">Loading...</div>
+                </div>
+            </div>
+        )
+    }
+
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-darkbg flex">
             {/* Sidebar */}
@@ -277,11 +300,11 @@ export default function AdminDashboard() {
                         <Link
                             key={link.href}
                             href={link.href}
-                            className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 transition-colors group"
+                            className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 transition-colors group w-full"
                         >
-                            {link.icon}
+                            <span className="flex-shrink-0">{link.icon}</span>
                             {isSidebarOpen && (
-                                <span className="text-sm font-medium group-hover:text-gray-200">
+                                <span className="text-sm font-medium group-hover:text-gray-200 whitespace-nowrap">
                                     {link.label}
                                 </span>
                             )}
@@ -401,10 +424,10 @@ export default function AdminDashboard() {
                         ].map((stat, i) => {
                             const IconComponent = stat.icon
                             return (
-                                <Link key={i} href={stat.href}>
+                                <Link key={`stat-${stat.label}-${i}`} href={stat.href}>
                                     <div className="bg-white dark:bg-gray-900 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-800 hover:shadow-lg transition-shadow cursor-pointer h-full">
                                         <div className="flex items-center justify-between">
-                                            <div>
+                                            <div className="flex-1">
                                                 <p className="text-gray-600 dark:text-gray-400 text-sm font-medium">
                                                     {stat.label}
                                                 </p>
@@ -412,7 +435,7 @@ export default function AdminDashboard() {
                                                     {stat.value}
                                                 </p>
                                             </div>
-                                            <div className={`${stat.color} p-3 rounded-lg`}>
+                                            <div className={`${stat.color} p-3 rounded-lg flex-shrink-0 ml-4`}>
                                                 <IconComponent className="w-6 h-6 text-white" />
                                             </div>
                                         </div>

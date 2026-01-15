@@ -64,6 +64,7 @@ export default function AdminUsersPage() {
       try {
         const response = await fetch('/api/auth/me', { credentials: 'include' })
         if (!response.ok) {
+          setIsLoading(false)
           router.push('/admin/login')
           return
         }
@@ -72,25 +73,27 @@ export default function AdminUsersPage() {
         
         // Check if user is admin and has manage_users permission
         if (userData.role !== 'ADMIN' && userData.role !== 'SUPERADMIN') {
+          setIsLoading(false)
           router.push('/admin')
           return
         }
         
-        // Fetch users if authenticated
-        fetchUsers()
+        // Fetch users if authenticated (fetchUsers handles its own loading state)
+        await fetchUsers()
       } catch (error) {
         console.error('Session check failed:', error)
+        setIsLoading(false)
         router.push('/admin/login')
       }
     }
     
     checkSession()
-  }, [router])
+  }, [])
 
   const fetchUsers = async () => {
     try {
       setIsLoading(true)
-      const response = await fetch('/api/admin/users')
+      const response = await fetch('/api/admin/users', { credentials: 'include' })
       if (!response.ok) throw new Error('Failed to fetch users')
       const data = await response.json()
       setUsers(data)
