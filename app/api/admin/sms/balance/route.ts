@@ -35,8 +35,8 @@ export async function GET(request: NextRequest) {
             )
         }
 
-        // Fetch SMS balance/credits from BMS API
-        const response = await fetch(`${BMS_API_URL}/credits/balance`, {
+        // Fetch SMS balance from BMS API
+        const response = await fetch(`${BMS_API_URL}/balance`, {
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${smsApiKey}`,
@@ -51,13 +51,14 @@ export async function GET(request: NextRequest) {
             // Return a default error response with a fallback message
             return NextResponse.json({
                 balance: 0,
+                currency: 'GHS',
                 error: data.error || 'Unable to fetch SMS balance',
             })
         }
 
-        // Extract balance from BMS response
-        const balance = data.data?.balance || data.balance || 0
-        const currency = data.data?.currency || data.currency || 'GHS'
+        // Extract balance from BMS response structure: {data: {balance: number, ...}}
+        const balance = data.data?.balance || 0
+        const currency = data.data?.currency || 'GHS'
 
         return NextResponse.json({
             balance,

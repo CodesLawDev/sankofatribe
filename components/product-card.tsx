@@ -144,9 +144,36 @@ export default function ProductCard({ product, onQuickView }: ProductCardProps) 
                     <p className="text-sm font-semibold text-black">{displayPrice}</p>
                 </div>
 
-                {/* Out of Stock Indicator */}
-                {!product.inStock && (
-                    <p className="text-xs text-red-600 font-medium pt-1">Out of stock</p>
+                {/* Stock Indicator */}
+                {product.inStock ? (
+                    <div className="text-xs text-green-600 font-medium pt-1 flex items-center gap-1">
+                        <span className="inline-block w-2 h-2 bg-green-600 rounded-full"></span>
+                        In Stock
+                    </div>
+                ) : (
+                    <p className="text-xs text-red-600 font-medium pt-1 flex items-center gap-1">
+                        <span className="inline-block w-2 h-2 bg-red-600 rounded-full"></span>
+                        Out of stock
+                    </p>
+                )}
+
+                {/* Size Stock Indicator - Show only when sizes have varied stock */}
+                {product.sizes && product.sizes.length > 0 && product.inStock && (
+                    <div className="text-xs text-gray-600 pt-1">
+                        <div className="flex flex-wrap gap-2">
+                            {product.sizes.map((sizeObj: any) => (
+                                <span key={sizeObj.size} className={`px-2 py-0.5 rounded text-xs ${
+                                    sizeObj.stock > 5 
+                                        ? 'bg-green-100 text-green-700'
+                                        : sizeObj.stock > 0
+                                        ? 'bg-yellow-100 text-yellow-700'
+                                        : 'bg-red-100 text-red-700'
+                                }`}>
+                                    {sizeObj.size}: {sizeObj.stock}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
                 )}
 
                 {/* Size/Color/Quantity Options */}

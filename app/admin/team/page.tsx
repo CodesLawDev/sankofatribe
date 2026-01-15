@@ -5,8 +5,6 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { AlertCircle, ArrowLeft, CheckCircle, Eye, EyeOff, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { getAdminSession } from '@/lib/adminAuth'
-import { hasPermission } from '@/lib/adminTypes'
 
 interface AdminUser {
   _id: string
@@ -61,13 +59,32 @@ export default function AdminUsersPage() {
   const [form, setForm] = useState<CreateUserForm>({ ...INITIAL_FORM })
 
   useEffect(() => {
-    const session = getAdminSession()
-    if (!session || !hasPermission(session.user, 'manage_users')) {
-      router.push('/admin')
-      return
+    // Check admin session via API endpoint
+    const checkSession = async () => {
+      try {
+        const response = await fetch('/api/auth/me', { credentials: 'include' })
+        if (!response.ok) {
+          router.push('/admin/login')
+          return
+        }
+        const data = await response.json()
+        const userData = data.user
+        
+        // Check if user is admin and has manage_users permission
+        if (userData.role !== 'ADMIN' && userData.role !== 'SUPERADMIN') {
+          router.push('/admin')
+          return
+        }
+        
+        // Fetch users if authenticated
+        fetchUsers()
+      } catch (error) {
+        console.error('Session check failed:', error)
+        router.push('/admin/login')
+      }
     }
-
-    fetchUsers()
+    
+    checkSession()
   }, [router])
 
   const fetchUsers = async () => {
