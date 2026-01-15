@@ -81,7 +81,7 @@ export default function AnalyticsPage() {
                   <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wider">Total Revenue</h3>
                   <DollarSign className="h-5 w-5 text-green-600" />
                 </div>
-                <p className="text-3xl font-light">₵{stats.totalRevenue.toFixed(2)}</p>
+                <p className="text-3xl font-light">₵{(stats.totalRevenue || 0).toFixed(2)}</p>
                 <p className="text-xs text-gray-500 mt-2">All time</p>
               </div>
 
@@ -91,8 +91,8 @@ export default function AnalyticsPage() {
                   <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wider">Total Orders</h3>
                   <ShoppingCart className="h-5 w-5 text-blue-600" />
                 </div>
-                <p className="text-3xl font-light">{stats.totalOrders}</p>
-                <p className="text-xs text-gray-500 mt-2">{stats.completedOrders} completed</p>
+                <p className="text-3xl font-light">{stats.totalOrders || 0}</p>
+                <p className="text-xs text-gray-500 mt-2">{stats.completedOrders || 0} completed</p>
               </div>
 
               {/* Average Order Value */}
@@ -101,7 +101,7 @@ export default function AnalyticsPage() {
                   <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wider">Avg Order Value</h3>
                   <TrendingUp className="h-5 w-5 text-purple-600" />
                 </div>
-                <p className="text-3xl font-light">₵{stats.avgOrderValue.toFixed(2)}</p>
+                <p className="text-3xl font-light">₵{(stats.avgOrderValue || 0).toFixed(2)}</p>
                 <p className="text-xs text-gray-500 mt-2">Per transaction</p>
               </div>
 
@@ -111,7 +111,7 @@ export default function AnalyticsPage() {
                   <h3 className="text-sm font-medium text-gray-600 uppercase tracking-wider">Customers</h3>
                   <Users className="h-5 w-5 text-orange-600" />
                 </div>
-                <p className="text-3xl font-light">{stats.totalCustomers}</p>
+                <p className="text-3xl font-light">{stats.totalCustomers || 0}</p>
                 <p className="text-xs text-gray-500 mt-2">Unique customers</p>
               </div>
             </div>
@@ -124,13 +124,13 @@ export default function AnalyticsPage() {
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm">Pending</span>
-                      <span className="text-sm font-medium">{stats.pendingOrders}</span>
+                      <span className="text-sm font-medium">{stats.pendingOrders || 0}</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div
                         className="bg-yellow-500 h-2 rounded-full"
                         style={{
-                          width: `${stats.totalOrders ? (stats.pendingOrders / stats.totalOrders) * 100 : 0}%`,
+                          width: `${(stats.totalOrders && stats.pendingOrders) ? ((stats.pendingOrders / stats.totalOrders) * 100) : 0}%`,
                         }}
                       />
                     </div>
@@ -138,13 +138,13 @@ export default function AnalyticsPage() {
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm">Completed</span>
-                      <span className="text-sm font-medium">{stats.completedOrders}</span>
+                      <span className="text-sm font-medium">{stats.completedOrders || 0}</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div
                         className="bg-green-500 h-2 rounded-full"
                         style={{
-                          width: `${stats.totalOrders ? (stats.completedOrders / stats.totalOrders) * 100 : 0}%`,
+                          width: `${(stats.totalOrders && stats.completedOrders) ? ((stats.completedOrders / stats.totalOrders) * 100) : 0}%`,
                         }}
                       />
                     </div>
@@ -156,18 +156,18 @@ export default function AnalyticsPage() {
               <div className="bg-white rounded-lg border border-gray-200 p-6">
                 <h3 className="text-lg font-medium uppercase tracking-wider mb-6">Top Products</h3>
                 <div className="space-y-4">
-                  {stats.topProducts.length > 0 ? (
+                  {stats.topProducts && stats.topProducts.length > 0 ? (
                     stats.topProducts.map((product, idx) => (
                       <div key={idx} className="flex items-center justify-between pb-4 border-b border-gray-100 last:border-0 last:pb-0">
                         <div>
                           <p className="text-sm font-medium">{product.name}</p>
                           <p className="text-xs text-gray-500">{product.sales} sold</p>
                         </div>
-                        <p className="text-sm font-medium">₵{product.revenue.toFixed(2)}</p>
+                        <p className="text-sm font-medium">₵{(product.revenue || 0).toFixed(2)}</p>
                       </div>
                     ))
                   ) : (
-                    <p className="text-sm text-gray-500">No data yet</p>
+                    <p className="text-sm text-gray-500">No product data available yet</p>
                   )}
                 </div>
               </div>
@@ -177,31 +177,31 @@ export default function AnalyticsPage() {
             <div className="bg-white rounded-lg border border-gray-200 p-6">
               <h3 className="text-lg font-medium uppercase tracking-wider mb-6">Revenue Trend (Last 7 Days)</h3>
               <div className="space-y-4">
-                {stats.revenueByDay.length > 0 ? (
-                  stats.revenueByDay.slice(-7).map((day, idx) => (
-                    <div key={idx} className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">{new Date(day.date).toLocaleDateString()}</span>
-                      <div className="flex items-center gap-4 flex-1 ml-4">
-                        <div className="flex-1 h-8 bg-gray-100 rounded overflow-hidden">
-                          <div
-                            className="h-full bg-blue-500"
-                            style={{
-                              width: `${stats.revenueByDay.length > 0
-                                ? (day.revenue / Math.max(...stats.revenueByDay.map(d => d.revenue)))
-                                : 0
-                              }%`,
-                            }}
-                          />
-                        </div>
-                        <div className="text-right min-w-max">
-                          <p className="text-sm font-medium">₵{day.revenue.toFixed(2)}</p>
-                          <p className="text-xs text-gray-500">{day.orders} orders</p>
+                {stats.revenueByDay && stats.revenueByDay.length > 0 ? (
+                  stats.revenueByDay.slice(-7).map((day, idx) => {
+                    const maxRevenue = Math.max(...stats.revenueByDay.map(d => d.revenue), 1)
+                    return (
+                      <div key={idx} className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">{new Date(day.date).toLocaleDateString()}</span>
+                        <div className="flex items-center gap-4 flex-1 ml-4">
+                          <div className="flex-1 h-8 bg-gray-100 rounded overflow-hidden">
+                            <div
+                              className="h-full bg-blue-500"
+                              style={{
+                                width: `${((day.revenue / maxRevenue) * 100)}%`,
+                              }}
+                            />
+                          </div>
+                          <div className="text-right min-w-max">
+                            <p className="text-sm font-medium">₵{(day.revenue || 0).toFixed(2)}</p>
+                            <p className="text-xs text-gray-500">{day.orders || 0} orders</p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))
+                    )
+                  })
                 ) : (
-                  <p className="text-sm text-gray-500">No data yet</p>
+                  <p className="text-sm text-gray-500">No revenue data available yet</p>
                 )}
               </div>
             </div>
