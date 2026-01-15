@@ -65,14 +65,29 @@ export default function SMSPage() {
       })
       if (response.ok) {
         const result = await response.json()
-        setCustomers(result.data?.customers || [])
+        const customerList = Array.isArray(result.data?.customers) ? result.data.customers : (Array.isArray(result) ? result : [])
+        setCustomers(customerList)
+      } else {
+        setCustomers([])
       }
     } catch (error) {
       console.error('Failed to fetch customers:', error)
+      setCustomers([])
     } finally {
       setIsLoading(false)
     }
   }
+
+  // Calculate filtered customers based on search query
+  const filteredCustomers = Array.isArray(customers) ? customers.filter(c => {
+    const query = searchQuery.toLowerCase()
+    return (
+      c.email.toLowerCase().includes(query) ||
+      c.firstName.toLowerCase().includes(query) ||
+      c.lastName.toLowerCase().includes(query) ||
+      c.phone.includes(query)
+    )
+  }) : []
 
   const toggleCustomer = (customerId: string) => {
     const newSelected = new Set(selectedCustomers)
@@ -160,16 +175,6 @@ export default function SMSPage() {
       setIsSending(false)
     }
   }
-
-  const filteredCustomers = customers.filter(c => {
-    const query = searchQuery.toLowerCase()
-    return (
-      c.email.toLowerCase().includes(query) ||
-      c.firstName.toLowerCase().includes(query) ||
-      c.lastName.toLowerCase().includes(query) ||
-      c.phone.includes(query)
-    )
-  })
 
   const selectedCount = selectedCustomers.size
   const phoneCount = getRecipientPhones().length
