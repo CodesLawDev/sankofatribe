@@ -60,7 +60,7 @@ export default function AnalyticsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto p-8">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <Link href="/admin" className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-black mb-4">
@@ -74,7 +74,7 @@ export default function AnalyticsPage() {
         {/* Key Metrics */}
         {stats && (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8 w-full">
               {/* Total Revenue */}
               <div className="bg-white rounded-lg border border-gray-200 p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -117,7 +117,7 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Order Status */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-8 w-full">
               <div className="bg-white rounded-lg border border-gray-200 p-6">
                 <h3 className="text-lg font-medium uppercase tracking-wider mb-6">Order Status</h3>
                 <div className="space-y-4">
