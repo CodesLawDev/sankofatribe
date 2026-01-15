@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyToken } from '@/lib/auth-utils'
+import { verifyToken, getPrisma } from '@/lib/auth-utils'
 import { cookies } from 'next/headers'
 
 export const dynamic = 'force-dynamic'
@@ -28,20 +28,40 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
-    // Get all orders from database
-    // For now, return mock data since orders table may not be fully set up
+    const prisma = getPrisma()
+
+    // Get today's date range
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const tomorrow = new Date(today)
+    tomorrow.setDate(tomorrow.getDate() + 1)
+
+    // Fetch all orders with their details
+    const allOrders = await prisma.order.findMany({
+      select: {
+        id: true,
+        total: true,
+        status: true,
+        paymentStatus: true,
+        createdAt: true,
+      },
+    })
+
+    // Calculate statistics
     const stats = {
-      totalOrders: 0,
-      totalRevenue: 0,
-      pendingOrders: 0,
-      processingOrders: 0,
-      shippedOrders: 0,
-      deliveredOrders: 0,
-      cancelledOrders: 0,
-      todayOrders: 0,
-      todayRevenue: 0,
-      paidOrders: 0,
-      unpaidOrders: 0,
+      totalOrders: allOrders.length,
+      totalRevenue: allOrders.reduce((sum, order) => sum + (order.total || 0), 0),
+      pendingOrders: allOrders.filter(o => o.status === 'PENDING').length,
+      processingOrders: allOrders.filter(o => o.status === 'PROCESSING').length,
+      shippedOrders: allOrders.filter(o => o.status === 'SHIPPED').length,
+      deliveredOrders: allOrders.filter(o => o.status === 'DELIVERED').length,
+      cancelledOrders: allOrders.filter(o => o.status === 'CANCELLED').length,
+      todayOrders: allOrders.filter(o => new Date(o.createdAt) >= today && new Date(o.createdAt) < tomorrow).length,
+      todayRevenue: allOrders
+        .filter(o => new Date(o.createdAt) >= today && new Date(o.createdAt) < tomorrow)
+        .reduce((sum, order) => sum + (order.total || 0), 0),
+      paidOrders: allOrders.filter(o => o.paymentStatus === 'paid' || o.paymentStatus === 'success').length,
+      unpaidOrders: allOrders.filter(o => o.paymentStatus === 'pending' || o.paymentStatus === 'failed').length,
     }
 
     return NextResponse.json(stats)

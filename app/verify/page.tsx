@@ -3,6 +3,8 @@ import { serverClient } from '@/lib/sanity-server'
 import Link from 'next/link'
 import { Calendar, MapPin, Users, QrCode } from 'lucide-react'
 
+export const dynamic = 'force-dynamic'
+
 export default async function VerifyEventsPage() {
   const prisma = getPrisma()
 

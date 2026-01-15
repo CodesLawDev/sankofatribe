@@ -1,93 +1,92 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { serverClient } from '@/lib/sanity-server'
-import { getAdminSession } from '@/lib/adminAuth'
+import { verifyToken, getPrisma } from '@/lib/auth-utils'
+import { cookies } from 'next/headers'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 export async function GET(request: NextRequest) {
     try {
-        const session = getAdminSession()
-        if (!session) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        const cookieStore = cookies()
+        const token = cookieStore.get('auth-token')?.value
+
+        if (!token) {
+            return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+        }
+
+        const payload = await verifyToken(token)
+        if (!payload) {
+            return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+        }
+
+        if (payload.role !== 'ADMIN' && payload.role !== 'SUPERADMIN') {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
         }
 
         // Get query parameters for filtering
         const status = request.nextUrl.searchParams.get('status')
         const paymentStatus = request.nextUrl.searchParams.get('paymentStatus')
-        const dateFrom = request.nextUrl.searchParams.get('dateFrom')
-        const dateTo = request.nextUrl.searchParams.get('dateTo')
         const limit = parseInt(request.nextUrl.searchParams.get('limit') || '100')
         const offset = parseInt(request.nextUrl.searchParams.get('offset') || '0')
 
-        // Build GROQ query with filters
-        let query = `*[_type == "order"`
+        const prisma = getPrisma()
 
+        // Build filter object
+        const where: any = {}
         if (status) {
-            query += ` && status == "${status}"`
+            where.status = status.toUpperCase()
         }
-
         if (paymentStatus) {
-            query += ` && paymentStatus == "${paymentStatus}"`
+            where.paymentStatus = paymentStatus.toLowerCase()
         }
 
-        if (dateFrom || dateTo) {
-            if (dateFrom && dateTo) {
-                query += ` && orderDate >= "${dateFrom}" && orderDate <= "${dateTo}"`
-            } else if (dateFrom) {
-                query += ` && orderDate >= "${dateFrom}"`
-            } else if (dateTo) {
-                query += ` && orderDate <= "${dateTo}"`
-            }
-        }
-
-        query += `] | order(orderDate desc) [${offset}...${offset + limit}] {
-            _id,
-            orderId,
-            orderDate,
-            status,
-            paymentStatus,
-            paymentReference,
-            customer,
-            shippingAddress,
-            items,
-            subtotal,
-            shippingCost,
-            tax,
-            total,
-            metadata
-        }`
-
-        // Get total count for pagination
-        let countQuery = `count(*[_type == "order"`
-        if (status) countQuery += ` && status == "${status}"`
-        if (paymentStatus) countQuery += ` && paymentStatus == "${paymentStatus}"`
-        if (dateFrom || dateTo) {
-            if (dateFrom && dateTo) {
-                countQuery += ` && orderDate >= "${dateFrom}" && orderDate <= "${dateTo}"`
-            } else if (dateFrom) {
-                countQuery += ` && orderDate >= "${dateFrom}"`
-            } else if (dateTo) {
-                countQuery += ` && orderDate <= "${dateTo}"`
-            }
-        }
-        countQuery += `])`
-
+        // Fetch orders with user information
         const [orders, total] = await Promise.all([
-            serverClient.fetch(query),
-            serverClient.fetch(countQuery)
+            prisma.order.findMany({
+                where,
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            email: true,
+                            firstName: true,
+                            lastName: true,
+                            phone: true,
+                        },
+                    },
+                    items: true,
+                },
+                orderBy: {
+                    createdAt: 'desc',
+                },
+                take: limit,
+                skip: offset,
+            }),
+            prisma.order.count({ where }),
         ])
+
+        // Transform orders for frontend
+        const transformedOrders = orders.map(order => ({
+            id: order.id,
+            orderNumber: order.orderNumber,
+            total: order.total,
+            status: order.status,
+            paymentStatus: order.paymentStatus,
+            createdAt: order.createdAt,
+            user: order.user,
+            itemCount: order.items.length,
+        }))
 
         return NextResponse.json(
             {
                 success: true,
-                orders,
+                data: transformedOrders,
                 pagination: {
                     total,
                     limit,
                     offset,
-                    pages: Math.ceil(total / limit)
-                }
+                    pages: Math.ceil(total / limit),
+                },
             },
             {
                 headers: {
@@ -97,9 +96,11 @@ export async function GET(request: NextRequest) {
                 },
             }
         )
-    } catch (error) {
-        console.error('Orders API error:', error)
-        const message = error instanceof Error ? error.message : 'Failed to fetch orders'
-        return NextResponse.json({ error: message }, { status: 500 })
+    } catch (error: any) {
+        console.error('Get orders error:', error)
+        return NextResponse.json(
+            { error: error.message || 'Failed to fetch orders' },
+            { status: 500 }
+        )
     }
 }
