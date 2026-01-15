@@ -28,7 +28,11 @@ async function getEvent(slug: string): Promise<Event | null> {
             }
         }
     }`
-    return client.fetch<Event>(query, { slug })
+    const event = await client.fetch<Event>(query, { slug })
+    if (event?.ticketInfo?.ticketTiers) {
+        console.log(`[Event] Fetched ${event.ticketInfo.ticketTiers.length} ticket tiers from Sanity for event: ${event.title}`)
+    }
+    return event
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -127,19 +131,32 @@ export default async function EventPage({ params }: Props) {
         where: { eventId: event._id },
         orderBy: { createdAt: 'asc' }
     })
+    console.log(`[Event] Found ${dbTiers.length} ticket tiers in database for event: ${event._id}`)
     
-    // Merge Sanity data with database data (db data takes precedence for sold count)
-    const mergedTiers = event.ticketInfo?.ticketTiers?.map((sanityTier: any) => {
-        const dbTier = dbTiers.find(t => t.name === sanityTier.name)
-        return {
+    // Use database tiers as primary source (they're synced from Sanity)
+    // Merge in Sanity metadata (descriptions) where available
+    const mergedTiers = dbTiers.length > 0 
+        ? dbTiers.map((dbTier) => {
+            const sanityTier = event.ticketInfo?.ticketTiers?.find(t => t.name === dbTier.name)
+            return {
+                _key: sanityTier?._key || dbTier.name,
+                name: dbTier.name,
+                description: sanityTier?.description || dbTier.description || null,
+                price: sanityTier?.price ?? dbTier.price ?? 0,
+                quantity: sanityTier?.quantity ?? dbTier.quantity ?? 0,
+                sold: dbTier.sold,
+            }
+        })
+        : event.ticketInfo?.ticketTiers?.map((sanityTier: any) => ({
             _key: sanityTier._key,
             name: sanityTier.name,
             description: sanityTier.description,
             price: sanityTier.price || 0,
             quantity: sanityTier.quantity,
-            sold: dbTier?.sold ?? sanityTier.sold ?? 0, // Use database sold count
-        }
-    }) || []
+            sold: sanityTier.sold ?? 0,
+        })) || []
+    
+    console.log(`[Event] Merged tiers count: ${mergedTiers.length} for event: ${event.title}`)
     
     // Check if tickets are available and calculate sold out status
     const hasTicketTiers = mergedTiers && mergedTiers.length > 0
