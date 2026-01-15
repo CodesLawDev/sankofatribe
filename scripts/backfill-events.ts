@@ -14,6 +14,19 @@ async function run() {
       endDate,
       status,
       featured,
+      ticketInfo{
+        isFree,
+        maxCapacity,
+        currency,
+        ticketTiers[]{
+          _key,
+          name,
+          description,
+          price,
+          quantity,
+          currency
+        }
+      },
       location{
         venue,
         address,
@@ -26,6 +39,7 @@ async function run() {
     for (const ev of events) {
       const slug = ev?.slug?.current || null
       const location = ev?.location || {}
+      
       await prisma.eventRecord.upsert({
         where: { sanityId: ev._id },
         update: {
@@ -56,6 +70,33 @@ async function run() {
           virtualLink: location.virtualLink || null,
         },
       })
+
+      // Sync ticket tiers
+      const ticketInfo = ev?.ticketInfo
+      if (ticketInfo?.ticketTiers && Array.isArray(ticketInfo.ticketTiers)) {
+        const tiers = ticketInfo.ticketTiers
+        
+        // Delete existing tiers for this event
+        await prisma.eventTicketTier.deleteMany({
+          where: { eventId: ev._id }
+        })
+
+        // Create new tiers
+        for (const tier of tiers) {
+          if (!tier?.name) continue
+          
+          await prisma.eventTicketTier.create({
+            data: {
+              eventId: ev._id,
+              name: tier.name,
+              description: tier.description || null,
+              price: typeof tier.price === 'number' ? tier.price : 0,
+              quantity: typeof tier.quantity === 'number' ? tier.quantity : 0,
+              sold: 0,
+            }
+          })
+        }
+      }
     }
 
     console.log(`Backfilled ${events.length} events into EventRecord`)
