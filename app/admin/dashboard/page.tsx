@@ -18,6 +18,8 @@ import {
     CheckCircle,
     XCircle,
     TrendingUp,
+    MessageSquare,
+    UserCog,
 } from 'lucide-react'
 
 interface User {
@@ -183,6 +185,16 @@ export default function AdminDashboard() {
             href: '/admin/customers',
             label: 'Customers',
             icon: <Users className="w-5 h-5" />,
+        },
+        {
+            href: '/admin/team',
+            label: 'Team',
+            icon: <UserCog className="w-5 h-5" />,
+        },
+        {
+            href: '/admin/sms',
+            label: 'Send SMS',
+            icon: <MessageSquare className="w-5 h-5" />,
         },
         {
             href: '/admin/settings',
