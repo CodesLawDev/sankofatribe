@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Plus, Edit, Trash2, Search, ArrowLeft } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { getAdminSession } from '@/lib/adminAuth'
-import { hasPermission } from '@/lib/adminTypes'
+import { useAdminAuth } from '@/lib/useAdminAuth'
 
 interface Product {
     id: string
@@ -22,24 +21,16 @@ interface Product {
 
 export default function AdminProducts() {
     const router = useRouter()
+    const { user, isLoading: authLoading, isMounted } = useAdminAuth()
     const [products, setProducts] = useState<Product[]>([])
-    const [isLoading, setIsLoading] = useState(true)
+    const [isLoading, setIsLoading] = useState(false)
     const [searchQuery, setSearchQuery] = useState('')
 
     useEffect(() => {
-        const session = getAdminSession()
-        if (!session) {
-            router.push('/admin/login')
-            return
+        if (isMounted && user && !authLoading) {
+            fetchProducts()
         }
-
-        if (!hasPermission(session.user, 'view_products')) {
-            router.push('/admin')
-            return
-        }
-
-        fetchProducts()
-    }, [router])
+    }, [isMounted, user, authLoading])
 
     const fetchProducts = async () => {
         try {

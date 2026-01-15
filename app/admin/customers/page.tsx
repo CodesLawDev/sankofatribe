@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react'
 import { Search, Mail, Phone, ArrowLeft } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { getAdminSession } from '@/lib/adminAuth'
-import { hasPermission } from '@/lib/adminTypes'
+import { useAdminAuth } from '@/lib/useAdminAuth'
 
 interface Customer {
     id: string
@@ -22,24 +21,16 @@ interface Customer {
 
 export default function AdminCustomers() {
     const router = useRouter()
+    const { user, isLoading: authLoading, isMounted } = useAdminAuth()
     const [customers, setCustomers] = useState<Customer[]>([])
-    const [isLoading, setIsLoading] = useState(true)
+    const [isLoading, setIsLoading] = useState(false)
     const [searchQuery, setSearchQuery] = useState('')
 
     useEffect(() => {
-        const session = getAdminSession()
-        if (!session) {
-            router.push('/admin/login')
-            return
+        if (isMounted && user && !authLoading) {
+            fetchCustomers()
         }
-
-        if (!hasPermission(session.user, 'view_customers')) {
-            router.push('/admin')
-            return
-        }
-
-        fetchCustomers()
-    }, [router])
+    }, [isMounted, user, authLoading])
 
     const fetchCustomers = async () => {
         try {

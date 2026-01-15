@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Eye, Edit, Trash2, Search, Filter, ArrowLeft } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { getAdminSession } from '@/lib/adminAuth'
-import { hasPermission } from '@/lib/adminTypes'
+import { useAdminAuth } from '@/lib/useAdminAuth'
 
 interface Order {
     id: string
@@ -22,25 +21,17 @@ interface Order {
 
 export default function AdminOrders() {
     const router = useRouter()
+    const { user, isLoading: authLoading, isMounted } = useAdminAuth()
     const [orders, setOrders] = useState<Order[]>([])
-    const [isLoading, setIsLoading] = useState(true)
+    const [isLoading, setIsLoading] = useState(false)
     const [searchQuery, setSearchQuery] = useState('')
     const [filterStatus, setFilterStatus] = useState('all')
 
     useEffect(() => {
-        const session = getAdminSession()
-        if (!session) {
-            router.push('/admin/login')
-            return
+        if (isMounted && user && !authLoading) {
+            fetchOrders()
         }
-
-        if (!hasPermission(session.user, 'view_orders')) {
-            router.push('/admin')
-            return
-        }
-
-        fetchOrders()
-    }, [router])
+    }, [isMounted, user, authLoading])
 
     const fetchOrders = async () => {
         try {

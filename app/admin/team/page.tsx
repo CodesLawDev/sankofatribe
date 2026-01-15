@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { AlertCircle, ArrowLeft, CheckCircle, Eye, EyeOff, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useAdminAuth } from '@/lib/useAdminAuth'
 
 interface AdminUser {
   _id: string
@@ -49,8 +50,9 @@ const INITIAL_FORM: CreateUserForm = {
 
 export default function AdminUsersPage() {
   const router = useRouter()
+  const { user, isLoading: authLoading, isMounted } = useAdminAuth()
   const [users, setUsers] = useState<AdminUser[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -58,37 +60,12 @@ export default function AdminUsersPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [form, setForm] = useState<CreateUserForm>({ ...INITIAL_FORM })
 
+  // Fetch users when authenticated
   useEffect(() => {
-    // Check admin session via API endpoint
-    const checkSession = async () => {
-      try {
-        const response = await fetch('/api/auth/me', { credentials: 'include' })
-        if (!response.ok) {
-          setIsLoading(false)
-          router.push('/admin/login')
-          return
-        }
-        const data = await response.json()
-        const userData = data.user
-        
-        // Check if user is admin and has manage_users permission
-        if (userData.role !== 'ADMIN' && userData.role !== 'SUPERADMIN') {
-          setIsLoading(false)
-          router.push('/admin')
-          return
-        }
-        
-        // Fetch users if authenticated (fetchUsers handles its own loading state)
-        await fetchUsers()
-      } catch (error) {
-        console.error('Session check failed:', error)
-        setIsLoading(false)
-        router.push('/admin/login')
-      }
+    if (isMounted && user && !authLoading) {
+      fetchUsers()
     }
-    
-    checkSession()
-  }, [])
+  }, [isMounted, user, authLoading])
 
   const fetchUsers = async () => {
     try {
@@ -189,7 +166,7 @@ export default function AdminUsersPage() {
     }
   }
 
-  if (isLoading) {
+  if (authLoading || !isMounted || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
