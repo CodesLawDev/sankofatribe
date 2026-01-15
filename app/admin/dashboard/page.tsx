@@ -20,6 +20,7 @@ import {
     TrendingUp,
     MessageSquare,
     UserCog,
+    BarChart3,
 } from 'lucide-react'
 
 interface User {
@@ -49,6 +50,11 @@ interface DashboardStats {
     unpaidOrders: number
 }
 
+interface SMSBalance {
+    balance: number
+    currency: string
+}
+
 const initialStats: DashboardStats = {
     totalOrders: 0,
     totalRevenue: 0,
@@ -61,6 +67,11 @@ const initialStats: DashboardStats = {
     todayRevenue: 0,
     paidOrders: 0,
     unpaidOrders: 0,
+}
+
+const initialSMSBalance: SMSBalance = {
+    balance: 0,
+    currency: 'GHS',
 }
 
 const pickNumber = (value: any): number => {
@@ -76,6 +87,8 @@ export default function AdminDashboard() {
     const [isLoading, setIsLoading] = useState(true)
     const [stats, setStats] = useState<DashboardStats>(initialStats)
     const [statsLoading, setStatsLoading] = useState(true)
+    const [smsBalance, setSmsBalance] = useState<SMSBalance>(initialSMSBalance)
+    const [smsLoading, setSmsLoading] = useState(true)
 
     // Helper function to fetch stats
     const fetchStats = async () => {
@@ -110,6 +123,31 @@ export default function AdminDashboard() {
         }
     }
 
+    // Helper function to fetch SMS balance
+    const fetchSMSBalance = async () => {
+        try {
+            setSmsLoading(true)
+            const response = await fetch('/api/admin/sms/balance', {
+                credentials: 'include',
+                cache: 'no-store' as any,
+            })
+            if (response.ok) {
+                const data = await response.json()
+                setSmsBalance({
+                    balance: data.balance || 0,
+                    currency: data.currency || 'GHS',
+                })
+            } else {
+                setSmsBalance(initialSMSBalance)
+            }
+        } catch (error) {
+            console.error('Failed to fetch SMS balance:', error)
+            setSmsBalance(initialSMSBalance)
+        } finally {
+            setSmsLoading(false)
+        }
+    }
+
     // Fetch user session on mount
     useEffect(() => {
         const fetchSession = async () => {
@@ -126,8 +164,8 @@ export default function AdminDashboard() {
                             role: userData.role,
                             username: userData.firstName || userData.email,
                         })
-                        // Fetch stats after user is confirmed
-                        await fetchStats()
+                        // Fetch stats and SMS balance after user is confirmed
+                        await Promise.all([fetchStats(), fetchSMSBalance()])
                     } else {
                         router.push('/admin/login')
                     }
@@ -195,6 +233,11 @@ export default function AdminDashboard() {
             href: '/admin/sms',
             label: 'Send SMS',
             icon: <MessageSquare className="w-5 h-5" />,
+        },
+        {
+            href: '/admin/analytics',
+            label: 'Analytics',
+            icon: <BarChart3 className="w-5 h-5" />,
         },
         {
             href: '/admin/settings',
@@ -347,6 +390,13 @@ export default function AdminDashboard() {
                                 icon: TrendingUp,
                                 color: 'bg-cyan-500',
                                 href: '/admin/orders?date=today',
+                            },
+                            {
+                                label: 'SMS Credits',
+                                value: smsLoading ? '...' : smsBalance.balance.toLocaleString(),
+                                icon: MessageSquare,
+                                color: 'bg-orange-500',
+                                href: '/admin/sms',
                             },
                         ].map((stat, i) => {
                             const IconComponent = stat.icon
