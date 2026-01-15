@@ -144,16 +144,9 @@ export default function ProductCard({ product, onQuickView }: ProductCardProps) 
                     <p className="text-sm font-semibold text-black">{displayPrice}</p>
                 </div>
 
-                {/* Stock Indicator */}
-                {product.inStock && product.sizes && (
-                    (() => {
-                        const validSizes = product.sizes.filter((s: any) => s != null)
-                        const minStock = validSizes.length > 0 ? Math.min(...validSizes.map((s: any) => s.stock || 0)) : 0
-                        if (minStock > 0 && minStock <= 3) {
-                            return <p className="text-xs text-red-600 font-medium pt-1">Low stock</p>
-                        }
-                        return null
-                    })()
+                {/* Out of Stock Indicator */}
+                {!product.inStock && (
+                    <p className="text-xs text-red-600 font-medium pt-1">Out of stock</p>
                 )}
 
                 {/* Size/Color/Quantity Options */}

@@ -12,7 +12,8 @@
     "prisma:generate": "prisma generate",
     "prisma:seed": "prisma db seed",
     "backfill:events": "node -r dotenv/config scripts/backfill-events.js",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "create:superadmin": "npx ts-node scripts/create-superadmin.ts"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
