@@ -106,13 +106,13 @@ function formatEventTime(date: string) {
 
 const portableTextComponents = {
     block: {
-        normal: ({ children }: any) => <p className="mb-4 text-gray-700 leading-relaxed">{children}</p>,
-        h2: ({ children }: any) => <h2 className="text-2xl font-bold mt-8 mb-4 text-gray-900">{children}</h2>,
-        h3: ({ children }: any) => <h3 className="text-xl font-bold mt-6 mb-3 text-gray-900">{children}</h3>,
+        normal: ({ children }: any) => <p className="mb-4 text-neutral-600 leading-relaxed">{children}</p>,
+        h2: ({ children }: any) => <h2 className="text-2xl font-bold mt-8 mb-4 text-brand-dark">{children}</h2>,
+        h3: ({ children }: any) => <h3 className="text-xl font-bold mt-6 mb-3 text-brand-dark">{children}</h3>,
     },
     list: {
-        bullet: ({ children }: any) => <ul className="list-disc list-inside mb-4 space-y-2 text-gray-700">{children}</ul>,
-        number: ({ children }: any) => <ol className="list-decimal list-inside mb-4 space-y-2 text-gray-700">{children}</ol>,
+        bullet: ({ children }: any) => <ul className="list-disc list-inside mb-4 space-y-2 text-neutral-600">{children}</ul>,
+        number: ({ children }: any) => <ol className="list-decimal list-inside mb-4 space-y-2 text-neutral-600">{children}</ol>,
     },
 }
 
@@ -165,9 +165,9 @@ export default async function EventPage({ params }: Props) {
     ) || false
     
     return (
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-brand-cream">
             {/* Hero Image */}
-            <div className="relative h-[60vh] min-h-[400px] bg-gray-900">
+            <div className="relative h-[60vh] min-h-[400px] bg-brand-dark">
                 {event.image && (
                     <>
                         <Image
@@ -198,12 +198,12 @@ export default async function EventPage({ params }: Props) {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 {/* Breadcrumb */}
                 <nav className="mb-8 text-sm">
-                    <ol className="flex items-center gap-2 text-gray-500">
-                        <li><Link href="/" className="hover:text-amber-600">Home</Link></li>
+                    <ol className="flex items-center gap-2 text-neutral-500">
+                        <li><Link href="/" className="hover:text-brand-primary">Home</Link></li>
                         <li>/</li>
-                        <li><Link href="/events" className="hover:text-amber-600">Events</Link></li>
+                        <li><Link href="/events" className="hover:text-brand-primary">Events</Link></li>
                         <li>/</li>
-                        <li className="text-gray-900">{event.title}</li>
+                        <li className="text-brand-dark">{event.title}</li>
                     </ol>
                 </nav>
                 
@@ -211,16 +211,16 @@ export default async function EventPage({ params }: Props) {
                     {/* Main Content */}
                     <div className="lg:col-span-2">
                         {event.category && (
-                            <p className="text-amber-600 font-semibold uppercase tracking-wide mb-4">
+                            <p className="text-brand-primary font-semibold uppercase tracking-wide mb-4">
                                 {event.category.replace('-', ' ')}
                             </p>
                         )}
                         
-                        <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+                        <h1 className="text-4xl md:text-5xl font-bold text-brand-dark mb-6">
                             {event.title}
                         </h1>
                         
-                        <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+                        <p className="text-xl text-neutral-600 mb-8 leading-relaxed">
                             {event.summary}
                         </p>
                         
@@ -236,7 +236,7 @@ export default async function EventPage({ params }: Props) {
                         {/* Event Gallery */}
                         {event.gallery && event.gallery.length > 0 && (
                             <div className="mt-12">
-                                <h2 className="text-2xl font-bold text-gray-900 mb-6">Event Gallery</h2>
+                                <h2 className="text-2xl font-bold text-brand-dark mb-6">Event Gallery</h2>
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                                     {event.gallery.map((image, index) => (
                                         <div key={index} className="relative aspect-square rounded-lg overflow-hidden">
@@ -257,26 +257,26 @@ export default async function EventPage({ params }: Props) {
                     <div className="lg:col-span-1">
                         <div className="sticky top-8 space-y-6">
                             {/* Event Details Card */}
-                            <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
-                                <h3 className="text-lg font-bold text-gray-900 mb-4">Event Details</h3>
+                            <div className="bg-white rounded-lg p-6 border border-brand-primary/10">
+                                <h3 className="text-lg font-bold text-brand-dark mb-4">Event Details</h3>
                                 
                                 <div className="space-y-4">
                                     {/* Date & Time */}
                                     <div className="flex gap-3">
-                                        <Calendar className="w-5 h-5 text-amber-600 flex-shrink-0 mt-1" />
+                                        <Calendar className="w-5 h-5 text-brand-primary flex-shrink-0 mt-1" />
                                         <div>
-                                            <p className="font-semibold text-gray-900">Date</p>
-                                            <p className="text-gray-600 text-sm">
+                                            <p className="font-semibold text-brand-dark">Date</p>
+                                            <p className="text-neutral-600 text-sm">
                                                 {formatEventDate(event.eventDate, event.endDate)}
                                             </p>
                                         </div>
                                     </div>
                                     
                                     <div className="flex gap-3">
-                                        <Clock className="w-5 h-5 text-amber-600 flex-shrink-0 mt-1" />
+                                        <Clock className="w-5 h-5 text-brand-primary flex-shrink-0 mt-1" />
                                         <div>
-                                            <p className="font-semibold text-gray-900">Time</p>
-                                            <p className="text-gray-600 text-sm">
+                                            <p className="font-semibold text-brand-dark">Time</p>
+                                            <p className="text-neutral-600 text-sm">
                                                 {formatEventTime(event.eventDate)}
                                             </p>
                                         </div>
@@ -286,16 +286,16 @@ export default async function EventPage({ params }: Props) {
                                     {event.location && (
                                         <div className="flex gap-3">
                                             {event.location.isVirtual ? (
-                                                <Globe className="w-5 h-5 text-amber-600 flex-shrink-0 mt-1" />
+                                                <Globe className="w-5 h-5 text-brand-primary flex-shrink-0 mt-1" />
                                             ) : (
-                                                <MapPin className="w-5 h-5 text-amber-600 flex-shrink-0 mt-1" />
+                                                <MapPin className="w-5 h-5 text-brand-primary flex-shrink-0 mt-1" />
                                             )}
                                             <div>
-                                                <p className="font-semibold text-gray-900">Location</p>
+                                                <p className="font-semibold text-brand-dark">Location</p>
                                                 {event.location.isVirtual ? (
-                                                    <p className="text-gray-600 text-sm">Virtual Event</p>
+                                                    <p className="text-neutral-600 text-sm">Virtual Event</p>
                                                 ) : (
-                                                    <div className="text-gray-600 text-sm">
+                                                    <div className="text-neutral-600 text-sm">
                                                         {event.location.venue && <p>{event.location.venue}</p>}
                                                         {event.location.address && <p>{event.location.address}</p>}
                                                         {event.location.city && <p>{event.location.city}</p>}
@@ -310,28 +310,28 @@ export default async function EventPage({ params }: Props) {
                                         <div className="flex gap-3">
                                             <Ticket className="w-5 h-5 text-amber-600 flex-shrink-0 mt-1" />
                                             <div className="w-full">
-                                                <p className="font-semibold text-gray-900">Tickets</p>
+                                                <p className="font-semibold text-brand-dark">Tickets</p>
                                                 {event.ticketInfo.isFree ? (
-                                                    <p className="text-gray-600 text-sm">Free Event</p>
+                                                    <p className="text-neutral-600 text-sm">Free Event</p>
                                                 ) : hasTicketTiers && mergedTiers.length > 0 ? (
                                                     <div className="space-y-2 mt-2">
                                                         {mergedTiers.map((tier: any) => {
                                                             const available = Math.max(0, tier.quantity - tier.sold)
                                                             return (
-                                                                <div key={tier.name} className="text-xs text-gray-600">
+                                                                <div key={tier.name} className="text-xs text-neutral-600">
                                                                     <div className="flex justify-between">
                                                                         <span className="font-medium">{tier.name}</span>
                                                                         <span>{available > 0 ? `${available} available` : 'Sold out'}</span>
                                                                     </div>
-                                                                    <div className="text-gray-500">{event.ticketInfo?.currency || 'GHS'} {tier.price}</div>
+                                                                    <div className="text-neutral-500">{event.ticketInfo?.currency || 'GHS'} {tier.price}</div>
                                                                 </div>
                                                             )
                                                         })}
                                                     </div>
                                                 ) : event.ticketInfo.price ? (
-                                                    <p className="text-gray-600 text-sm">${event.ticketInfo.price}</p>
+                                                    <p className="text-neutral-600 text-sm">${event.ticketInfo.price}</p>
                                                 ) : (
-                                                    <p className="text-gray-600 text-sm">Ticket information available</p>
+                                                    <p className="text-neutral-600 text-sm">Ticket information available</p>
                                                 )}
                                             </div>
                                         </div>
@@ -404,7 +404,7 @@ export default async function EventPage({ params }: Props) {
                             {/* Back to Events */}
                             <Link
                                 href="/events"
-                                className="block text-center px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-gray-700 font-medium"
+                                className="block text-center px-6 py-3 border border-brand-primary/20 rounded-lg hover:bg-brand-primary/5 transition-colors text-neutral-600 font-medium"
                             >
                                 ← Back to All Events
                             </Link>

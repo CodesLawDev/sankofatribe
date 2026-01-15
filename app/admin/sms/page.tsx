@@ -182,16 +182,16 @@ export default function SMSPage() {
   const estimatedSMS = Math.ceil(messageLength / 160)
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-darkbg">
+    <div className="min-h-screen bg-brand-cream dark:bg-darkbg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8 flex items-center gap-4">
-          <Link href="/admin/dashboard" className="p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-lg">
-            <ArrowLeft className="w-5 h-5" />
+          <Link href="/admin/dashboard" className="p-2 hover:bg-brand-primary/5 dark:hover:bg-gray-800 rounded-lg">
+            <ArrowLeft className="w-5 h-5 text-brand-dark dark:text-gray-400" />
           </Link>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Send SMS</h1>
-            <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
+            <h1 className="text-3xl font-bold text-brand-dark dark:text-white">Send SMS</h1>
+            <p className="text-neutral-600 dark:text-gray-400 text-sm mt-1">
               Send bulk SMS messages to your customers
             </p>
           </div>
@@ -201,9 +201,9 @@ export default function SMSPage() {
           {/* Main Form */}
           <div className="lg:col-span-2 space-y-6">
             {/* Message Form */}
-            <form onSubmit={handleSendSMS} className="bg-white dark:bg-gray-900 rounded-lg shadow border border-gray-200 dark:border-gray-800 p-6 space-y-6">
+            <form onSubmit={handleSendSMS} className="bg-brand-cream dark:bg-gray-900 rounded-lg shadow-sm border border-brand-primary/10 dark:border-gray-800 p-6 space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+                <label className="block text-sm font-medium text-brand-dark dark:text-white mb-2">
                   Send To
                 </label>
                 <div className="space-y-3">
@@ -214,9 +214,9 @@ export default function SMSPage() {
                       value="selected"
                       checked={recipientType === 'selected'}
                       onChange={(e) => setRecipientType(e.target.value as 'selected' | 'all')}
-                      className="w-4 h-4"
+                      className="w-4 h-4 text-brand-primary focus:ring-brand-primary border-gray-300"
                     />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">
+                    <span className="text-sm text-brand-dark dark:text-gray-300">
                       Selected Customers ({selectedCount})
                     </span>
                   </label>
@@ -227,9 +227,9 @@ export default function SMSPage() {
                       value="all"
                       checked={recipientType === 'all'}
                       onChange={(e) => setRecipientType(e.target.value as 'selected' | 'all')}
-                      className="w-4 h-4"
+                      className="w-4 h-4 text-brand-primary focus:ring-brand-primary border-gray-300"
                     />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">
+                    <span className="text-sm text-brand-dark dark:text-gray-300">
                       All Customers with Phone ({filteredCustomers.filter(c => c.phone).length})
                     </span>
                   </label>
@@ -237,7 +237,7 @@ export default function SMSPage() {
               </div>
 
               <div>
-                <label htmlFor="message" className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+                <label htmlFor="message" className="block text-sm font-medium text-brand-dark dark:text-white mb-2">
                   Message
                 </label>
                 <textarea
@@ -247,13 +247,13 @@ export default function SMSPage() {
                   placeholder="Type your message here..."
                   rows={5}
                   maxLength={480}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-brand-primary/20 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-brand-dark dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-primary"
                 />
                 <div className="flex items-center justify-between mt-2">
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-xs text-neutral-600 dark:text-gray-400">
                     {messageLength}/480 characters
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-xs text-neutral-600 dark:text-gray-400">
                     ~{estimatedSMS} SMS {estimatedSMS === 1 ? 'message' : 'messages'}
                   </p>
                 </div>
@@ -291,7 +291,7 @@ export default function SMSPage() {
                 <button
                   type="submit"
                   disabled={isSending || !message.trim() || (recipientType === 'selected' && selectedCount === 0) || (recipientType === 'all' && phoneCount === 0)}
-                  className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 bg-brand-primary hover:bg-brand-primary/90 disabled:bg-gray-400 text-brand-cream font-medium py-2 px-4 rounded-lg transition-colors"
                 >
                   {isSending ? (
                     <>

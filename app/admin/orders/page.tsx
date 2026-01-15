@@ -73,19 +73,19 @@ export default function AdminOrders() {
             case 'CANCELLED':
                 return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
             default:
-                return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+                return 'bg-neutral-100 text-neutral-800 dark:bg-gray-900 dark:text-gray-200'
         }
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-darkbg">
+        <div className="min-h-screen bg-brand-cream dark:bg-darkbg">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
                 <div className="mb-8 flex items-center gap-4">
-                    <Link href="/admin/dashboard" className="p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-lg">
-                        <ArrowLeft className="w-5 h-5" />
+                    <Link href="/admin/dashboard" className="p-2 hover:bg-brand-primary/5 dark:hover:bg-gray-800 rounded-lg">
+                        <ArrowLeft className="w-5 h-5 text-brand-dark dark:text-gray-400" />
                     </Link>
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Orders</h1>
+                    <h1 className="text-3xl font-bold text-brand-dark dark:text-white">Orders</h1>
                 </div>
 
                 {/* Filters */}
@@ -97,13 +97,13 @@ export default function AdminOrders() {
                             placeholder="Search orders..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+                            className="w-full pl-10 pr-4 py-2 border border-brand-primary/20 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-brand-dark dark:text-white placeholder-neutral-400 dark:placeholder-gray-500"
                         />
                     </div>
                     <select
                         value={filterStatus}
                         onChange={(e) => setFilterStatus(e.target.value)}
-                        className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                        className="px-4 py-2 border border-brand-primary/20 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-brand-dark dark:text-white"
                     >
                         <option value="all">All Status</option>
                         <option value="pending">Pending</option>
@@ -115,35 +115,35 @@ export default function AdminOrders() {
                 </div>
 
                 {/* Orders Table */}
-                <div className="bg-white dark:bg-gray-900 rounded-lg shadow border border-gray-200 dark:border-gray-800 overflow-hidden">
+                <div className="bg-brand-cream dark:bg-gray-900 rounded-lg shadow-sm border border-brand-primary/10 dark:border-gray-800 overflow-hidden">
                     {isLoading ? (
-                        <div className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                        <div className="px-6 py-8 text-center text-neutral-500 dark:text-gray-400">
                             <p>Loading orders...</p>
                         </div>
                     ) : filteredOrders.length === 0 ? (
-                        <div className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                        <div className="px-6 py-8 text-center text-neutral-500 dark:text-gray-400">
                             <p>No orders found.</p>
                         </div>
                     ) : (
-                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
-                            <thead className="bg-gray-50 dark:bg-gray-800">
+                        <table className="min-w-full divide-y divide-brand-primary/10 dark:divide-gray-800">
+                            <thead className="bg-brand-primary/5 dark:bg-gray-800">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-gray-400 uppercase tracking-wider">
                                         Order ID
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-gray-400 uppercase tracking-wider">
                                         Customer
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-gray-400 uppercase tracking-wider">
                                         Total
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-gray-400 uppercase tracking-wider">
                                         Status
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-gray-400 uppercase tracking-wider">
                                         Date
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-gray-400 uppercase tracking-wider">
                                         Actions
                                     </th>
                                 </tr>

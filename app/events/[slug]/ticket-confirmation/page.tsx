@@ -77,10 +77,10 @@ export default function TicketConfirmationPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-brand-cream flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Verifying your payment...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-brand-primary mx-auto mb-4"></div>
+          <p className="text-neutral-600">Verifying your payment...</p>
         </div>
       </div>
     );
@@ -88,16 +88,16 @@ export default function TicketConfirmationPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
+      <div className="min-h-screen bg-brand-cream flex items-center justify-center p-4">
+        <div className="bg-brand-cream border border-brand-primary/10 rounded-lg shadow-lg p-8 max-w-md w-full text-center">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <span className="text-4xl">❌</span>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Payment Failed</h1>
-          <p className="text-gray-600 mb-6">{error}</p>
+          <h1 className="text-2xl font-bold text-brand-dark mb-2">Payment Failed</h1>
+          <p className="text-neutral-600 mb-6">{error}</p>
           <Link
             href="/events"
-            className="inline-block px-6 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition"
+            className="inline-block px-6 py-3 bg-brand-primary text-white rounded-lg hover:bg-brand-primary/90 transition"
           >
             Back to Events
           </Link>
@@ -108,12 +108,12 @@ export default function TicketConfirmationPage() {
 
   if (tickets.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
-          <p className="text-gray-600">No tickets found</p>
+      <div className="min-h-screen bg-brand-cream flex items-center justify-center p-4">
+        <div className="bg-brand-cream border border-brand-primary/10 rounded-lg shadow-lg p-8 max-w-md w-full text-center">
+          <p className="text-neutral-600">No tickets found</p>
           <Link
             href="/events"
-            className="inline-block mt-4 px-6 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition"
+            className="inline-block mt-4 px-6 py-3 bg-brand-primary text-white rounded-lg hover:bg-brand-primary/90 transition"
           >
             Back to Events
           </Link>
@@ -125,20 +125,20 @@ export default function TicketConfirmationPage() {
   const firstTicket = tickets[0];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4">
+    <div className="min-h-screen bg-brand-cream py-12 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Success Header */}
-        <div className="bg-white rounded-lg shadow-lg p-8 mb-6 text-center">
+        <div className="bg-brand-cream border border-brand-primary/10 rounded-lg shadow-lg p-8 mb-6 text-center">
           <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="w-12 h-12 text-green-600" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-brand-dark mb-2">
             Payment Successful!
           </h1>
-          <p className="text-gray-600 mb-4">
+          <p className="text-neutral-600 mb-4">
             Your tickets have been sent to <strong>{firstTicket.ticket.attendeeEmail}</strong>
           </p>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-neutral-500">
             Order ID: {firstTicket.order.orderId}
           </p>
         </div>
@@ -148,44 +148,44 @@ export default function TicketConfirmationPage() {
           {tickets.map((ticketData, index) => (
             <div
               key={ticketData.ticket.ticketId}
-              className="bg-white rounded-lg shadow-lg overflow-hidden"
+              className="bg-brand-cream rounded-lg shadow-lg border border-brand-primary/10 overflow-hidden"
             >
-              <div className="bg-white border-b border-gray-200 p-5">
+              <div className="bg-brand-cream border-b border-brand-primary/10 p-5">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                    <span className="font-bold text-orange-500 text-sm tracking-wide">CODETICKETS</span>
+                    <div className="w-3 h-3 rounded-full bg-brand-accent"></div>
+                    <span className="font-bold text-brand-accent text-sm tracking-wide">CODETICKETS</span>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-semibold text-gray-900">Ticket {index + 1} of {tickets.length}</div>
+                    <div className="text-sm font-semibold text-brand-dark">Ticket {index + 1} of {tickets.length}</div>
                   </div>
                 </div>
               </div>
 
               <div className="p-6">
                 {/* Meta Row - Tier and Attendee */}
-                <div className="border-b border-gray-200 pb-4 mb-6">
+                <div className="border-b border-brand-primary/10 pb-4 mb-6">
                   <div className="flex justify-between items-start gap-6">
                     <div>
-                      <p className="text-xs text-gray-500 font-semibold tracking-wider mb-1">TICKET</p>
-                      <p className="text-xl font-black text-gray-900 uppercase tracking-wide">{ticketData.ticket.tierName}</p>
+                      <p className="text-xs text-neutral-500 font-semibold tracking-wider mb-1">TICKET</p>
+                      <p className="text-xl font-black text-brand-dark uppercase tracking-wide">{ticketData.ticket.tierName}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-gray-500 font-semibold tracking-wider mb-1">ATTENDEE</p>
-                      <p className="text-sm font-semibold text-gray-900">{ticketData.ticket.attendeeName}</p>
+                      <p className="text-xs text-neutral-500 font-semibold tracking-wider mb-1">ATTENDEE</p>
+                      <p className="text-sm font-semibold text-brand-dark">{ticketData.ticket.attendeeName}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Attendee Info - Centered and Bold */}
-                <div className="text-center mb-6 pb-6 border-b border-gray-200">
-                  <h2 className="text-3xl font-black text-gray-900 mb-2 uppercase tracking-wide">{ticketData.ticket.attendeeName}</h2>
-                  <p className="text-sm text-gray-600 mb-1">{ticketData.ticket.attendeeEmail}</p>
-                  <p className="text-xs text-gray-500 font-mono mt-2">{ticketData.ticket.ticketId}</p>
+                <div className="text-center mb-6 pb-6 border-b border-brand-primary/10">
+                  <h2 className="text-3xl font-black text-brand-dark mb-2 uppercase tracking-wide">{ticketData.ticket.attendeeName}</h2>
+                  <p className="text-sm text-neutral-600 mb-1">{ticketData.ticket.attendeeEmail}</p>
+                  <p className="text-xs text-neutral-500 font-mono mt-2">{ticketData.ticket.ticketId}</p>
                 </div>
 
                 {/* QR Code - Enlarged */}
-                <div className="bg-gray-50 rounded-lg p-6 text-center mb-4">
+                <div className="bg-brand-cream rounded-lg p-6 text-center mb-4 border border-brand-primary/10">
                   {ticketData.ticket.qrCode && (
                     <Image
                       src={ticketData.ticket.qrCode}
@@ -195,7 +195,7 @@ export default function TicketConfirmationPage() {
                       className="mx-auto border-4 border-white rounded-lg shadow-md"
                     />
                   )}
-                  <p className="text-xs text-gray-500 mt-3 font-medium">
+                  <p className="text-xs text-neutral-500 mt-3 font-medium">
                     Scan this code at event entry
                   </p>
                 </div>
@@ -204,14 +204,14 @@ export default function TicketConfirmationPage() {
                 <div className="mt-6 flex flex-wrap gap-3">
                   <a
                     href={`/api/tickets/${ticketData.ticket.ticketId}?format=image`}
-                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition text-sm font-medium"
+                    className="flex items-center gap-2 px-4 py-2 bg-brand-cream border border-brand-primary/10 hover:bg-brand-primary/5 rounded-lg transition text-sm font-medium"
                   >
                     <Download className="w-4 h-4" />
                     Download Image
                   </a>
                   <a
                     href={`/api/tickets/${ticketData.ticket.ticketId}?format=wallet`}
-                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition text-sm font-medium"
+                    className="flex items-center gap-2 px-4 py-2 bg-brand-cream border border-brand-primary/10 hover:bg-brand-primary/5 rounded-lg transition text-sm font-medium"
                   >
                     <Download className="w-4 h-4" />
                     Add to Apple Wallet
@@ -220,7 +220,7 @@ export default function TicketConfirmationPage() {
                     onClick={() => {
                       window.print();
                     }}
-                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition text-sm font-medium"
+                    className="flex items-center gap-2 px-4 py-2 bg-brand-cream border border-brand-primary/10 hover:bg-brand-primary/5 rounded-lg transition text-sm font-medium"
                   >
                     <Mail className="w-4 h-4" />
                     Print Ticket
@@ -232,21 +232,21 @@ export default function TicketConfirmationPage() {
         </div>
 
         {/* Order Summary */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mt-6">
-          <h3 className="font-bold text-gray-900 mb-4">Order Summary</h3>
+        <div className="bg-brand-cream border border-brand-primary/10 rounded-lg shadow-lg p-6 mt-6">
+          <h3 className="font-bold text-brand-dark mb-4">Order Summary</h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-600">Number of Tickets</span>
+              <span className="text-neutral-600">Number of Tickets</span>
               <span className="font-semibold">{tickets.length}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Total Amount</span>
+              <span className="text-neutral-600">Total Amount</span>
               <span className="font-semibold">
                 {firstTicket.order.currency} {firstTicket.order.totalAmount.toFixed(2)}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Payment Status</span>
+              <span className="text-neutral-600">Payment Status</span>
               <span className="inline-block px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-semibold">
                 {firstTicket.order.paymentStatus}
               </span>
@@ -270,13 +270,13 @@ export default function TicketConfirmationPage() {
         <div className="flex gap-4 mt-8">
           <Link
             href="/events"
-            className="flex-1 text-center px-6 py-3 bg-amber-600 text-white rounded-lg font-semibold hover:bg-amber-700 transition"
+            className="flex-1 text-center px-6 py-3 bg-brand-primary text-white rounded-lg font-semibold hover:bg-brand-primary/90 transition"
           >
             Browse More Events
           </Link>
           <Link
             href={`/events/${firstTicket.ticket.eventId}`}
-            className="flex-1 text-center px-6 py-3 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition"
+            className="flex-1 text-center px-6 py-3 border border-brand-primary/20 rounded-lg font-semibold hover:bg-brand-primary/5 transition"
           >
             View Event Details
           </Link>

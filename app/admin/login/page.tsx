@@ -186,25 +186,25 @@ export default function AdminLoginPage() {
     // Prevent hydration mismatch by not rendering until client is ready
     if (!isHydrated) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-darkbg">
-                <Loader className="w-8 h-8 animate-spin text-gray-400" />
+            <div className="min-h-screen flex items-center justify-center bg-brand-cream dark:bg-darkbg">
+                <Loader className="w-8 h-8 animate-spin text-neutral-400" />
             </div>
         )
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-darkbg py-12 px-4 sm:px-6 lg:px-8">
+        <div className="min-h-screen flex items-center justify-center bg-brand-cream dark:bg-darkbg py-12 px-4 sm:px-6 lg:px-8">
             <div className="w-full max-w-md">
                 {/* Header */}
                 <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                    <h1 className="text-3xl font-bold text-brand-dark dark:text-white mb-2">
                         SANKOFA TRIBE
                     </h1>
-                    <p className="text-gray-600 dark:text-gray-400">Admin Dashboard</p>
+                    <p className="text-neutral-600 dark:text-gray-400">Admin Dashboard</p>
                 </div>
 
                 {/* Login Card */}
-                <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8">
+                <div className="bg-brand-cream dark:bg-gray-900 rounded-lg shadow-lg border border-brand-primary/10 p-8">
                 {/* Error Message */}
                 {error && (
                     <div className="mb-6 p-4 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg flex items-start gap-3">
@@ -225,7 +225,7 @@ export default function AdminLoginPage() {
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Email Field */}
                     <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label htmlFor="email" className="block text-sm font-medium text-brand-dark dark:text-gray-300 mb-2">
                             Email Address
                         </label>
                         <input
@@ -235,14 +235,14 @@ export default function AdminLoginPage() {
                             value={formData.email}
                             onChange={handleInputChange}
                             disabled={isLoading}
-                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent dark:bg-gray-800 dark:text-white disabled:opacity-50"
+                            className="w-full px-4 py-2 border border-brand-primary/20 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent dark:bg-gray-800 dark:text-white disabled:opacity-50"
                             placeholder="admin@example.com"
                         />
                     </div>
 
                     {/* Password Field */}
                     <div>
-                        <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label htmlFor="password" className="block text-sm font-medium text-brand-dark dark:text-gray-300 mb-2">
                             Password
                         </label>
                         <input
@@ -252,7 +252,7 @@ export default function AdminLoginPage() {
                             value={formData.password}
                             onChange={handleInputChange}
                             disabled={isLoading}
-                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent dark:bg-gray-800 dark:text-white disabled:opacity-50"
+                            className="w-full px-4 py-2 border border-brand-primary/20 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent dark:bg-gray-800 dark:text-white disabled:opacity-50"
                             placeholder="Enter your password"
                         />
                     </div>
@@ -267,16 +267,16 @@ export default function AdminLoginPage() {
                                 checked={formData.rememberMe}
                                 onChange={handleInputChange}
                                 disabled={isLoading}
-                                className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black dark:bg-gray-800 dark:border-gray-600"
+                                className="w-4 h-4 text-brand-primary border-gray-300 rounded focus:ring-brand-primary dark:bg-gray-800 dark:border-gray-600"
                             />
-                            <label htmlFor="rememberMe" className="ml-2 text-sm text-gray-600 dark:text-gray-400">
+                            <label htmlFor="rememberMe" className="ml-2 text-sm text-neutral-600 dark:text-gray-400">
                                 Remember this device
                             </label>
                         </div>
                         <button
                             type="button"
                             onClick={() => setShowForgotPasswordModal(true)}
-                            className="text-sm text-black dark:text-white hover:underline font-medium"
+                            className="text-sm text-brand-primary dark:text-white hover:underline font-medium"
                         >
                             Forgot Password?
                         </button>
@@ -286,7 +286,7 @@ export default function AdminLoginPage() {
                     <button
                         type="submit"
                         disabled={isLoading || success}
-                        className="w-full bg-black dark:bg-white text-white dark:text-black font-medium py-2 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                        className="w-full bg-brand-dark dark:bg-white text-brand-cream dark:text-black font-medium py-2 rounded-lg hover:bg-brand-dark/90 dark:hover:bg-gray-100 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                         {isLoading && <Loader className="w-4 h-4 animate-spin" />}
                         {isLoading ? 'Signing in...' : success ? 'Redirecting...' : 'Sign in'}

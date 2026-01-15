@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
       description,
       price,
       compareAtPrice,
-      minStock,
+      sizes,
       inStock,
       image {
         asset->{ url }
@@ -84,7 +84,8 @@ export async function GET(request: NextRequest) {
       description: product.description,
       price: product.price,
       compareAtPrice: product.compareAtPrice,
-      stock: product.minStock,
+      stock: product.sizes?.reduce((acc: number, size: any) => acc + (size.stock || 0), 0) || 0,
+      sizes: product.sizes || [],
       inStock: product.inStock,
       imageUrl: product.image?.asset?.url,
       category: product.category?.name,

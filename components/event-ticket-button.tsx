@@ -34,9 +34,9 @@ export default function EventTicketButton({
 
   if (isPastEvent) {
     return (
-      <div className="bg-gray-100 border border-gray-300 rounded-lg p-6 text-center">
-        <Ticket className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-        <p className="text-gray-600 font-medium">This event has ended</p>
+      <div className="bg-brand-cream border border-brand-primary/10 rounded-lg p-6 text-center">
+        <Ticket className="w-8 h-8 text-neutral-400 mx-auto mb-2" />
+        <p className="text-neutral-600 font-medium">This event has ended</p>
       </div>
     );
   }
@@ -55,7 +55,7 @@ export default function EventTicketButton({
     <>
       <button
         onClick={() => setIsModalOpen(true)}
-        className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-4 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
+        className="w-full bg-brand-primary hover:bg-brand-primary/90 text-white font-bold py-4 px-6 rounded-lg transition-colors flex items-center justify-center gap-2"
       >
         <Ticket className="w-5 h-5" />
         Purchase Tickets
