@@ -76,8 +76,8 @@ export default function ContactPage() {
                                     <Mail className="h-5 w-5 text-gray-400 flex-shrink-0 mt-1" />
                                     <div>
                                         <h3 className="text-sm font-medium mb-1">Email</h3>
-                                        <a href="mailto:info@sankofatribe.com" className="text-sm text-gray-600 hover:text-black">
-                                            info@sankofatribe.com
+                                        <a href="mailto:sankofatribe007@gmail.com" className="text-sm text-gray-600 hover:text-black">
+                                            sankofatribe007@gmail.com
                                         </a>
                                     </div>
                                 </div>

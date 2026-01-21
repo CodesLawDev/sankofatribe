@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { CheckCircle, Download, Mail, Ticket, QrCode } from 'lucide-react';
+import TicketDownload from '@/components/ticket-download';
 
 interface TicketData {
   ticket: {
@@ -148,6 +149,7 @@ export default function TicketConfirmationPage() {
           {tickets.map((ticketData, index) => (
             <div
               key={ticketData.ticket.ticketId}
+              id={`ticket-${ticketData.ticket.ticketId}`}
               className="bg-brand-cream rounded-lg shadow-lg border border-brand-primary/10 overflow-hidden"
             >
               <div className="bg-brand-cream border-b border-brand-primary/10 p-5">
@@ -202,13 +204,11 @@ export default function TicketConfirmationPage() {
 
                 {/* Download Buttons */}
                 <div className="mt-6 flex flex-wrap gap-3">
-                  <a
-                    href={`/api/tickets/${ticketData.ticket.ticketId}?format=image`}
-                    className="flex items-center gap-2 px-4 py-2 bg-brand-cream border border-brand-primary/10 hover:bg-brand-primary/5 rounded-lg transition text-sm font-medium"
-                  >
-                    <Download className="w-4 h-4" />
-                    Download Image
-                  </a>
+                  <TicketDownload 
+                    ticketId={ticketData.ticket.ticketId}
+                    elementId={`ticket-${ticketData.ticket.ticketId}`}
+                    filename={`ticket-${ticketData.ticket.ticketId}.png`}
+                  />
                   <a
                     href={`/api/tickets/${ticketData.ticket.ticketId}?format=wallet`}
                     className="flex items-center gap-2 px-4 py-2 bg-brand-cream border border-brand-primary/10 hover:bg-brand-primary/5 rounded-lg transition text-sm font-medium"

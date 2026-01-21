@@ -258,9 +258,14 @@ export async function GET(
 </body>
 </html>`;
 
+    // Return HTML with proper filename suggestion for download
+    const filename = `ticket-${ticket.ticketId}.html`;
+    
     return new NextResponse(html, {
       headers: {
-        'Content-Type': 'text/html',
+        'Content-Type': 'text/html; charset=utf-8',
+        'Content-Disposition': `inline; filename="${filename}"`,
+        'X-Ticket-ID': ticket.ticketId,
       },
     });
   } catch (error) {
