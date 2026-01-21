@@ -43,29 +43,10 @@ export default async function ReturnsPage() {
             {/* Content */}
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
                 {page.content && (
-                    <div className="prose prose-lg max-w-none mb-16">
+                    <div className="prose prose-lg max-w-none">
                         <PortableText value={page.content} />
                     </div>
                 )}
-
-                {/* Sections */}
-                {page.sections && page.sections.map((section, idx) => (
-                    <div key={idx} className="mb-16">
-                        {section.heading && (
-                            <h2 className="text-2xl font-light tracking-wider uppercase mb-8 pb-4 border-b">
-                                {section.heading}
-                            </h2>
-                        )}
-                        <div className="space-y-8">
-                            {section.items.map((item, itemIdx) => (
-                                <div key={itemIdx}>
-                                    <h3 className="text-lg font-medium mb-3">{item.title}</h3>
-                                    <p className="text-gray-600 leading-relaxed">{item.content}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                ))}
             </div>
         </div>
     )

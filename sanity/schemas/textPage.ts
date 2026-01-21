@@ -20,11 +20,11 @@ export default defineType({
             },
             validation: (Rule) => Rule.required(),
         }),
-        defineField({
+        {
             name: 'content',
             title: 'Content',
             type: 'array',
             of: [{ type: 'block' }],
-        }),
+        },
     ],
 })

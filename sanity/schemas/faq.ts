@@ -16,7 +16,7 @@ export default defineType({
             title: 'Intro Description',
             type: 'text',
         }),
-        defineField({
+        {
             name: 'faqs',
             title: 'Questions & Answers',
             type: 'array',
@@ -35,6 +35,6 @@ export default defineType({
                     },
                 },
             ],
-        }),
+        },
     ],
 })
