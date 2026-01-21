@@ -1,49 +1,47 @@
 import { client } from './sanity'
 import { PortableTextBlock } from '@portabletext/react'
 
-export interface ContentPageData {
+export interface TextPageData {
     title: string
     slug: { current: string }
-    metaDescription?: string
-    hero?: {
-        title?: string
-        subtitle?: string
-        image?: any
-        showHero: boolean
-    }
     content?: PortableTextBlock[]
-    sections?: Array<{
-        heading: string
-        items: Array<{
-            title: string
-            content: string
-            icon?: string
-        }>
-    }>
-    contactInfo?: {
-        address?: string
-        email?: string
-        phone?: string
-        hours?: string
-    }
 }
 
-export async function getContentPage(slug: string): Promise<ContentPageData | null> {
-    const query = `*[_type == "contentPage" && slug.current == $slug][0]{
+export interface FAQData {
+    title: string
+    description?: string
+    faqs?: Array<{
+        question: string
+        answer: string
+    }>
+}
+
+export async function getTextPage(slug: string): Promise<TextPageData | null> {
+    const query = `*[_type == "textPage" && slug.current == $slug][0]{
         title,
         slug,
-        metaDescription,
-        hero,
-        content,
-        sections,
-        contactInfo
+        content
     }`
 
     try {
-        const page = await client.fetch(query, { slug }, { next: { revalidate: 60 } })
-        return page
+        return await client.fetch(query, { slug }, { next: { revalidate: 60 } })
     } catch (error) {
-        console.error('Error fetching content page:', error)
+        console.error(`Error fetching text page ${slug}:`, error)
+        return null
+    }
+}
+
+export async function getFAQPage(): Promise<FAQData | null> {
+    const query = `*[_type == "faq"][0]{
+        title,
+        description,
+        faqs
+    }`
+
+    try {
+        return await client.fetch(query, {}, { next: { revalidate: 60 } })
+    } catch (error) {
+        console.error('Error fetching FAQ page:', error)
         return null
     }
 }
