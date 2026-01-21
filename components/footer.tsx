@@ -48,11 +48,27 @@ export default function Footer() {
     useEffect(() => {
         async function fetchFooterData() {
             try {
-                const query = `*[_type == "footerSettings"][0]`
+                const query = `*[_type == "footerSettings"][0]{
+                    _id,
+                    title,
+                    showSections,
+                    showSocialLinks,
+                    showNewsletter,
+                    showBottomSection,
+                    showLegalLinks,
+                    sections,
+                    socialLinks,
+                    newsletter,
+                    bottomSection,
+                    copyrightText,
+                    legalLinks
+                }`
                 const data = await client.fetch(query)
                 setFooterData(data)
             } catch (error) {
                 console.error('Error fetching footer data:', error)
+                // Set fallback data on error
+                setFooterData(null)
             }
         }
         fetchFooterData()

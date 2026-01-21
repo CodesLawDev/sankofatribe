@@ -37,21 +37,6 @@ export const siteSettings = defineType({
             ],
         },
         defineField({
-            name: 'footerText',
-            title: 'Footer Text',
-            type: 'text',
-        }),
-        defineField({
-            name: 'socialLinks',
-            title: 'Social Media Links',
-            type: 'object',
-            fields: [
-                defineField({ name: 'instagram', title: 'Instagram', type: 'url' }),
-                defineField({ name: 'facebook', title: 'Facebook', type: 'url' }),
-                defineField({ name: 'twitter', title: 'Twitter', type: 'url' }),
-            ],
-        } as any),
-        defineField({
             name: 'adminPhone',
             title: 'Admin Phone (SMS)',
             type: 'string',

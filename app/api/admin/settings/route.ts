@@ -7,12 +7,17 @@ export async function GET(request: NextRequest) {
       `*[_type == "siteSettings"][0] {
         _id,
         siteName,
+        description,
         adminPhone,
         senderId,
         currency {
           defaultCurrency,
           exchangeRate,
           lastUpdated
+        },
+        geoLocation {
+          ghanaCurrencyCountries,
+          defaultCountry
         }
       }`
     )
@@ -37,19 +42,21 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
-    const { _id, siteName, adminPhone, senderId, currency } = body
+    const { _id, siteName, description, adminPhone, senderId, currency, geoLocation } = body
 
     // Update settings in Sanity
     const updated = await serverClient
       .patch(_id)
       .set({
         siteName,
+        description,
         adminPhone,
         senderId,
         currency: {
           ...currency,
           lastUpdated: new Date().toISOString(),
         },
+        geoLocation,
       })
       .commit()
 

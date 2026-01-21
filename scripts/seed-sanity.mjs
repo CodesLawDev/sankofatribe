@@ -118,14 +118,12 @@ async function run() {
       _type: 'siteSettings',
       siteName: 'Sankofa Tribe',
       description: 'Sankofa Tribe apparel & lifestyle.',
-      footerText: '© ' + new Date().getFullYear() + ' Sankofa Tribe',
       mainNavigation: [
         { title: 'Mens', link: '/category/mens' },
         { title: 'Womens', link: '/category/womens' },
         { title: 'Accessories', link: '/category/accessories' },
         { title: 'Home', link: '/category/home' }
-      ],
-      socialLinks: { instagram: 'https://instagram.com/placeholder' }
+      ]
     })
 
     console.log('\n[seed] Completed successfully.')

@@ -20,8 +20,8 @@ interface SiteSettings {
     lastUpdated?: string
   }
   geoLocation?: {
-    ghanaCurrencyCountries: string[]
-    defaultCountry: string
+    ghanaCurrencyCountries?: string[]
+    defaultCountry?: string
   }
 }
 
@@ -243,6 +243,50 @@ export default function SettingsPage() {
                     <li>International users see USD ($)</li>
                     <li>Conversion based on exchange rate above</li>
                   </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* Geo Location Settings */}
+            <div className="bg-brand-cream rounded-lg border border-brand-primary/10 p-6 shadow-sm">
+              <h2 className="text-lg font-medium uppercase tracking-wider mb-6 text-brand-dark">Geo Location Settings</h2>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Default Country Code</label>
+                  <input
+                    type="text"
+                    value={settings.geoLocation?.defaultCountry || 'GH'}
+                    onChange={(e) => setSettings({
+                      ...settings,
+                      geoLocation: {
+                        ...settings.geoLocation,
+                        defaultCountry: e.target.value.toUpperCase(),
+                      },
+                    })}
+                    placeholder="GH"
+                    maxLength={2}
+                    className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-black"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">ISO country code (e.g., GH for Ghana)</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Countries Using GHS</label>
+                  <textarea
+                    value={(settings.geoLocation?.ghanaCurrencyCountries || []).join(', ')}
+                    onChange={(e) => setSettings({
+                      ...settings,
+                      geoLocation: {
+                        ...settings.geoLocation,
+                        ghanaCurrencyCountries: e.target.value.split(',').map(c => c.trim().toUpperCase()).filter(c => c),
+                      },
+                    })}
+                    rows={3}
+                    placeholder="GH, BJ, TG"
+                    className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-black"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Comma-separated ISO country codes</p>
                 </div>
               </div>
             </div>

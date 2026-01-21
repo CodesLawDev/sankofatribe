@@ -176,12 +176,6 @@ export interface SiteSettings {
     logo?: SanityImage
     description?: string
     mainNavigation?: { title: string; link: string }[]
-    footerText?: string
-    socialLinks?: {
-        instagram?: string
-        facebook?: string
-        twitter?: string
-    }
 }
 
 export interface Career {
