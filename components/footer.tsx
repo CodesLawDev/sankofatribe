@@ -34,6 +34,11 @@ interface FooterData {
     }>
     copyrightText: string
     legalLinks: FooterLink[]
+    showSections?: boolean
+    showSocialLinks?: boolean
+    showNewsletter?: boolean
+    showBottomSection?: boolean
+    showLegalLinks?: boolean
 }
 
 export default function Footer() {
@@ -106,6 +111,12 @@ export default function Footer() {
         ],
     }
 
+    const showSections = footerData?.showSections ?? true
+    const showSocialLinks = footerData?.showSocialLinks ?? true
+    const showNewsletter = footerData?.showNewsletter ?? true
+    const showBottomSection = footerData?.showBottomSection ?? true
+    const showLegalLinks = footerData?.showLegalLinks ?? true
+
     const sections = footerData?.sections ?? defaultData.sections
     const socialLinks = {
         ...defaultData.socialLinks,
@@ -120,82 +131,86 @@ export default function Footer() {
         <footer className="bg-black text-white">
             {/* Main Footer Content */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 py-20">
-                    {sections.map((section, idx) => (
-                        <div key={idx}>
-                            <h4 className="text-xs font-bold uppercase tracking-wider mb-6">{section.heading}</h4>
-                            <ul className="space-y-3">
-                                {section.links.map((link, linkIdx) => (
-                                    <li key={linkIdx}>
-                                        <Link href={link.url} className="text-xs text-gray-400 hover:text-white transition-colors">
-                                            {link.text}
-                                        </Link>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    ))}
+                {showSections && (
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 py-20">
+                        {sections.map((section, idx) => (
+                            <div key={idx}>
+                                <h4 className="text-xs font-bold uppercase tracking-wider mb-6">{section.heading}</h4>
+                                <ul className="space-y-3">
+                                    {section.links.map((link, linkIdx) => (
+                                        <li key={linkIdx}>
+                                            <Link href={link.url} className="text-xs text-gray-400 hover:text-white transition-colors">
+                                                {link.text}
+                                            </Link>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        ))}
 
-                    {/* Connect - Social Media */}
-                    <div>
-                        <h4 className="text-xs font-bold uppercase tracking-wider mb-6">Connect</h4>
-                        <div className="flex gap-4">
-                            {socialLinks.instagram && (
-                                <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors" aria-label="Instagram">
-                                    <Instagram className="h-5 w-5" />
-                                </a>
-                            )}
-                            {socialLinks.facebook && (
-                                <a href={socialLinks.facebook} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors" aria-label="Facebook">
-                                    <Facebook className="h-5 w-5" />
-                                </a>
-                            )}
-                            {socialLinks.twitter && (
-                                <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors" aria-label="Twitter">
-                                    <Twitter className="h-5 w-5" />
-                                </a>
-                            )}
-                            {socialLinks.youtube && (
-                                <a href={socialLinks.youtube} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors" aria-label="YouTube">
-                                    <Youtube className="h-5 w-5" />
-                                </a>
-                            )}
+                        {showSocialLinks && (
+                            <div>
+                                <h4 className="text-xs font-bold uppercase tracking-wider mb-6">Connect</h4>
+                                <div className="flex gap-4">
+                                    {socialLinks.instagram && (
+                                        <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors" aria-label="Instagram">
+                                            <Instagram className="h-5 w-5" />
+                                        </a>
+                                    )}
+                                    {socialLinks.facebook && (
+                                        <a href={socialLinks.facebook} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors" aria-label="Facebook">
+                                            <Facebook className="h-5 w-5" />
+                                        </a>
+                                    )}
+                                    {socialLinks.twitter && (
+                                        <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors" aria-label="Twitter">
+                                            <Twitter className="h-5 w-5" />
+                                        </a>
+                                    )}
+                                    {socialLinks.youtube && (
+                                        <a href={socialLinks.youtube} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors" aria-label="YouTube">
+                                            <Youtube className="h-5 w-5" />
+                                        </a>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {showNewsletter && (
+                    <div className="border-y border-gray-800 py-12">
+                        <div className="max-w-md">
+                            <h3 className="text-sm font-bold mb-4">{newsletter.heading}</h3>
+                            <p className="text-xs text-gray-400 mb-4">
+                                {newsletter.description}
+                            </p>
+                            <form className="flex gap-2">
+                                <label htmlFor="newsletter-email" className="sr-only">
+                                    Email address
+                                </label>
+                                <input
+                                    type="email"
+                                    id="newsletter-email"
+                                    name="email"
+                                    required
+                                    aria-required="true"
+                                    placeholder="Enter your email"
+                                    className="flex-1 px-3 py-2 text-xs bg-gray-900 text-white border border-gray-700 focus:outline-none focus:border-white transition-colors"
+                                />
+                                <button 
+                                    type="submit" 
+                                    className="bg-white text-black px-4 py-2 text-xs font-bold hover:bg-gray-200 transition-colors focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
+                                >
+                                    {newsletter.buttonText}
+                                </button>
+                            </form>
                         </div>
                     </div>
-                </div>
-
-                {/* Newsletter */}
-                <div className="border-y border-gray-800 py-12">
-                    <div className="max-w-md">
-                        <h3 className="text-sm font-bold mb-4">{newsletter.heading}</h3>
-                        <p className="text-xs text-gray-400 mb-4">
-                            {newsletter.description}
-                        </p>
-                        <form className="flex gap-2">
-                            <label htmlFor="newsletter-email" className="sr-only">
-                                Email address
-                            </label>
-                            <input
-                                type="email"
-                                id="newsletter-email"
-                                name="email"
-                                required
-                                aria-required="true"
-                                placeholder="Enter your email"
-                                className="flex-1 px-3 py-2 text-xs bg-gray-900 text-white border border-gray-700 focus:outline-none focus:border-white transition-colors"
-                            />
-                            <button 
-                                type="submit" 
-                                className="bg-white text-black px-4 py-2 text-xs font-bold hover:bg-gray-200 transition-colors focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
-                            >
-                                {newsletter.buttonText}
-                            </button>
-                        </form>
-                    </div>
-                </div>
+                )}
 
                 {/* Bottom Section */}
-                {bottomSection && bottomSection.length > 0 && (
+                {showBottomSection && bottomSection && bottomSection.length > 0 && (
                     <div className="py-8 border-b border-gray-800">
                         <div className="grid grid-cols-2 gap-4">
                             {bottomSection.map((item, idx) => (
@@ -215,7 +230,7 @@ export default function Footer() {
                     <p className="text-xs text-gray-500">
                         {copyrightText}
                     </p>
-                    {legalLinks && legalLinks.length > 0 && (
+                    {showLegalLinks && legalLinks && legalLinks.length > 0 && (
                         <div className="flex gap-6 text-xs">
                             {legalLinks.map((link, idx) => (
                                 <Link key={idx} href={link.url} className="text-gray-500 hover:text-white transition-colors">

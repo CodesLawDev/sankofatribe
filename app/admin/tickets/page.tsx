@@ -3,11 +3,23 @@ import TicketVerifier from '@/components/admin/ticket-verifier'
 
 const prisma = new PrismaClient()
 
+export const dynamic = 'force-dynamic'
+
 export default async function AdminTicketsPage() {
-  const [orders, tickets] = await Promise.all([
-    prisma.eventTicketOrder.findMany({ orderBy: { createdAt: 'desc' }, take: 10 }),
-    prisma.eventTicket.findMany({ orderBy: { createdAt: 'desc' }, take: 10 }),
-  ])
+  type OrdersResult = Awaited<ReturnType<typeof prisma.eventTicketOrder.findMany>>
+  type TicketsResult = Awaited<ReturnType<typeof prisma.eventTicket.findMany>>
+
+  let orders: OrdersResult = []
+  let tickets: TicketsResult = []
+
+  try {
+    ;[orders, tickets] = await Promise.all([
+      prisma.eventTicketOrder.findMany({ orderBy: { createdAt: 'desc' }, take: 10 }),
+      prisma.eventTicket.findMany({ orderBy: { createdAt: 'desc' }, take: 10 }),
+    ])
+  } catch (error) {
+    console.error('Admin tickets page data fetch failed:', error)
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4">
