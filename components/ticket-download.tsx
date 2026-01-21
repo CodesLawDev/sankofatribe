@@ -18,8 +18,12 @@ export default function TicketDownload({ ticketId, elementId, filename }: Ticket
     try {
       const element = document.getElementById(elementId);
       if (!element) {
+        console.error('Element not found:', elementId);
         throw new Error('Ticket element not found');
       }
+
+      // Wait a bit for images to load
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       // Generate canvas from HTML element
       const canvas = await html2canvas(element, {
@@ -27,7 +31,16 @@ export default function TicketDownload({ ticketId, elementId, filename }: Ticket
         backgroundColor: '#ffffff',
         logging: false,
         useCORS: true,
-        allowTaint: true,
+        allowTaint: false,
+        imageTimeout: 15000,
+        onclone: (clonedDoc) => {
+          // Ensure the cloned element is visible
+          const clonedElement = clonedDoc.getElementById(elementId);
+          if (clonedElement) {
+            clonedElement.style.display = 'block';
+            clonedElement.style.position = 'relative';
+          }
+        }
       });
 
       // Convert canvas to blob

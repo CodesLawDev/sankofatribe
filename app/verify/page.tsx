@@ -1,41 +1,73 @@
-import { getPrisma } from '@/lib/auth-utils'
-import { serverClient } from '@/lib/sanity-server'
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Calendar, MapPin, Users, QrCode } from 'lucide-react'
 
-export const dynamic = 'force-dynamic'
+interface Event {
+  _id: string
+  title: string
+  slug: { current: string }
+  eventDate: string
+  venue: string
+  city: string
+  imageUrl?: string
+  totalTickets: number
+  usedTickets: number
+}
 
-export default async function VerifyEventsPage() {
-  const prisma = getPrisma()
+export default function VerifyEventsPage() {
+  const router = useRouter()
+  const [isLoading, setIsLoading] = useState(true)
+  const [events, setEvents] = useState<Event[]>([])
 
-  // Get all events from Sanity
-  const eventsQuery = `*[_type == "event"] | order(eventDate desc) {
-    _id,
-    title,
-    slug,
-    eventDate,
-    venue,
-    city,
-    "imageUrl": image.asset->url
-  }`
-  const events = await serverClient.fetch(eventsQuery)
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/api/auth/me', { credentials: 'include' })
+        if (!response.ok) {
+          router.push('/admin/login')
+          return
+        }
+        const data = await response.json()
+        if (data.user.role !== 'ADMIN' && data.user.role !== 'SUPERADMIN') {
+          router.push('/admin/login')
+          return
+        }
+        fetchEvents()
+      } catch (error) {
+        console.error('Auth check failed:', error)
+        router.push('/admin/login')
+      }
+    }
+    checkAuth()
+  }, [router])
 
-  // Get ticket counts for each event from database
-  const eventStats = await Promise.all(
-    events.map(async (event: any) => {
-      const [totalTickets, usedTickets] = await Promise.all([
-        prisma.eventTicket.count({ where: { eventId: event._id } }),
-        prisma.eventTicket.count({ where: { eventId: event._id, status: 'USED' } }),
-      ])
-      return { eventId: event._id, totalTickets, usedTickets }
-    })
-  )
+  const fetchEvents = async () => {
+    try {
+      const response = await fetch('/api/admin/events', { credentials: 'include' })
+      if (response.ok) {
+        const data = await response.json()
+        setEvents(data.events || [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch events:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
-  const eventsWithStats = events.map((event: any) => {
-    const stats = eventStats.find((s) => s.eventId === event._id)
-    return { ...event, ...stats }
-  })
-
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4">
       <div className="max-w-6xl mx-auto">
@@ -44,7 +76,7 @@ export default async function VerifyEventsPage() {
           <p className="text-gray-600">Select an event to verify attendees and scan tickets</p>
         </div>
 
-        {eventsWithStats.length === 0 ? (
+        {events.length === 0 ? (
           <div className="bg-white rounded-lg shadow-sm p-12 text-center">
             <QrCode className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No Events Found</h3>
@@ -52,7 +84,7 @@ export default async function VerifyEventsPage() {
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {eventsWithStats.map((event: any) => (
+            {events.map((event) => (
               <Link
                 key={event._id}
                 href={`/verify/${event.slug.current}`}
