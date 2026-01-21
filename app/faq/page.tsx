@@ -57,7 +57,7 @@ export default async function FAQPage() {
                 <div className="mt-16 text-center bg-gray-50 py-12 px-6">
                     <h3 className="text-lg font-medium mb-3">Still have questions?</h3>
                     <p className="text-sm text-gray-600 mb-6">
-                        Can't find the answer you're looking for? Our customer support team is here to help.
+                        Can&apos;t find the answer you&apos;re looking for? Our customer support team is here to help.
                     </p>
                     <a
                         href="/contact"
