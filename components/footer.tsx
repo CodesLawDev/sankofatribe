@@ -23,11 +23,6 @@ interface FooterData {
         twitter?: string
         youtube?: string
     }
-    newsletter: {
-        heading: string
-        description: string
-        buttonText: string
-    }
     bottomSection: Array<{
         title: string
         description: string
@@ -36,7 +31,6 @@ interface FooterData {
     legalLinks: FooterLink[]
     showSections?: boolean
     showSocialLinks?: boolean
-    showNewsletter?: boolean
     showBottomSection?: boolean
     showLegalLinks?: boolean
 }
@@ -53,12 +47,10 @@ export default function Footer() {
                     title,
                     showSections,
                     showSocialLinks,
-                    showNewsletter,
                     showBottomSection,
                     showLegalLinks,
                     sections,
                     socialLinks,
-                    newsletter,
                     bottomSection,
                     copyrightText,
                     legalLinks
@@ -111,11 +103,6 @@ export default function Footer() {
             twitter: 'https://twitter.com',
             youtube: 'https://youtube.com',
         },
-        newsletter: {
-            heading: 'Email Sign Up',
-            description: 'Get the latest product launches, exclusive offers, and updates',
-            buttonText: 'Sign Up',
-        },
         bottomSection: [
             { title: 'Find a Store', description: 'Locate our retail locations near you' },
             { title: 'Sustainability', description: 'Learn about our environmental commitment' },
@@ -129,7 +116,6 @@ export default function Footer() {
 
     const showSections = footerData?.showSections ?? true
     const showSocialLinks = footerData?.showSocialLinks ?? true
-    const showNewsletter = footerData?.showNewsletter ?? true
     const showBottomSection = footerData?.showBottomSection ?? true
     const showLegalLinks = footerData?.showLegalLinks ?? true
 
@@ -138,7 +124,6 @@ export default function Footer() {
         ...defaultData.socialLinks,
         ...(footerData?.socialLinks || {}),
     }
-    const newsletter = footerData?.newsletter ?? defaultData.newsletter
     const bottomSection = footerData?.bottomSection ?? defaultData.bottomSection
     const legalLinks = footerData?.legalLinks ?? defaultData.legalLinks
     const copyrightText = (footerData?.copyrightText || defaultData.copyrightText).replace('{year}', currentYear.toString())
@@ -194,36 +179,7 @@ export default function Footer() {
                     </div>
                 )}
 
-                {showNewsletter && (
-                    <div className="border-y border-gray-800 py-12">
-                        <div className="max-w-md">
-                            <h3 className="text-sm font-bold mb-4">{newsletter.heading}</h3>
-                            <p className="text-xs text-gray-400 mb-4">
-                                {newsletter.description}
-                            </p>
-                            <form className="flex gap-2">
-                                <label htmlFor="newsletter-email" className="sr-only">
-                                    Email address
-                                </label>
-                                <input
-                                    type="email"
-                                    id="newsletter-email"
-                                    name="email"
-                                    required
-                                    aria-required="true"
-                                    placeholder="Enter your email"
-                                    className="flex-1 px-3 py-2 text-xs bg-gray-900 text-white border border-gray-700 focus:outline-none focus:border-white transition-colors"
-                                />
-                                <button 
-                                    type="submit" 
-                                    className="bg-white text-black px-4 py-2 text-xs font-bold hover:bg-gray-200 transition-colors focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
-                                >
-                                    {newsletter.buttonText}
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                )}
+                
 
                 {/* Bottom Section */}
                 {showBottomSection && bottomSection && bottomSection.length > 0 && (
