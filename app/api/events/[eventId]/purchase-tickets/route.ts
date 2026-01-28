@@ -202,8 +202,8 @@ export async function POST(
         amount: Math.round(totalAmount * 100), // Paystack expects amount in kobo (pesewas for GHS)
         currency,
         reference: order.id,
-        // Use site URL env; pass reference back via query for confirmation page
-        callback_url: `${process.env.NEXT_PUBLIC_SITE_URL}/events/${eventId}/ticket-confirmation`,
+        // Use dedicated callback route that handles verification and redirects
+        callback_url: `${process.env.NEXT_PUBLIC_SITE_URL}/api/events/payment-callback`,
         metadata: {
           orderId: order.id,
           eventId,
