@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, TrendingUp, ShoppingCart, Users, DollarSign } from 'lucide-react'
+import { ArrowLeft, TrendingUp, ShoppingCart, Users, DollarSign, FileText, Send, Loader2 } from 'lucide-react'
 import { useAdminAuth } from '@/lib/useAdminAuth'
 
 interface DashboardStats {
@@ -17,11 +17,36 @@ interface DashboardStats {
   topProducts: Array<{ name: string; sales: number; revenue: number }>
 }
 
+interface MonthlyReport {
+  id: string
+  month: number
+  year: number
+  totalOrders: number
+  totalRevenue: number
+  totalPageViews: number
+  uniqueVisitors: number
+  newCustomers: number
+  successfulPayments: number
+  failedPayments: number
+  smsSent: boolean
+  createdAt: string
+}
+
 export default function AnalyticsPage() {
   const router = useRouter()
   const { user, isLoading: authLoading, isMounted } = useAdminAuth()
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const now = new Date()
+    return now.getMonth() === 0 ? 12 : now.getMonth()
+  })
+  const [selectedYear, setSelectedYear] = useState(() => {
+    const now = new Date()
+    return now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear()
+  })
+  const [generatingReport, setGeneratingReport] = useState(false)
+  const [reportResult, setReportResult] = useState<{ success: boolean; message: string; report?: MonthlyReport } | null>(null)
 
   useEffect(() => {
     if (isMounted && user && !authLoading) {
@@ -42,6 +67,44 @@ export default function AnalyticsPage() {
       setIsLoading(false)
     }
   }
+
+  const generateMonthlyReport = async () => {
+    try {
+      setGeneratingReport(true)
+      setReportResult(null)
+
+      const response = await fetch('/api/admin/analytics/monthly-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ month: selectedMonth, year: selectedYear }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setReportResult({ success: false, message: data.error || 'Failed to generate report' })
+      } else {
+        setReportResult({
+          success: true,
+          message: data.message || 'Report generated successfully',
+          report: data.report,
+        })
+      }
+    } catch (error) {
+      console.error('Failed to generate report:', error)
+      setReportResult({ success: false, message: 'Failed to generate report' })
+    } finally {
+      setGeneratingReport(false)
+    }
+  }
+
+  const monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ]
+
+  const currentYear = new Date().getFullYear()
+  const years = Array.from({ length: 5 }, (_, i) => currentYear - i)
 
   if (authLoading || isLoading) {
     return (
@@ -65,6 +128,92 @@ export default function AnalyticsPage() {
           </Link>
           <h1 className="text-3xl font-light tracking-wider uppercase text-brand-dark dark:text-white">Analytics & Insights</h1>
           <p className="text-sm text-neutral-600 dark:text-gray-400 mt-2">Overview of your business performance</p>
+        </div>
+
+        {/* Monthly Report Generator */}
+        <div className="bg-white dark:bg-gray-900 rounded-lg border border-brand-primary/10 dark:border-gray-800 p-6 mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <FileText className="h-5 w-5 text-brand-primary" />
+            <h3 className="text-lg font-medium text-brand-dark dark:text-white uppercase tracking-wider">Monthly Report</h3>
+          </div>
+          <p className="text-sm text-neutral-600 dark:text-gray-400 mb-4">
+            Generate and send a monthly analytics report via SMS to all admin phone numbers.
+          </p>
+          
+          <div className="flex flex-wrap items-end gap-4">
+            <div>
+              <label className="block text-xs text-neutral-500 dark:text-gray-500 mb-1 uppercase tracking-wider">Month</label>
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                className="px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-brand-dark dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+              >
+                {monthNames.map((name, idx) => (
+                  <option key={idx} value={idx + 1}>{name}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-xs text-neutral-500 dark:text-gray-500 mb-1 uppercase tracking-wider">Year</label>
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(Number(e.target.value))}
+                className="px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-brand-dark dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
+              >
+                {years.map((year) => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+            </div>
+            
+            <button
+              onClick={generateMonthlyReport}
+              disabled={generatingReport}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {generatingReport ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4" />
+                  Generate & Send Report
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Report Result */}
+          {reportResult && (
+            <div className={`mt-4 p-4 rounded-lg ${reportResult.success ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'}`}>
+              <p className={`text-sm font-medium ${reportResult.success ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'}`}>
+                {reportResult.message}
+              </p>
+              {reportResult.report && (
+                <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <p className="text-neutral-500 dark:text-gray-500">Orders</p>
+                    <p className="font-medium text-brand-dark dark:text-white">{reportResult.report.totalOrders}</p>
+                  </div>
+                  <div>
+                    <p className="text-neutral-500 dark:text-gray-500">Revenue</p>
+                    <p className="font-medium text-brand-dark dark:text-white">₵{Number(reportResult.report.totalRevenue).toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <p className="text-neutral-500 dark:text-gray-500">Page Views</p>
+                    <p className="font-medium text-brand-dark dark:text-white">{reportResult.report.totalPageViews}</p>
+                  </div>
+                  <div>
+                    <p className="text-neutral-500 dark:text-gray-500">New Customers</p>
+                    <p className="font-medium text-brand-dark dark:text-white">{reportResult.report.newCustomers}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Key Metrics */}
