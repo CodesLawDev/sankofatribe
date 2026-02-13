@@ -28,6 +28,8 @@ export default function Checkout() {
   } | null>(null);
   const [promoError, setPromoError] = useState("");
   const [isValidatingPromo, setIsValidatingPromo] = useState(false);
+  const [paymentProvider, setPaymentProvider] = useState("");
+  const [paymentError, setPaymentError] = useState("");
 
   // Calculate final total with promo discount
   const discount = appliedPromo?.discountAmount || 0;
@@ -92,6 +94,10 @@ export default function Checkout() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!paymentProvider) {
+      setPaymentError("Please select a payment provider");
+      return;
+    }
     setIsProcessing(true);
     setStockErrors([]);
 
@@ -143,6 +149,7 @@ export default function Checkout() {
           tax: 0,
           total: finalTotal,
           paymentStatus: 'pending',
+          paymentMethod: paymentProvider,
         }),
       });
 
@@ -170,6 +177,8 @@ export default function Checkout() {
           orderId,
           customerName: `${formData.firstName} ${formData.lastName}`,
           customerPhone: formData.phone,
+          provider: paymentProvider,
+          reference: orderId,
           items: cart.map(item => ({
             name: item.name,
             quantity: item.quantity,
@@ -358,6 +367,54 @@ export default function Checkout() {
                       className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-black focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
                     />
                   </div>
+                </div>
+              </div>
+
+              {/* Payment Method */}
+              <div>
+                <h2 className="text-xl font-light mb-6 pb-3 border-b border-gray-200 dark:border-gray-800">
+                  Payment Method
+                </h2>
+                <div className="space-y-3">
+                  {paymentError && (
+                    <p className="text-sm text-red-600">{paymentError}</p>
+                  )}
+                  <label className="flex items-center gap-3 border border-gray-200 dark:border-gray-800 rounded-lg p-4 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="paymentProvider"
+                      value="PAYSTACK"
+                      checked={paymentProvider === 'PAYSTACK'}
+                      onChange={(e) => {
+                        setPaymentProvider(e.target.value);
+                        setPaymentError('');
+                      }}
+                    />
+                    <div>
+                      <p className="text-sm font-medium">Paystack</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        Card, Mobile Money, Bank Transfer, USSD
+                      </p>
+                    </div>
+                  </label>
+                  <label className="flex items-center gap-3 border border-gray-200 dark:border-gray-800 rounded-lg p-4 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="paymentProvider"
+                      value="HUBTEL"
+                      checked={paymentProvider === 'HUBTEL'}
+                      onChange={(e) => {
+                        setPaymentProvider(e.target.value);
+                        setPaymentError('');
+                      }}
+                    />
+                    <div>
+                      <p className="text-sm font-medium">Hubtel</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        Mobile Money or Card via Hubtel
+                      </p>
+                    </div>
+                  </label>
                 </div>
               </div>
 

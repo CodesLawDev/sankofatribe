@@ -40,11 +40,6 @@ export async function POST(req: NextRequest) {
 
         if (verificationData.status && verificationData.data.status === 'success') {
             // Payment verified successfully
-            console.log('Payment verified:', {
-                reference,
-                amount: verificationData.data.amount,
-                customer: verificationData.data.customer,
-            })
 
             // TODO: Save order to database
             // TODO: Send confirmation email to customer
@@ -59,8 +54,6 @@ export async function POST(req: NextRequest) {
                 paymentMethod: 'paystack',
                 createdAt: new Date().toISOString(),
             }
-
-            console.log('Order created:', orderData)
 
             return NextResponse.json({
                 success: true,

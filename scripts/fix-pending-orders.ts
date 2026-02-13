@@ -10,13 +10,9 @@ const ordersToFix = [
 ];
 
 async function fixPendingOrders() {
-  console.log('=== Fixing Pending Orders with Successful Payments ===\n');
-
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
   for (const orderId of ordersToFix) {
-    console.log(`\nProcessing order: ${orderId}`);
-    
     // Get order details
     const order = await prisma.eventTicketOrder.findUnique({
       where: { id: orderId },
@@ -24,23 +20,16 @@ async function fixPendingOrders() {
     });
 
     if (!order) {
-      console.log(`  Order not found!`);
+      console.error(`Order not found: ${orderId}`);
       continue;
     }
 
-    console.log(`  Buyer: ${order.buyerName} (${order.buyerEmail})`);
-    console.log(`  Current status: ${order.paymentStatus}`);
-    console.log(`  Tickets already generated: ${order.tickets.length}`);
-
     if (order.paymentStatus === 'success' && order.tickets.length > 0) {
-      console.log(`  Already fixed - skipping`);
       continue;
     }
 
     // Call the verify-payment endpoint
     try {
-      console.log(`  Calling verify-payment API...`);
-      
       const response = await fetch(`${baseUrl}/api/events/verify-payment`, {
         method: 'POST',
         headers: {
@@ -53,26 +42,16 @@ async function fixPendingOrders() {
 
       const result = await response.json();
 
-      if (response.ok && result.success) {
-        console.log(`  ✅ SUCCESS: ${result.message}`);
-        console.log(`  Tickets generated: ${result.tickets?.length || 0}`);
-        if (result.tickets) {
-          for (const ticket of result.tickets) {
-            console.log(`    - ${ticket.ticketId}: ${ticket.attendeeName}`);
-          }
-        }
-      } else {
-        console.log(`  ❌ FAILED: ${result.error || 'Unknown error'}`);
+      if (!response.ok || !result.success) {
+        console.error(`Verification failed for ${orderId}: ${result.error || 'Unknown error'}`);
         if (result.details) {
-          console.log(`  Details: ${result.details}`);
+          console.error(`Details: ${result.details}`);
         }
       }
     } catch (error) {
-      console.log(`  ❌ ERROR: ${error}`);
+      console.error(`Error verifying order ${orderId}:`, error);
     }
   }
-
-  console.log('\n=== Done ===');
   await prisma.$disconnect();
 }
 

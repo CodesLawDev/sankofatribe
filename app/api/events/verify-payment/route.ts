@@ -24,11 +24,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify payment with Paystack (using CodeTickets credentials)
-    const paystackSecretKey = process.env.CODETICKETS_PAYSTACK_SECRET_KEY;
+    // Verify payment with Paystack
+    const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
     if (!paystackSecretKey) {
       return NextResponse.json(
-        { error: 'CodeTickets payment configuration error' },
+        { error: 'Payment configuration error' },
         { status: 500 }
       );
     }
@@ -215,7 +215,6 @@ export async function POST(request: NextRequest) {
       } catch (error: any) {
         // If ticket already exists (duplicate key), fetch it instead
         if (error.code === 'P2002' && error.meta?.target?.includes('ticketId')) {
-          console.log('Ticket already exists, fetching existing:', { ticketId: ticketData.ticketId });
           const existingTicket = await prisma.eventTicket.findUnique({
             where: { ticketId: ticketData.ticketId },
           });

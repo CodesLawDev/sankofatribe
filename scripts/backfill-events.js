@@ -108,7 +108,6 @@ async function run() {
       }
     }
 
-    console.log(`Backfilled ${events.length} events into EventRecord`)
     process.exit(0)
   } catch (err) {
     console.error('Backfill failed:', err)

@@ -9,6 +9,7 @@ function VerifyPaymentContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const reference = searchParams?.get('reference');
+  const provider = searchParams?.get('provider');
   const { clearCart } = useCart();
   
   const [status, setStatus] = useState<'verifying' | 'success' | 'failed'>('verifying');
@@ -27,7 +28,6 @@ function VerifyPaymentContent() {
     const alreadyProcessed = sessionStorage.getItem(processedKey);
     
     if (alreadyProcessed) {
-      console.log('Payment already processed, skipping verification');
       setStatus('success');
       setMessage('Payment successful! Your order has been confirmed.');
       setHasProcessed(true);
@@ -42,11 +42,18 @@ function VerifyPaymentContent() {
 
   const verifyPayment = async () => {
     try {
-      const response = await fetch(`/api/payment/verify?reference=${reference}`);
+      if (!reference) {
+        setStatus('failed');
+        setMessage('No payment reference found');
+        return;
+      }
+      
+      const query = new URLSearchParams({
+        reference,
+        ...(provider ? { provider } : {}),
+      });
+      const response = await fetch(`/api/payment/verify?${query.toString()}`);
       const data = await response.json();
-
-      console.log('Payment verification response:', data);
-      console.log('Metadata from payment:', data.metadata);
 
       if (data.success) {
         // Mark this payment as processed to prevent duplicate SMS
@@ -67,7 +74,7 @@ function VerifyPaymentContent() {
                 paymentStatus: 'paid',
                 paymentReference: reference,
                 paidAt: data.paidAt,
-                paymentMethod: data.channel,
+                paymentMethod: data.provider || data.channel,
               },
             }),
           });
@@ -78,9 +85,6 @@ function VerifyPaymentContent() {
           if (!updateResult.alreadyProcessed) {
             // Send payment confirmation SMS to customer (includes order confirmation)
             try {
-              console.log('Attempting to send payment confirmation SMS...');
-              console.log('Customer phone:', data.metadata?.customerPhone);
-              console.log('Payment channel:', data.channel);
               
               const paymentSmsResponse = await fetch('/api/sms', {
                 method: 'POST',
@@ -97,8 +101,7 @@ function VerifyPaymentContent() {
                 }),
               });
               
-              const paymentSmsResult = await paymentSmsResponse.json();
-              console.log('Payment confirmation SMS result:', paymentSmsResult);
+              await paymentSmsResponse.json();
             } catch (error) {
               console.error('Failed to send payment confirmation SMS:', error);
             }
@@ -129,8 +132,6 @@ function VerifyPaymentContent() {
             } catch (error) {
               console.error('Failed to send admin alert SMS:', error);
             }
-          } else {
-            console.log('Skipping SMS - payment already processed');
           }
         }
 

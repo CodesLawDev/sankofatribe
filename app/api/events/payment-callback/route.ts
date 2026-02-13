@@ -3,6 +3,7 @@ import { getPrisma } from '@/lib/auth-utils';
 import { serverClient } from '@/lib/sanity-server';
 import { sendSMS } from '@/lib/sms-service';
 import QRCode from 'qrcode';
+import { verifyHubtelPayment } from '@/lib/hubtel';
 
 const prisma = getPrisma();
 
@@ -13,13 +14,14 @@ interface AttendeeInfo {
 }
 
 /**
- * Payment callback handler for Paystack
- * This route receives the callback from Paystack after payment,
+ * Payment callback handler for ticket payments
+ * This route receives the callback from the payment provider,
  * verifies the payment, generates tickets, and redirects to confirmation page
  */
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const reference = searchParams.get('reference') || searchParams.get('trxref');
+  const provider = (searchParams.get('provider') || 'PAYSTACK').toUpperCase();
   
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://sankofatribe.com';
 
@@ -28,46 +30,118 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Verify payment with Paystack
-    const paystackSecretKey = process.env.CODETICKETS_PAYSTACK_SECRET_KEY;
-    if (!paystackSecretKey) {
-      console.error('CODETICKETS_PAYSTACK_SECRET_KEY not configured');
-      return NextResponse.redirect(`${baseUrl}/events?error=config_error`);
-    }
+    let order: any = null;
+    let attendees: AttendeeInfo[] | null = null;
 
-    const verifyResponse = await fetch(
-      `https://api.paystack.co/transaction/verify/${reference}`,
-      {
-        headers: {
-          Authorization: `Bearer ${paystackSecretKey}`,
-        },
+    if (provider === 'PAYSTACK') {
+      // Verify payment with Paystack
+      const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
+      if (!paystackSecretKey) {
+        console.error('PAYSTACK_SECRET_KEY not configured');
+        return NextResponse.redirect(`${baseUrl}/events?error=config_error`);
       }
-    );
 
-    const verifyData = await verifyResponse.json();
+      const verifyResponse = await fetch(
+        `https://api.paystack.co/transaction/verify/${reference}`,
+        {
+          headers: {
+            Authorization: `Bearer ${paystackSecretKey}`,
+          },
+        }
+      );
 
-    if (!verifyData.status || verifyData.data.status !== 'success') {
-      console.log('Payment verification failed:', verifyData);
-      return NextResponse.redirect(`${baseUrl}/events?error=payment_failed`);
-    }
+      const verifyData = await verifyResponse.json();
 
-    // Get metadata
-    const metadata = verifyData.data.metadata;
-    
-    if (!metadata || !metadata.orderId) {
-      console.error('Missing orderId in Paystack metadata:', { metadata });
-      return NextResponse.redirect(`${baseUrl}/events?error=invalid_metadata`);
-    }
+      if (!verifyData.status || verifyData.data.status !== 'success') {
+        console.error('Payment verification failed:', verifyData);
+        return NextResponse.redirect(`${baseUrl}/events?error=payment_failed`);
+      }
 
-    // Get order
-    const order = await prisma.eventTicketOrder.findUnique({
-      where: { id: metadata.orderId },
-      include: { tier: true, tickets: true },
-    });
+      // Get metadata
+      const metadata = verifyData.data.metadata;
+      
+      if (!metadata || !metadata.orderId) {
+        console.error('Missing orderId in Paystack metadata:', { metadata });
+        return NextResponse.redirect(`${baseUrl}/events?error=invalid_metadata`);
+      }
 
-    if (!order) {
-      console.error('Order not found:', metadata.orderId);
-      return NextResponse.redirect(`${baseUrl}/events?error=order_not_found`);
+      // Get order
+      order = await prisma.eventTicketOrder.findUnique({
+        where: { id: metadata.orderId },
+        include: { tier: true, tickets: true },
+      });
+
+      if (!order) {
+        console.error('Order not found:', metadata.orderId);
+        return NextResponse.redirect(`${baseUrl}/events?error=order_not_found`);
+      }
+
+      if (order.attendees && Array.isArray(order.attendees)) {
+        // Validate that the attendees array matches the expected structure
+        try {
+          const parsed = order.attendees as unknown as AttendeeInfo[];
+          const isValid = parsed.every(
+            (item) =>
+              item &&
+              typeof item === 'object' &&
+              typeof item.name === 'string' &&
+              typeof item.email === 'string' &&
+              typeof item.phone === 'string'
+          );
+          if (isValid) {
+            attendees = parsed;
+          }
+        } catch {
+          // Invalid attendees data, leave as null
+        }
+      }
+
+      if (!attendees && metadata.attendees) {
+        try {
+          attendees = JSON.parse(metadata.attendees);
+        } catch (e) {
+          console.error('Failed to parse attendees:', e);
+          return NextResponse.redirect(`${baseUrl}/events?error=invalid_attendees`);
+        }
+      }
+    } else if (provider === 'HUBTEL') {
+      const hubtelResult = await verifyHubtelPayment(reference);
+      if (hubtelResult.status !== 'SUCCESS') {
+        console.error('Hubtel payment verification failed:', hubtelResult);
+        return NextResponse.redirect(`${baseUrl}/events?error=payment_failed`);
+      }
+
+      order = await prisma.eventTicketOrder.findUnique({
+        where: { id: reference },
+        include: { tier: true, tickets: true },
+      });
+
+      if (!order) {
+        console.error('Order not found:', reference);
+        return NextResponse.redirect(`${baseUrl}/events?error=order_not_found`);
+      }
+
+      if (order.attendees && Array.isArray(order.attendees)) {
+        // Validate that the attendees array matches the expected structure
+        try {
+          const parsed = order.attendees as unknown as AttendeeInfo[];
+          const isValid = parsed.every(
+            (item) =>
+              item &&
+              typeof item === 'object' &&
+              typeof item.name === 'string' &&
+              typeof item.email === 'string' &&
+              typeof item.phone === 'string'
+          );
+          if (isValid) {
+            attendees = parsed;
+          }
+        } catch {
+          // Invalid attendees data, leave as null
+        }
+      }
+    } else {
+      return NextResponse.redirect(`${baseUrl}/events?error=invalid_provider`);
     }
 
     // Get event slug for redirect
@@ -95,18 +169,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Parse attendees
-    if (!metadata.attendees) {
-      console.error('Missing attendees in metadata');
+    if (!attendees || attendees.length === 0) {
+      console.error('Missing attendees for order');
       return NextResponse.redirect(`${baseUrl}/events?error=missing_attendees`);
-    }
-
-    let attendees: AttendeeInfo[];
-    try {
-      attendees = JSON.parse(metadata.attendees);
-    } catch (e) {
-      console.error('Failed to parse attendees:', e);
-      return NextResponse.redirect(`${baseUrl}/events?error=invalid_attendees`);
     }
 
     // Generate tickets
@@ -188,7 +253,10 @@ export async function GET(request: NextRequest) {
     // Update order
     await prisma.eventTicketOrder.update({
       where: { id: order.id },
-      data: { paymentStatus: 'success' },
+      data: {
+        paymentStatus: 'success',
+        paymentMethod: provider.toLowerCase(),
+      },
     });
 
     // Update sold count

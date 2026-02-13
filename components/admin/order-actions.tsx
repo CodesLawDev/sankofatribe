@@ -92,7 +92,7 @@ export default function OrderActions({ orderId, paymentStatus, onStatusChange }:
             onClick={handleConfirm}
             disabled={loading !== null}
             className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded hover:bg-green-100 disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Verify with Paystack and generate tickets"
+            title="Verify payment and generate tickets"
           >
             {loading === 'confirm' ? (
               <Loader2 className="w-3 h-3 animate-spin" />

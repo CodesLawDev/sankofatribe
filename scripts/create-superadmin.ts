@@ -17,10 +17,6 @@ async function createSuperAdmin() {
     })
 
     if (existingUser) {
-      console.log(`User with email ${email} already exists!`)
-      console.log(`User ID: ${existingUser.id}`)
-      console.log(`Current role: ${existingUser.role}`)
-      
       if (existingUser.role !== 'SUPERADMIN') {
         // Update to SUPERADMIN
         await prisma.user.update({
@@ -30,9 +26,7 @@ async function createSuperAdmin() {
             status: 'ACTIVE'
           }
         })
-        console.log(`✅ Updated user to SUPERADMIN role`)
       } else {
-        console.log(`✅ User is already a SUPERADMIN`)
       }
       
       process.exit(0)
@@ -62,13 +56,6 @@ async function createSuperAdmin() {
         ]
       }
     })
-
-    console.log('✅ Superadmin account created successfully!')
-    console.log('Email:', email)
-    console.log('Password:', password)
-    console.log('User ID:', superAdmin.id)
-    console.log('Role:', superAdmin.role)
-    console.log('\n⚠️  Please change the password after first login!')
 
     process.exit(0)
   } catch (error) {

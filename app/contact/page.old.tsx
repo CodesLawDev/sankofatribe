@@ -22,7 +22,6 @@ export default function ContactPage() {
         await new Promise(resolve => setTimeout(resolve, 1000))
         
         // In production, you would send this to your API
-        console.log('Form submitted:', formData)
         setStatus('success')
         setFormData({ name: '', email: '', subject: '', message: '' })
     }

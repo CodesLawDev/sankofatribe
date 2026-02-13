@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getPrisma } from '@/lib/auth-utils';
 import { serverClient } from '@/lib/sanity-server';
 import { nanoid } from 'nanoid';
+import { generateHubtelReference, initHubtelCheckout } from '@/lib/hubtel';
 
 const prisma = getPrisma();
 
@@ -28,6 +29,7 @@ export async function POST(
       attendees,
       totalAmount,
       currency = 'GHS',
+      paymentProvider,
       tierPrice,
       tierQuantity,
     }: {
@@ -39,6 +41,7 @@ export async function POST(
       attendees: AttendeeInfo[];
       totalAmount: number;
       currency: string;
+      paymentProvider?: string;
       tierPrice?: number;
       tierQuantity?: number;
     } = body;
@@ -130,6 +133,14 @@ export async function POST(
     // Create order
     const orderId = `ORD-${nanoid(10)}`;
     const isFree = totalAmount === 0;
+    const normalizedProvider = paymentProvider ? paymentProvider.toUpperCase() : '';
+
+    if (!isFree && !normalizedProvider) {
+      return NextResponse.json(
+        { error: 'Payment provider is required for paid tickets' },
+        { status: 400 }
+      );
+    }
 
     const order = await prisma.eventTicketOrder.create({
       data: {
@@ -144,6 +155,8 @@ export async function POST(
         currency,
         paymentStatus: isFree ? 'success' : 'pending',
         paymentReference: isFree ? `FREE-${nanoid(10)}` : '',
+        paymentMethod: normalizedProvider ? normalizedProvider.toLowerCase() : undefined,
+        attendees: attendees as any,
       },
     });
 
@@ -182,60 +195,98 @@ export async function POST(
       });
     }
 
-    // For paid tickets, initiate Paystack payment (using CodeTickets credentials)
-    const paystackSecretKey = process.env.CODETICKETS_PAYSTACK_SECRET_KEY;
-    if (!paystackSecretKey) {
-      return NextResponse.json(
-        { error: 'CodeTickets payment configuration error' },
-        { status: 500 }
-      );
-    }
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://sankofatribe.com';
 
-    const paystackResponse = await fetch('https://api.paystack.co/transaction/initialize', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${paystackSecretKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email: buyerEmail,
-        amount: Math.round(totalAmount * 100), // Paystack expects amount in kobo (pesewas for GHS)
-        currency,
-        reference: order.id,
-        // Use dedicated callback route that handles verification and redirects
-        callback_url: `${process.env.NEXT_PUBLIC_SITE_URL}/api/events/payment-callback`,
-        metadata: {
-          orderId: order.id,
-          eventId,
-          tierId: tier.id,
-          ticketCount,
-          buyerName,
-          buyerPhone,
-          attendees: JSON.stringify(attendees),
+    if (normalizedProvider === 'PAYSTACK') {
+      // For paid tickets, initiate Paystack payment
+      const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
+      if (!paystackSecretKey) {
+        return NextResponse.json(
+          { error: 'Payment configuration error' },
+          { status: 500 }
+        );
+      }
+
+      const paystackResponse = await fetch('https://api.paystack.co/transaction/initialize', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${paystackSecretKey}`,
+          'Content-Type': 'application/json',
         },
-      }),
-    });
+        body: JSON.stringify({
+          email: buyerEmail,
+          amount: Math.round(totalAmount * 100), // Paystack expects amount in kobo (pesewas for GHS)
+          currency,
+          reference: order.id,
+          // Use dedicated callback route that handles verification and redirects
+          callback_url: `${baseUrl}/api/events/payment-callback?provider=PAYSTACK`,
+          metadata: {
+            orderId: order.id,
+            eventId,
+            tierId: tier.id,
+            ticketCount,
+            buyerName,
+            buyerPhone,
+            attendees: JSON.stringify(attendees),
+          },
+        }),
+      });
 
-    const paystackData = await paystackResponse.json();
+      const paystackData = await paystackResponse.json();
 
-    if (!paystackData.status) {
-      return NextResponse.json(
-        { error: 'Failed to initiate payment' },
-        { status: 500 }
-      );
+      if (!paystackData.status) {
+        return NextResponse.json(
+          { error: 'Failed to initiate payment' },
+          { status: 500 }
+        );
+      }
+
+      // Update order with payment reference
+      await prisma.eventTicketOrder.update({
+        where: { id: order.id },
+        data: { paymentReference: paystackData.data.reference },
+      });
+
+      return NextResponse.json({
+        orderId: order.id,
+        paymentUrl: paystackData.data.authorization_url,
+        reference: paystackData.data.reference,
+      });
     }
 
-    // Update order with payment reference
-    await prisma.eventTicketOrder.update({
-      where: { id: order.id },
-      data: { paymentReference: paystackData.data.reference },
-    });
+    if (normalizedProvider === 'HUBTEL') {
+      const hubtelReference = order.id || generateHubtelReference('EVT');
+      const returnUrl = `${baseUrl}/api/events/payment-callback?provider=HUBTEL&reference=${encodeURIComponent(hubtelReference)}`;
+      const callbackUrl = `${baseUrl}/api/webhooks/hubtel/payments`;
 
-    return NextResponse.json({
-      orderId: order.id,
-      paymentUrl: paystackData.data.authorization_url,
-      reference: paystackData.data.reference,
-    });
+      const hubtelResult = await initHubtelCheckout({
+        amountGhs: totalAmount,
+        clientReference: hubtelReference,
+        description: `Tickets for ${eventId}`,
+        returnUrl,
+        callbackUrl,
+        cancellationUrl: `${baseUrl}/events/${eventId}?payment=cancelled`,
+        customerName: buyerName,
+        customerEmail: buyerEmail,
+        customerPhone: buyerPhone,
+      });
+
+      await prisma.eventTicketOrder.update({
+        where: { id: order.id },
+        data: { paymentReference: hubtelReference },
+      });
+
+      return NextResponse.json({
+        orderId: order.id,
+        paymentUrl: hubtelResult.checkoutUrl,
+        reference: hubtelResult.clientReference,
+      });
+    }
+
+    return NextResponse.json(
+      { error: `Unsupported payment provider: ${normalizedProvider}` },
+      { status: 400 }
+    );
   } catch (error) {
     console.error('Ticket purchase error:', error);
     return NextResponse.json(

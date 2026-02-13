@@ -11,7 +11,6 @@ async function main() {
     });
 
     if (existingAdmin) {
-      console.log('Admin user already exists');
       return;
     }
 
@@ -31,8 +30,6 @@ async function main() {
       },
     });
 
-    console.log('✅ Admin user created:', admin.email);
-    console.log('📝 Please change password for:', admin.email);
   } catch (error) {
     console.error('❌ Seed error:', error);
     process.exit(1);

@@ -41,7 +41,6 @@ async function sendSMS(phone: string, message: string): Promise<boolean> {
   const senderId = process.env.BMS_SENDER_ID || 'SankofaTrib';
   
   if (!apiKey) {
-    console.log('  SMS: BMS API key not configured, skipping');
     return false;
   }
 
@@ -68,7 +67,7 @@ async function sendSMS(phone: string, message: string): Promise<boolean> {
 }
 
 async function verifyAndFixOrder(orderId: string): Promise<VerificationResult> {
-  const paystackSecretKey = process.env.CODETICKETS_PAYSTACK_SECRET_KEY;
+  const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
   if (!paystackSecretKey) {
     return {
       orderId,
@@ -301,21 +300,13 @@ async function verifyAndFixOrder(orderId: string): Promise<VerificationResult> {
 }
 
 async function main() {
-  console.log('='.repeat(60));
-  console.log('PENDING PAYMENT VERIFICATION JOB');
-  console.log(`Started at: ${new Date().toISOString()}`);
-  console.log('='.repeat(60));
-
   // Get all pending orders
   const pendingOrders = await prisma.eventTicketOrder.findMany({
     where: { paymentStatus: 'pending' },
     orderBy: { createdAt: 'desc' },
   });
 
-  console.log(`\nFound ${pendingOrders.length} pending order(s) to check\n`);
-
   if (pendingOrders.length === 0) {
-    console.log('No pending orders to process.');
     await prisma.$disconnect();
     return;
   }
@@ -323,47 +314,15 @@ async function main() {
   const results: VerificationResult[] = [];
 
   for (const order of pendingOrders) {
-    console.log(`\nProcessing: ${order.id}`);
-    console.log(`  Buyer: ${order.buyerName} (${order.buyerEmail})`);
-    console.log(`  Amount: ${order.currency} ${order.totalAmount}`);
-    console.log(`  Created: ${order.createdAt.toISOString()}`);
-
     const result = await verifyAndFixOrder(order.id);
     results.push(result);
-
-    console.log(`  Result: ${result.status} - ${result.message}`);
   }
-
-  // Summary
-  console.log('\n' + '='.repeat(60));
-  console.log('SUMMARY');
-  console.log('='.repeat(60));
 
   const fixed = results.filter(r => r.status === 'fixed');
   const abandoned = results.filter(r => r.status === 'abandoned');
   const failed = results.filter(r => r.status === 'failed');
   const notFound = results.filter(r => r.status === 'not_found');
   const alreadyProcessed = results.filter(r => r.status === 'already_processed');
-
-  console.log(`\n✅ Fixed: ${fixed.length}`);
-  for (const r of fixed) {
-    console.log(`   - ${r.buyerEmail}: ${r.ticketsGenerated} ticket(s)`);
-  }
-
-  console.log(`\n⏳ Abandoned: ${abandoned.length}`);
-  for (const r of abandoned) {
-    console.log(`   - ${r.buyerEmail}`);
-  }
-
-  console.log(`\n❌ Failed: ${failed.length}`);
-  for (const r of failed) {
-    console.log(`   - ${r.buyerEmail}: ${r.message}`);
-  }
-
-  console.log(`\n❓ Not Found: ${notFound.length}`);
-  console.log(`\n✓ Already Processed: ${alreadyProcessed.length}`);
-
-  console.log(`\nCompleted at: ${new Date().toISOString()}`);
 
   await prisma.$disconnect();
 

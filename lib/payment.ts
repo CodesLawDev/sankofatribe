@@ -68,13 +68,6 @@ class PaymentService {
         throw new Error('Paystack secret key is not configured');
       }
 
-      console.log('=== PAYSTACK API CALL ===')
-      console.log('Email:', data.email)
-      console.log('Amount (pesewas):', data.amount)
-      console.log('Channels:', data.channels)
-      console.log('Callback URL:', data.callback_url)
-      console.log('Metadata orderId:', data.metadata?.orderId)
-
       const response = await axios.post(
         `${PAYSTACK_BASE_URL}/transaction/initialize`,
         {
@@ -92,11 +85,6 @@ class PaymentService {
           },
         }
       );
-
-      console.log('=== PAYSTACK RESPONSE ===')
-      console.log('Status:', response.data?.status)
-      console.log('Reference:', response.data?.data?.reference)
-      console.log('Auth URL exists:', !!response.data?.data?.authorization_url)
 
       if (!response.data || response.data.status !== true) {
         throw new Error(response.data?.message || 'Paystack returned unsuccessful status')

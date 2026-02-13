@@ -48,6 +48,8 @@ export default function TicketPurchaseModal({
   const [buyerInfo, setBuyerInfo] = useState({ name: '', email: '', phone: '' });
   const [isProcessing, setIsProcessing] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [paymentProvider, setPaymentProvider] = useState('');
+  const [paymentError, setPaymentError] = useState('');
 
   if (!isOpen) return null;
 
@@ -123,6 +125,10 @@ export default function TicketPurchaseModal({
   const handlePurchase = async () => {
     if (!selectedTier) return;
     if (!validateForm()) return;
+    if (selectedTier.price > 0 && !paymentProvider) {
+      setPaymentError('Please select a payment provider');
+      return;
+    }
 
     setIsProcessing(true);
 
@@ -144,6 +150,7 @@ export default function TicketPurchaseModal({
           attendees,
           totalAmount: selectedTier.price * ticketCount,
           currency,
+          paymentProvider,
           // Provide tier details to allow backend to upsert tier if missing
           tierPrice: selectedTier.price,
           tierQuantity: selectedTier.quantity,
@@ -157,7 +164,7 @@ export default function TicketPurchaseModal({
 
       const { orderId, paymentUrl, reference } = await response.json();
 
-      // Redirect to Paystack for payment
+      // Redirect to the selected payment provider
       if (paymentUrl) {
         window.location.href = paymentUrl;
       } else if (reference) {
@@ -356,6 +363,51 @@ export default function TicketPurchaseModal({
               ))}
             </div>
           </div>
+
+          {!isFree && (
+            <div>
+              <h3 className="text-lg font-semibold text-brand-dark mb-3">Payment Method</h3>
+              {paymentError && (
+                <p className="text-sm text-red-500 mb-2">{paymentError}</p>
+              )}
+              <div className="space-y-2">
+                <label className="flex items-center gap-3 border border-brand-primary/10 rounded-lg p-3 bg-white cursor-pointer">
+                  <input
+                    type="radio"
+                    name="paymentProvider"
+                    value="PAYSTACK"
+                    checked={paymentProvider === 'PAYSTACK'}
+                    onChange={(e) => {
+                      setPaymentProvider(e.target.value);
+                      setPaymentError('');
+                    }}
+                    disabled={isProcessing}
+                  />
+                  <div>
+                    <p className="text-sm font-medium text-brand-dark">Paystack</p>
+                    <p className="text-xs text-neutral-600">Card, Mobile Money, Bank Transfer, USSD</p>
+                  </div>
+                </label>
+                <label className="flex items-center gap-3 border border-brand-primary/10 rounded-lg p-3 bg-white cursor-pointer">
+                  <input
+                    type="radio"
+                    name="paymentProvider"
+                    value="HUBTEL"
+                    checked={paymentProvider === 'HUBTEL'}
+                    onChange={(e) => {
+                      setPaymentProvider(e.target.value);
+                      setPaymentError('');
+                    }}
+                    disabled={isProcessing}
+                  />
+                  <div>
+                    <p className="text-sm font-medium text-brand-dark">Hubtel</p>
+                    <p className="text-xs text-neutral-600">Mobile Money or Card via Hubtel</p>
+                  </div>
+                </label>
+              </div>
+            </div>
+          )}
 
           {/* Order Summary */}
           <div className="bg-brand-primary/5 border border-brand-primary/10 rounded-lg p-4">

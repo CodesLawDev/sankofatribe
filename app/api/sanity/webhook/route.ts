@@ -32,11 +32,8 @@ export async function POST(req: NextRequest) {
 
     const ids = Array.isArray(rawIds) ? rawIds : []
     if (ids.length === 0) {
-      console.log('[webhook] No IDs to process, ignoring')
       return NextResponse.json({ ignored: true }, { status: 200 })
     }
-
-    console.log(`[webhook] Processing ${ids.length} event(s) with action: ${action}`)
 
     // Process multiple ids if present
     const results: any[] = []
@@ -45,7 +42,6 @@ export async function POST(req: NextRequest) {
         if (action === 'delete') {
           await prisma.eventRecord.deleteMany({ where: { sanityId: id } })
           results.push({ id, action: 'delete', success: true })
-          console.log(`[webhook] Deleted event record: ${id}`)
           continue
         }
 
@@ -86,7 +82,6 @@ export async function POST(req: NextRequest) {
           // If not found (e.g., draft/unpublished), remove any existing record
           await prisma.eventRecord.deleteMany({ where: { sanityId: id } })
           results.push({ id, action: 'unpublished', success: true })
-          console.log(`[webhook] Event not published in Sanity, removed from DB: ${id}`)
           continue
         }
 
@@ -184,13 +179,9 @@ export async function POST(req: NextRequest) {
             }
           }
 
-          console.log(`[webhook] Synced ${tiers.length} ticket tier(s) for event: ${event._id}`)
-        } else {
-          console.log(`[webhook] No ticket tiers found for event: ${event._id}`)
         }
 
         results.push({ id, action: 'upsert', success: true })
-        console.log(`[webhook] Successfully synced event: ${event._id}`)
       } catch (itemError) {
         console.error(`[webhook] Error processing event ${id}:`, itemError)
         results.push({ id, action, success: false, error: String(itemError) })

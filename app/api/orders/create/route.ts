@@ -20,6 +20,7 @@ export async function POST(req: NextRequest) {
             tax = 0,
             total = 0,
             paymentStatus = 'pending',
+            paymentMethod,
         } = body || {}
 
         if (!customer?.email) {
@@ -64,7 +65,7 @@ export async function POST(req: NextRequest) {
             tax,
             total,
             metadata: {
-                paymentMethod: undefined,
+                paymentMethod: paymentMethod || undefined,
                 paidAt: undefined,
             },
         }

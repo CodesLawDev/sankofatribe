@@ -31,7 +31,6 @@ export default function ContactPage() {
         // Simulate form submission
         await new Promise(resolve => setTimeout(resolve, 1000))
         
-        console.log('Form submitted:', formData)
         setStatus('success')
         setFormData({ name: '', email: '', subject: '', message: '' })
     }
