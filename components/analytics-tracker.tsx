@@ -31,7 +31,7 @@ export default function AnalyticsTracker() {
         })
       } catch (error) {
         // Silently fail - analytics should not break the app
-        console.error('Analytics tracking failed:', error)
+        console.debug('Analytics tracking failed:', error)
       }
     }
 

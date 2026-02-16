@@ -24,7 +24,7 @@ export default function ShareButton({ event, slug }: ShareButtonProps) {
                     url: shareUrl,
                 })
             } catch (err) {
-                console.error('Error sharing:', err)
+                console.log('Error sharing:', err)
             }
         } else {
             // Fallback: copy to clipboard

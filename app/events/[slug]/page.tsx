@@ -29,6 +29,9 @@ async function getEvent(slug: string): Promise<Event | null> {
         }
     }`
     const event = await client.fetch<Event>(query, { slug })
+    if (event?.ticketInfo?.ticketTiers) {
+        console.log(`[Event] Fetched ${event.ticketInfo.ticketTiers.length} ticket tiers from Sanity for event: ${event.title}`)
+    }
     return event
 }
 
@@ -128,6 +131,8 @@ export default async function EventPage({ params }: Props) {
         where: { eventId: event._id },
         orderBy: { createdAt: 'asc' }
     })
+    console.log(`[Event] Found ${dbTiers.length} ticket tiers in database for event: ${event._id}`)
+    
     // Use database tiers as primary source (they're synced from Sanity)
     // Merge in Sanity metadata (descriptions) where available
     const mergedTiers = dbTiers.length > 0 
@@ -150,6 +155,8 @@ export default async function EventPage({ params }: Props) {
             quantity: sanityTier.quantity,
             sold: sanityTier.sold ?? 0,
         })) || []
+    
+    console.log(`[Event] Merged tiers count: ${mergedTiers.length} for event: ${event.title}`)
     
     // Check if tickets are available and calculate sold out status
     const hasTicketTiers = mergedTiers && mergedTiers.length > 0

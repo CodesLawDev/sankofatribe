@@ -6,7 +6,7 @@ A high-end fashion e-commerce website built with **Next.js 14** and **Sanity Stu
 
 - **Modern E-Commerce**: Full-featured shopping cart, product variants (size, color), and checkout flow
 - **Headless CMS**: Sanity Studio v3 for easy content management
-- **Payment Integration**: Paystack and Hubtel checkout
+- **Payment Integration**: Paystack checkout (primary)
 - **Premium Design**: Calvin Klein-inspired minimalist aesthetic with smooth animations
 - **Fully Responsive**: Mobile-first design that works on all devices
 - **SEO Optimized**: Server-side rendering with Next.js App Router
@@ -19,7 +19,6 @@ Before you begin, ensure you have:
 - Node.js 18+ installed
 - A Sanity account ([create one at sanity.io](https://www.sanity.io))
 - A Paystack account ([create one at paystack.com](https://paystack.com))
-- A Hubtel account ([create one at hubtel.com](https://hubtel.com))
 
 ## 🚀 Quick Start
 
@@ -55,12 +54,6 @@ NEXT_PUBLIC_SANITY_API_VERSION=2024-01-01
 # Paystack (primary payment)
 NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY=your_paystack_public_key
 PAYSTACK_SECRET_KEY=your_paystack_secret_key
-
-# Hubtel (optional)
-HUBTEL_API_KEY=your_hubtel_api_key
-HUBTEL_ACCOUNT_ID=your_hubtel_account_id
-HUBTEL_MERCHANT_ACCOUNT_NUMBER=your_hubtel_merchant_account_number
-HUBTEL_WEBHOOK_SECRET=your_hubtel_webhook_secret
 
 # Site URL
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
@@ -124,7 +117,7 @@ Modify these colors to match your brand identity.
 
 ## 💳 Payments
 
-Paystack and Hubtel are supported. Configure `NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY`, `PAYSTACK_SECRET_KEY`, and the Hubtel environment variables in your `.env` file.
+Paystack is the primary payment processor. Configure `NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY` and `PAYSTACK_SECRET_KEY` in your `.env` file. (Stripe has been removed.)
 
 ## 📦 Project Structure
 
@@ -184,7 +177,7 @@ npx sanity deploy
 - **Framework**: Next.js 14 (App Router)
 - **CMS**: Sanity Studio v3
 - **Styling**: TailwindCSS
-- **Payment**: Paystack, Hubtel
+- **Payment**: Stripe
 - **Language**: TypeScript
 - **State Management**: React Context API
 - **Icons**: Lucide React
@@ -194,8 +187,7 @@ npx sanity deploy
 For issues or questions:
 - Sanity: [Sanity Documentation](https://www.sanity.io/docs)
 - Next.js: [Next.js Documentation](https://nextjs.org/docs)
-- Paystack: [Paystack Documentation](https://paystack.com/docs)
-- Hubtel: [Hubtel Documentation](https://developers.hubtel.com)
+- Stripe: [Stripe Documentation](https://stripe.com/docs)
 
 ## 📄 License
 
@@ -203,4 +195,4 @@ This project is licensed under the MIT License.
 
 ---
 
-Built with ❤️ using Next.js, Sanity, Paystack, and Hubtel
+Built with ❤️ using Next.js, Sanity, and Stripe

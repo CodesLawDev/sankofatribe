@@ -259,9 +259,6 @@ model EventTicketOrder {
   buyerEmail            String      @db.VarChar(255)
   buyerPhone            String?     @db.VarChar(20)
   buyerName             String      @db.VarChar(255)
-
-  // Attendee payload for post-payment ticket generation
-  attendees             Json?
   
   // Order details
   ticketCount           Int         // Number of tickets in this order

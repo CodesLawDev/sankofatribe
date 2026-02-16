@@ -18,13 +18,19 @@ interface AttendeeInfo {
 }
 
 async function fixPendingOrdersDirect() {
-  const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
+  console.log('=== Fixing Pending Orders Directly ===\n');
+
+  const paystackSecretKey = process.env.CODETICKETS_PAYSTACK_SECRET_KEY;
   if (!paystackSecretKey) {
-    console.error('ERROR: PAYSTACK_SECRET_KEY not configured');
+    console.error('ERROR: CODETICKETS_PAYSTACK_SECRET_KEY not configured');
     process.exit(1);
   }
 
   for (const orderId of ordersToFix) {
+    console.log(`\n${'='.repeat(60)}`);
+    console.log(`Processing order: ${orderId}`);
+    console.log('='.repeat(60));
+    
     // Get order details
     const order = await prisma.eventTicketOrder.findUnique({
       where: { id: orderId },
@@ -32,22 +38,32 @@ async function fixPendingOrdersDirect() {
     });
 
     if (!order) {
-      console.error(`Order not found: ${orderId}`);
+      console.log(`  Order not found!`);
       continue;
     }
 
+    console.log(`  Buyer: ${order.buyerName} (${order.buyerEmail})`);
+    console.log(`  Phone: ${order.buyerPhone}`);
+    console.log(`  Event ID: ${order.eventId}`);
+    console.log(`  Current payment status: ${order.paymentStatus}`);
+    console.log(`  Tickets already generated: ${order.tickets.length}`);
+
     if (order.tickets.length > 0) {
+      console.log(`  ⚠️ Tickets already exist - skipping ticket generation`);
+      
       // Just update payment status if needed
       if (order.paymentStatus !== 'success') {
         await prisma.eventTicketOrder.update({
           where: { id: order.id },
           data: { paymentStatus: 'success' },
         });
+        console.log(`  ✅ Updated payment status to success`);
       }
       continue;
     }
 
     // Verify with Paystack first
+    console.log(`\n  Verifying payment with Paystack...`);
     const verifyResponse = await fetch(
       `https://api.paystack.co/transaction/verify/${orderId}`,
       {
@@ -60,14 +76,18 @@ async function fixPendingOrdersDirect() {
     const verifyData = await verifyResponse.json();
     
     if (!verifyData.status || verifyData.data.status !== 'success') {
-      console.error(`Payment not successful on Paystack: ${verifyData.data?.status || 'not found'}`);
+      console.log(`  ❌ Payment not successful on Paystack: ${verifyData.data?.status || 'not found'}`);
       continue;
     }
+
+    console.log(`  ✅ Payment verified as SUCCESS on Paystack`);
+    console.log(`  Amount: ${verifyData.data.amount / 100} ${verifyData.data.currency}`);
+    console.log(`  Paid at: ${verifyData.data.paid_at}`);
 
     // Get metadata
     const metadata = verifyData.data.metadata;
     if (!metadata || !metadata.attendees) {
-      console.error('Missing attendees in metadata');
+      console.log(`  ❌ Missing attendees in metadata`);
       continue;
     }
 
@@ -75,11 +95,17 @@ async function fixPendingOrdersDirect() {
     try {
       attendees = JSON.parse(metadata.attendees);
     } catch (e) {
-      console.error('Failed to parse attendees:', e);
+      console.log(`  ❌ Failed to parse attendees: ${e}`);
       continue;
     }
 
+    console.log(`  Attendees: ${attendees.length}`);
+    for (const att of attendees) {
+      console.log(`    - ${att.name} (${att.email})`);
+    }
+
     // Fetch event from Sanity
+    console.log(`\n  Fetching event details from Sanity...`);
     const eventQuery = `*[_type == "event" && _id == $eventId][0] {
       _id,
       title,
@@ -91,14 +117,16 @@ async function fixPendingOrdersDirect() {
     try {
       event = await serverClient.fetch(eventQuery, { eventId: order.eventId });
     } catch (e) {
-      console.error('Failed to fetch event:', e);
+      console.log(`  ❌ Failed to fetch event: ${e}`);
       continue;
     }
 
     if (!event) {
-      console.error('Event not found in Sanity');
+      console.log(`  ❌ Event not found in Sanity`);
       continue;
     }
+
+    console.log(`  Event: ${event.title}`);
 
     // Generate event abbreviation for ticket IDs
     const eventAbbrev = event.title
@@ -122,6 +150,10 @@ async function fixPendingOrdersDirect() {
         nextTicketNumber = parseInt(match[1], 10) + 1;
       }
     }
+
+    console.log(`\n  Generating ${attendees.length} ticket(s)...`);
+    console.log(`  Event abbreviation: ${eventAbbrev}`);
+    console.log(`  Starting ticket number: ${nextTicketNumber}`);
 
     // Generate tickets
     const ticketsToCreate = [];
@@ -156,6 +188,7 @@ async function fixPendingOrdersDirect() {
         status: 'AVAILABLE' as TicketStatus,
       });
 
+      console.log(`    Created: ${ticketId} for ${attendee.name}`);
     }
 
     // Insert tickets
@@ -163,8 +196,9 @@ async function fixPendingOrdersDirect() {
       await prisma.eventTicket.createMany({
         data: ticketsToCreate,
       });
+      console.log(`  ✅ ${ticketsToCreate.length} ticket(s) saved to database`);
     } catch (e: any) {
-      console.error(`Failed to create tickets: ${e.message}`);
+      console.log(`  ❌ Failed to create tickets: ${e.message}`);
       continue;
     }
 
@@ -173,11 +207,37 @@ async function fixPendingOrdersDirect() {
       where: { id: order.id },
       data: { paymentStatus: 'success' },
     });
+    console.log(`  ✅ Order payment status updated to 'success'`);
+
     // Update tier sold count
     await prisma.eventTicketTier.update({
       where: { id: order.tierId },
       data: { sold: { increment: order.ticketCount } },
     });
+    console.log(`  ✅ Tier sold count incremented by ${order.ticketCount}`);
+
+    console.log(`\n  🎉 ORDER FIXED SUCCESSFULLY!`);
+  }
+
+  // Final summary
+  console.log('\n\n' + '='.repeat(60));
+  console.log('FINAL STATUS CHECK');
+  console.log('='.repeat(60));
+
+  for (const orderId of ordersToFix) {
+    const order = await prisma.eventTicketOrder.findUnique({
+      where: { id: orderId },
+      include: { tickets: true },
+    });
+
+    if (order) {
+      console.log(`\n${order.buyerName} (${order.buyerEmail}):`);
+      console.log(`  Payment Status: ${order.paymentStatus}`);
+      console.log(`  Tickets: ${order.tickets.length}`);
+      for (const t of order.tickets) {
+        console.log(`    - ${t.ticketId}`);
+      }
+    }
   }
 
   await prisma.$disconnect();

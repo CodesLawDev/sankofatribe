@@ -28,6 +28,7 @@ export default function PaystackButton({
     useEffect(() => {
         // Check if script already loaded
         if ((window as any).PaystackPop) {
+            console.log('Paystack script already loaded')
             return
         }
 
@@ -35,7 +36,9 @@ export default function PaystackButton({
         script.src = 'https://js.paystack.co/v1/inline.js'
         script.async = true
         
-        script.onload = () => {}
+        script.onload = () => {
+            console.log('Paystack script loaded successfully')
+        }
         
         script.onerror = () => {
             console.error('Failed to load Paystack script')
@@ -68,6 +71,13 @@ export default function PaystackButton({
             return
         }
 
+        console.log('Initializing Paystack payment with config:', {
+            email: config.email,
+            amount: config.amount,
+            reference: config.reference,
+            publicKey: config.publicKey
+        })
+
         // Use Paystack inline directly
         const PaystackPop = (window as any).PaystackPop
         if (!PaystackPop) {
@@ -76,6 +86,8 @@ export default function PaystackButton({
             return
         }
 
+        console.log('PaystackPop is available, setting up handler...')
+
         const handler = PaystackPop.setup({
             key: config.publicKey,
             email: config.email,
@@ -83,12 +95,16 @@ export default function PaystackButton({
             ref: config.reference,
             metadata: config.metadata || {},
             onClose: function() {
+                console.log('Payment window closed')
                 onClose()
             },
             onSuccess: function(response: any) {
+                console.log('Payment successful:', response)
                 onSuccess(response)
             }
         })
+        
+        console.log('Opening Paystack iframe...')
         handler.openIframe()
     }
 

@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import paymentService, { PaymentService } from '@/lib/payment'
-import { generateHubtelReference, initHubtelCheckout } from '@/lib/hubtel'
 
 export async function POST(request: NextRequest) {
     try {
+        // Check if Paystack secret key is configured
+        if (!process.env.PAYSTACK_SECRET_KEY) {
+            console.error('PAYSTACK_SECRET_KEY is not configured')
+            return NextResponse.json(
+                { success: false, error: 'Payment service not configured. Please contact support.' },
+                { status: 500 }
+            )
+        }
+
         const body = await request.json()
         const {
             email,
@@ -14,16 +22,16 @@ export async function POST(request: NextRequest) {
             items = [],
             reference,
             channels = ['mobile_money', 'card'],
-            provider,
         } = body
 
-        const normalizedProvider = String(provider || '').toUpperCase()
-        if (!normalizedProvider) {
-            return NextResponse.json(
-                { success: false, error: 'Payment provider is required' },
-                { status: 400 }
-            )
-        }
+        console.log('=== PAYMENT INIT REQUEST ===')
+        console.log('Email:', email)
+        console.log('Amount (GHS):', amount)
+        console.log('Order ID:', orderId)
+        console.log('Customer:', customerName, customerPhone)
+        console.log('Items:', items.length)
+        console.log('Secret key exists:', !!process.env.PAYSTACK_SECRET_KEY)
+        console.log('Secret key length:', process.env.PAYSTACK_SECRET_KEY?.length)
 
         // Validate required fields
         if (!email || !amount || amount <= 0) {
@@ -34,69 +42,26 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+        // Initialize payment with Paystack
+        const paymentResult = await paymentService.initializePayment({
+            email,
+            amount: PaymentService.toPesewas(amount), // Convert GHS to pesewas
+            callback_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/checkout/verify`,
+            reference: reference || undefined,
+            channels: channels as any[],
+            metadata: {
+                orderId: orderId || 'unknown',
+                customerName: customerName || '',
+                customerPhone: customerPhone || '',
+                items,
+            },
+        })
 
-        if (normalizedProvider === 'PAYSTACK') {
-            // Check if Paystack secret key is configured
-            if (!process.env.PAYSTACK_SECRET_KEY) {
-                console.error('PAYSTACK_SECRET_KEY is not configured')
-                return NextResponse.json(
-                    { success: false, error: 'Payment service not configured. Please contact support.' },
-                    { status: 500 }
-                )
-            }
+        console.log('=== PAYMENT INIT SUCCESS ===')
+        console.log('Reference:', paymentResult.reference)
+        console.log('Authorization URL:', paymentResult.authorization_url?.substring(0, 50) + '...')
 
-            // Initialize payment with Paystack
-            const paymentResult = await paymentService.initializePayment({
-                email,
-                amount: PaymentService.toPesewas(amount), // Convert GHS to pesewas
-                callback_url: `${baseUrl}/checkout/verify?provider=PAYSTACK`,
-                reference: reference || orderId || undefined,
-                channels: channels as any[],
-                metadata: {
-                    orderId: orderId || 'unknown',
-                    customerName: customerName || '',
-                    customerPhone: customerPhone || '',
-                    items,
-                },
-            })
-
-            return NextResponse.json({
-                ...paymentResult,
-                provider: 'PAYSTACK',
-            })
-        }
-
-        if (normalizedProvider === 'HUBTEL') {
-            const hubtelReference = reference || orderId || generateHubtelReference('ORD')
-            const returnUrl = `${baseUrl}/checkout/verify?provider=HUBTEL&reference=${encodeURIComponent(hubtelReference)}`
-            const callbackUrl = `${baseUrl}/api/webhooks/hubtel/payments`
-
-            const hubtelResult = await initHubtelCheckout({
-                amountGhs: amount,
-                clientReference: hubtelReference,
-                description: `Order ${orderId || hubtelReference}`,
-                returnUrl,
-                callbackUrl,
-                cancellationUrl: `${baseUrl}/checkout?payment=cancelled`,
-                customerName,
-                customerEmail: email,
-                customerPhone,
-            })
-
-            return NextResponse.json({
-                success: true,
-                provider: 'HUBTEL',
-                authorization_url: hubtelResult.checkoutUrl,
-                reference: hubtelResult.clientReference,
-                checkoutId: hubtelResult.checkoutId,
-            })
-        }
-
-        return NextResponse.json(
-            { success: false, error: `Unsupported payment provider: ${normalizedProvider}` },
-            { status: 400 }
-        )
+        return NextResponse.json(paymentResult)
     } catch (error) {
         console.error('=== PAYMENT INIT ERROR ===')
         console.error('Error type:', error instanceof Error ? error.constructor.name : typeof error)

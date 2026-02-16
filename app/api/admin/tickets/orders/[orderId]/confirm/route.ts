@@ -3,7 +3,6 @@ import { getPrisma } from '@/lib/auth-utils';
 import { serverClient } from '@/lib/sanity-server';
 import { sendSMS } from '@/lib/sms-service';
 import QRCode from 'qrcode';
-import { verifyHubtelPayment } from '@/lib/hubtel';
 
 const prisma = getPrisma();
 
@@ -15,7 +14,7 @@ interface AttendeeInfo {
 
 /**
  * POST /api/admin/tickets/orders/[orderId]/confirm
- * Manually confirm a pending order - verifies with payment provider and generates tickets
+ * Manually confirm a pending order - verifies with Paystack and generates tickets
  */
 export async function POST(
   request: NextRequest,
@@ -41,88 +40,51 @@ export async function POST(
       }, { status: 400 });
     }
 
-    const normalizedProvider = (order.paymentMethod || 'paystack').toUpperCase();
-    let attendees: AttendeeInfo[] | null = null;
-
-    if (order.attendees && Array.isArray(order.attendees)) {
-      // Validate that the attendees array matches the expected structure
-      try {
-        const parsed = order.attendees as unknown as AttendeeInfo[];
-        const isValid = parsed.every(
-          (item) =>
-            item &&
-            typeof item === 'object' &&
-            typeof item.name === 'string' &&
-            typeof item.email === 'string' &&
-            typeof item.phone === 'string'
-        );
-        if (isValid) {
-          attendees = parsed;
-        }
-      } catch {
-        // Invalid attendees data, leave as null
-      }
+    // Verify with Paystack
+    const paystackSecretKey = process.env.CODETICKETS_PAYSTACK_SECRET_KEY;
+    if (!paystackSecretKey) {
+      return NextResponse.json({ error: 'Paystack not configured' }, { status: 500 });
     }
 
-    if (normalizedProvider === 'PAYSTACK') {
-      // Verify with Paystack
-      const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
-      if (!paystackSecretKey) {
-        return NextResponse.json({ error: 'Paystack not configured' }, { status: 500 });
+    const verifyResponse = await fetch(
+      `https://api.paystack.co/transaction/verify/${orderId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${paystackSecretKey}`,
+        },
       }
+    );
 
-      const verifyResponse = await fetch(
-        `https://api.paystack.co/transaction/verify/${orderId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${paystackSecretKey}`,
-          },
-        }
-      );
+    const verifyData = await verifyResponse.json();
 
-      const verifyData = await verifyResponse.json();
-
-      if (!verifyData.status) {
-        return NextResponse.json({ 
-          error: 'Transaction not found in Paystack',
-          paystackMessage: verifyData.message 
-        }, { status: 404 });
-      }
-
-      const paystackStatus = verifyData.data.status;
-      
-      if (paystackStatus !== 'success') {
-        return NextResponse.json({ 
-          error: `Payment not successful`,
-          paystackStatus,
-          message: `Paystack shows payment as "${paystackStatus}". Cannot confirm.`
-        }, { status: 400 });
-      }
-
-      // Get attendees from metadata if not already stored
-      const metadata = verifyData.data.metadata;
-      if (!attendees && metadata?.attendees) {
-        try {
-          attendees = JSON.parse(metadata.attendees);
-        } catch (e) {
-          return NextResponse.json({ error: 'Failed to parse attendees' }, { status: 400 });
-        }
-      }
-    } else if (normalizedProvider === 'HUBTEL') {
-      const reference = order.paymentReference || order.id;
-      const hubtelResult = await verifyHubtelPayment(reference);
-      if (hubtelResult.status !== 'SUCCESS') {
-        return NextResponse.json({
-          error: 'Payment not successful',
-          hubtelStatus: hubtelResult.status,
-        }, { status: 400 });
-      }
-    } else {
-      return NextResponse.json({ error: 'Unsupported payment provider' }, { status: 400 });
+    if (!verifyData.status) {
+      return NextResponse.json({ 
+        error: 'Transaction not found in Paystack',
+        paystackMessage: verifyData.message 
+      }, { status: 404 });
     }
 
-    if (!attendees || attendees.length === 0) {
-      return NextResponse.json({ error: 'Missing attendees for this order' }, { status: 400 });
+    const paystackStatus = verifyData.data.status;
+    
+    if (paystackStatus !== 'success') {
+      return NextResponse.json({ 
+        error: `Payment not successful`,
+        paystackStatus,
+        message: `Paystack shows payment as "${paystackStatus}". Cannot confirm.`
+      }, { status: 400 });
+    }
+
+    // Get attendees from metadata
+    const metadata = verifyData.data.metadata;
+    if (!metadata?.attendees) {
+      return NextResponse.json({ error: 'Missing attendees in payment metadata' }, { status: 400 });
+    }
+
+    let attendees: AttendeeInfo[];
+    try {
+      attendees = JSON.parse(metadata.attendees);
+    } catch (e) {
+      return NextResponse.json({ error: 'Failed to parse attendees' }, { status: 400 });
     }
 
     // Fetch event from Sanity
@@ -204,10 +166,7 @@ export async function POST(
     // Update order status
     await prisma.eventTicketOrder.update({
       where: { id: order.id },
-      data: {
-        paymentStatus: 'success',
-        paymentMethod: normalizedProvider.toLowerCase(),
-      },
+      data: { paymentStatus: 'success' },
     });
 
     // Update tier sold count

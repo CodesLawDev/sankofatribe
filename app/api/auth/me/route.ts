@@ -10,21 +10,27 @@ export async function GET(request: NextRequest) {
     const token = cookieStore.get('auth-token')?.value;
 
     if (!token) {
+      console.log('No token found in cookies');
       return NextResponse.json(
         { error: 'Not authenticated' },
         { status: 401 }
       );
     }
 
+    console.log('Token found, verifying...');
+
     // Verify token
     const payload = await verifyToken(token);
 
     if (!payload) {
+      console.log('Token verification failed');
       return NextResponse.json(
         { error: 'Invalid token' },
         { status: 401 }
       );
     }
+
+    console.log('Token verified for user:', payload.userId);
 
     // Get full user data
     const prisma = getPrisma();
@@ -48,11 +54,14 @@ export async function GET(request: NextRequest) {
     });
 
     if (!user) {
+      console.log('User not found in database:', payload.userId);
       return NextResponse.json(
         { error: 'User not found' },
         { status: 404 }
       );
     }
+
+    console.log('User found, returning data');
 
     return NextResponse.json({
       success: true,
