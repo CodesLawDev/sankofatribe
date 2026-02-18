@@ -18,6 +18,8 @@ import { career } from './career'
 import { event } from './event'
 import faq from './faq'
 import textPage from './textPage'
+import { aboutPage } from './aboutPage'
+import { newsletterSubscriber } from './newsletterSubscriber'
 
 export const schemaTypes = [
     product,
@@ -40,5 +42,7 @@ export const schemaTypes = [
     event,
     faq,
     textPage,
+    aboutPage,
+    newsletterSubscriber,
 ]
 

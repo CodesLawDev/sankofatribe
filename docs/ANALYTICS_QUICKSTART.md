@@ -9,9 +9,9 @@
 - Admin dashboard with real-time metrics
 
 ✅ **Monthly SMS Reports**
-- Automated SMS delivery via Twilio
+- Automated SMS delivery via your existing BMS service
 - Monthly summaries of orders, revenue, traffic, and customers
-- Support for multiple admin phone numbers
+- Support for multiple admin phone numbers (from Sanity)
 
 ---
 
@@ -88,10 +88,11 @@ Keep up the great work! 🚀
 
 ## 🔄 Automated Monthly Reports
 
-**Vercel Cron Job** (configured in `vercel.json`):
-- Runs automatically on the 1st of each month at 9 AM
+**GitHub Actions Workflow** (configured in `.github/workflows/monthly-report.yml`):
+- Runs automatically on the 1st of each month at 9 AM UTC
 - Sends SMS to all admin phone numbers
 - No manual intervention needed
+- Secrets required: `BASE_URL`, `CRON_SECRET`
 
 **Manual Trigger** (optional):
 ```bash
@@ -107,7 +108,7 @@ POST /api/admin/analytics/monthly-report
 | `/api/analytics/track` | POST | Track page views |
 | `/api/admin/analytics` | GET | Get analytics data |
 | `/api/admin/analytics/monthly-report` | POST | Generate & send report |
-| `/api/cron/monthly-report` | GET | Cron job trigger |
+| `/api/cron/monthly-report` | GET | Triggered by GitHub Actions workflow |
 
 ---
 
@@ -134,30 +135,31 @@ See [ANALYTICS_SMS_SETUP.md](./ANALYTICS_SMS_SETUP.md) for:
 
 ### New Files
 - `prisma/schema.prisma` - Added `PageView` and `MonthlyReport` models
-- `lib/sms-service.ts` - Twilio SMS integration
+- `lib/sms-service.ts` - BMS SMS integration
 - `app/api/analytics/track/route.ts` - Page view tracking
 - `app/api/admin/analytics/route.ts` - Analytics aggregation
 - `app/api/admin/analytics/monthly-report/route.ts` - Report generator
-- `app/api/cron/monthly-report/route.ts` - Cron job endpoint
+- `app/api/cron/monthly-report/route.ts` - Cron endpoint (GitHub Actions triggered)
 - `components/analytics-tracker.tsx` - Client-side tracking
-- `vercel.json` - Cron job configuration
+- `.github/workflows/monthly-report.yml` - GitHub Actions scheduler
 - `ANALYTICS_SMS_SETUP.md` - Complete setup guide
 
 ### Modified Files
 - `app/admin/page.tsx` - Enhanced dashboard with analytics
 - `app/layout.tsx` - Added analytics tracker
-- `.env.local.example` - Added Twilio variables
+- `.env.local.example` - Added environment variable examples
 
 ---
 
 ## 🎯 Next Steps
 
 1. Run `npx prisma db push` to create database tables
-2. Add Twilio credentials to environment variables
-3. Deploy to Vercel
-4. Test by visiting your site (page views will be tracked)
-5. Manually trigger first report to test SMS delivery
-6. Wait until the 1st of next month for automated report
+2. Set admin phone in Sanity (`/studio` → Site Settings → Admin Phone)
+3. Configure GitHub Secrets: `BASE_URL` and `CRON_SECRET`
+4. Deploy to production
+5. Test by visiting your site (page views will be tracked)
+6. Wait until the 1st of next month for automated SMS report
+7. Or manually trigger via GitHub Actions → "Run workflow"
 
 ---
 

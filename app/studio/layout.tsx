@@ -9,7 +9,7 @@ export default function StudioLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="dark:bg-darkbg dark:text-white bg-white text-black">
+      <body className="bg-white text-black">
         <Providers>
           <main>{children}</main>
         </Providers>

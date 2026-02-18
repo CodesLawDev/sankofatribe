@@ -29,9 +29,12 @@ interface TicketData {
 export default function TicketConfirmationPage() {
   const searchParams = useSearchParams();
   const reference = searchParams.get('reference');
+  const provider = searchParams.get('provider') || 'paystack';
   const [tickets, setTickets] = useState<TicketData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [retryCount, setRetryCount] = useState(0);
+  const MAX_RETRIES = 5;
 
   useEffect(() => {
     const verifyPayment = async () => {
@@ -42,14 +45,29 @@ export default function TicketConfirmationPage() {
       }
 
       try {
+        // Build request body based on provider
+        const body: Record<string, any> = { reference, provider };
+
+        if (provider === 'hubtel') {
+          body.clientReference = reference;
+        }
+
         const response = await fetch('/api/events/verify-payment', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ reference }),
+          body: JSON.stringify(body),
         });
 
         if (!response.ok) {
           const errorData = await response.json();
+          // If retryable (Hubtel webhook delay) and we haven't exhausted retries
+          if (errorData.retryable && retryCount < MAX_RETRIES) {
+            // Exponential backoff: 5s, 8s, 12s, 18s, 25s
+            const delay = (5 + retryCount * 4) * 1000;
+            await new Promise(resolve => setTimeout(resolve, delay));
+            setRetryCount(prev => prev + 1);
+            return; // useEffect will re-trigger via retryCount dependency
+          }
           throw new Error(errorData.error || 'Payment verification failed');
         }
 
@@ -73,7 +91,7 @@ export default function TicketConfirmationPage() {
     };
 
     verifyPayment();
-  }, [reference]);
+  }, [reference, retryCount]);
 
   if (loading) {
     return (

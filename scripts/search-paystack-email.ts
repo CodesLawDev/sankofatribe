@@ -5,9 +5,9 @@ const prisma = new PrismaClient();
 async function searchPaystackByEmail() {
   console.log('=== Searching Paystack by Email ===\n');
 
-  const paystackSecretKey = process.env.CODETICKETS_PAYSTACK_SECRET_KEY;
+  const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
   if (!paystackSecretKey) {
-    console.error('ERROR: CODETICKETS_PAYSTACK_SECRET_KEY not configured');
+    console.error('ERROR: PAYSTACK_SECRET_KEY not configured');
     process.exit(1);
   }
 

@@ -163,8 +163,7 @@ export default function PremiumHeroBanner({
                                 <Link href={secondaryHref}>
                                     <Button
                                         size="lg"
-                                        variant={textColor === 'white' ? 'secondary' : 'default'}
-                                        className="bg-white/90 text-black hover:bg-white border-0"
+                                        className={`bg-transparent border-2 ${textColor === 'white' ? 'border-white text-white hover:bg-white hover:text-black' : 'border-black text-black hover:bg-black hover:text-white'} transition-all duration-300`}
                                     >
                                         {ctaTextSecondary}
                                     </Button>

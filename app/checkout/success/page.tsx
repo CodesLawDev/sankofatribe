@@ -1,7 +1,8 @@
-"use client";
-import { motion } from "framer-motion";
-import Link from "next/link";
-import { CheckCircleIcon } from "@heroicons/react/24/outline";
+"use client"
+
+import { motion } from "framer-motion"
+import Link from "next/link"
+import { CheckCircleIcon } from "@heroicons/react/24/outline"
 
 export default function CheckoutSuccess() {
   return (
@@ -13,12 +14,14 @@ export default function CheckoutSuccess() {
         className="text-center max-w-2xl mx-auto px-6"
       >
         <CheckCircleIcon className="w-20 h-20 mx-auto mb-8 text-green-500" />
-        <h1 className="text-4xl md:text-5xl font-light mb-6">Order Placed Successfully!</h1>
-        <p className="text-lg font-light text-gray-600 dark:text-gray-400 mb-8">
-          Thank you for your order. We&apos;ve sent a confirmation email with your order details.
+        <h1 className="text-4xl md:text-5xl font-light mb-6">
+          Order Placed Successfully!
+        </h1>
+        <p className="text-lg font-light text-gray-600 dark:text-gray-400 mb-4">
+          Thank you for your order. You will receive an SMS confirmation with your order details shortly.
         </p>
-        <p className="text-sm font-light text-gray-600 dark:text-gray-400 mb-12">
-          You&apos;ll receive another email when your order ships.
+        <p className="text-sm font-light text-gray-500 dark:text-gray-500 mb-12">
+          We&apos;ll notify you when your order is ready for delivery.
         </p>
         <div className="flex gap-4 justify-center">
           <Link
@@ -36,5 +39,5 @@ export default function CheckoutSuccess() {
         </div>
       </motion.div>
     </main>
-  );
+  )
 }

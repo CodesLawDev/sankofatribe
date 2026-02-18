@@ -11,20 +11,23 @@ interface FilterState {
     category: string
     priceRange: string
     sortBy: string
+    campaign?: string
 }
 
 interface ProductsWithFiltersProps {
     products: Product[]
     categories: { name: string; slug: string }[]
     initialFilters?: Partial<FilterState>
+    campaignData?: any
 }
 
-export default function ProductsWithFilters({ products, categories, initialFilters }: ProductsWithFiltersProps) {
+export default function ProductsWithFilters({ products, categories, initialFilters, campaignData }: ProductsWithFiltersProps) {
     const [filters, setFilters] = useState<FilterState>({
         audience: initialFilters?.audience || '',
         category: initialFilters?.category || '',
         priceRange: initialFilters?.priceRange || '',
         sortBy: initialFilters?.sortBy || 'newest',
+        campaign: initialFilters?.campaign || '',
     })
 
     const clearFilter = (type: string, value: string) => {
@@ -33,10 +36,26 @@ export default function ProductsWithFilters({ products, categories, initialFilte
         if (type === 'priceRange') setFilters((prev) => ({ ...prev, priceRange: '' }))
     }
 
-    const clearAll = () => setFilters({ audience: '', category: '', priceRange: '', sortBy: 'newest' })
+    const clearAll = () => setFilters({ audience: '', category: '', priceRange: '', sortBy: 'newest', campaign: filters.campaign })
 
     const filteredProducts = useMemo(() => {
         let result = [...products]
+
+        // Filter by campaign if active
+        if (filters.campaign && campaignData) {
+            if (campaignData.includedCategories && campaignData.includedCategories.length > 0) {
+                // Filter to only products in included categories
+                const categoryIds = campaignData.includedCategories.map((cat: any) => cat._id)
+                result = result.filter(p => 
+                    p.categories?.some((cat: any) => categoryIds.includes(cat._id))
+                )
+            } else if (campaignData.includedProducts && campaignData.includedProducts.length > 0) {
+                // Filter to only included products
+                const productIds = campaignData.includedProducts.map((prod: any) => prod._id)
+                result = result.filter(p => productIds.includes(p._id))
+            }
+            // If no included categories/products, show all products
+        }
 
         // Filter by audience
         if (filters.audience) {
@@ -84,7 +103,7 @@ export default function ProductsWithFilters({ products, categories, initialFilte
         }
 
         return result
-    }, [products, filters])
+    }, [products, filters, campaignData])
 
     return (
         <>
@@ -96,6 +115,9 @@ export default function ProductsWithFilters({ products, categories, initialFilte
             />
             <ActiveFilters
                 filters={[
+                    ...(filters.campaign && campaignData
+                        ? [{ label: campaignData.name, value: filters.campaign, type: 'campaign' as const }]
+                        : []),
                     ...(filters.audience
                         ? [{ label: audienceLabel(filters.audience), value: filters.audience, type: 'audience' as const }]
                         : []),

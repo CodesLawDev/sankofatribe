@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
+import { getPrisma } from '@/lib/auth-utils'
 import { v4 as uuidv4 } from 'uuid'
 
-const prisma = new PrismaClient()
+const prisma = getPrisma()
 
 export const dynamic = 'force-dynamic'
 
@@ -71,7 +71,5 @@ export async function POST(request: NextRequest) {
       { error: 'Failed to track page view' },
       { status: 500 }
     )
-  } finally {
-    await prisma.$disconnect()
   }
 }

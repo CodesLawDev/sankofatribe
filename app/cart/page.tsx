@@ -53,14 +53,14 @@ export default function CartPage() {
                                                 <p className="text-xs text-gray-600">Color: {item.selectedColor}</p>
                                             )}
                                         </div>
-                                        <p className="text-sm font-medium">${item.price.toFixed(2)}</p>
+                                        <p className="text-sm font-medium">GH₵{item.price.toFixed(2)}</p>
                                     </div>
 
                                     {/* Quantity Controls */}
                                     <div className="flex items-center justify-between mt-6">
                                         <div className="flex items-center gap-3">
                                             <button
-                                                onClick={() => updateQuantity(item.id, item.quantity - 1, item.maxStock || 0)}
+                                                onClick={() => updateQuantity(item.id, item.quantity - 1, item.maxStock || 0, item.selectedSize, item.selectedColor)}
                                                     className="w-8 h-8 border border-gray-300 hover:border-black focus:ring-2 focus:ring-brand-primary flex items-center justify-center transition-colors"
                                                 aria-label="Decrease quantity"
                                             >
@@ -68,7 +68,7 @@ export default function CartPage() {
                                             </button>
                                             <span className="w-10 text-center text-sm">{item.quantity}</span>
                                             <button
-                                                onClick={() => updateQuantity(item.id, item.quantity + 1, item.maxStock || 0)}
+                                                onClick={() => updateQuantity(item.id, item.quantity + 1, item.maxStock || 0, item.selectedSize, item.selectedColor)}
                                                     className="w-8 h-8 border border-gray-300 hover:border-black focus:ring-2 focus:ring-brand-primary flex items-center justify-center transition-colors"
                                                 aria-label="Increase quantity"
                                             >
@@ -77,7 +77,7 @@ export default function CartPage() {
                                         </div>
 
                                         <button
-                                            onClick={() => removeFromCart(item.id)}
+                                            onClick={() => removeFromCart(item.id, item.selectedSize, item.selectedColor)}
                                                 className="text-red-600 hover:text-red-700 focus:ring-2 focus:ring-red-500 flex items-center gap-2 text-xs uppercase tracking-wide transition-colors rounded px-2 py-1"
                                         >
                                             <X className="h-4 w-4" />
@@ -98,16 +98,16 @@ export default function CartPage() {
                         <div className="space-y-4 mb-8">
                             <div className="flex justify-between text-sm">
                                 <span className="text-gray-600">Subtotal</span>
-                                <span>${cartTotal.toFixed(2)}</span>
+                                <span>GH₵{cartTotal.toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between text-sm">
                                 <span className="text-gray-600">Shipping</span>
-                                <span>{cartTotal > 100 ? 'FREE' : '$10.00'}</span>
+                                <span>Calculated at checkout</span>
                             </div>
                             <div className="border-t border-gray-200 pt-4">
                                 <div className="flex justify-between font-medium text-base">
                                     <span>Total</span>
-                                    <span>${(cartTotal + (cartTotal > 100 ? 0 : 10)).toFixed(2)}</span>
+                                    <span>GH₵{cartTotal.toFixed(2)}</span>
                                 </div>
                             </div>
                         </div>
@@ -123,12 +123,6 @@ export default function CartPage() {
                                 Continue Shopping
                             </Button>
                         </Link>
-
-                        {cartTotal < 100 && (
-                            <p className="text-xs text-gray-500 mt-6 text-center">
-                                Add ${(100 - cartTotal).toFixed(2)} more for free shipping
-                            </p>
-                        )}
                     </div>
                 </div>
             </div>

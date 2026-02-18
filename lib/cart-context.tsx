@@ -17,8 +17,8 @@ export interface CartItem {
 interface CartContextType {
     cart: CartItem[]
     addToCart: (item: Omit<CartItem, 'quantity'>, maxStock: number, quantity?: number) => Promise<boolean>
-    removeFromCart: (id: string) => void
-    updateQuantity: (id: string, quantity: number, maxStock: number) => Promise<boolean>
+    removeFromCart: (id: string, selectedSize?: string, selectedColor?: string) => void
+    updateQuantity: (id: string, quantity: number, maxStock: number, selectedSize?: string, selectedColor?: string) => Promise<boolean>
     clearCart: () => void
     cartTotal: number
     cartCount: number
@@ -79,13 +79,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         return true // Successfully added
     }
 
-    const removeFromCart = (id: string) => {
-        setCart((prevCart) => prevCart.filter((item) => item.id !== id))
+    const removeFromCart = (id: string, selectedSize?: string, selectedColor?: string) => {
+        setCart((prevCart) => prevCart.filter((item) =>
+            !(item.id === id && item.selectedSize === selectedSize && item.selectedColor === selectedColor)
+        ))
     }
 
-    const updateQuantity = async (id: string, quantity: number, maxStock: number) => {
+    const updateQuantity = async (id: string, quantity: number, maxStock: number, selectedSize?: string, selectedColor?: string) => {
         if (quantity <= 0) {
-            removeFromCart(id)
+            removeFromCart(id, selectedSize, selectedColor)
             return true
         }
 
@@ -96,7 +98,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
         setCart((prevCart) =>
             prevCart.map((item) =>
-                item.id === id ? { ...item, quantity, maxStock } : item
+                item.id === id && item.selectedSize === selectedSize && item.selectedColor === selectedColor
+                    ? { ...item, quantity, maxStock }
+                    : item
             )
         )
 

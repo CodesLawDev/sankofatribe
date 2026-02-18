@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
+import { getPrisma } from '@/lib/auth-utils'
 import { verifyToken } from '@/lib/auth-utils'
 import { cookies } from 'next/headers'
 import { sendBulkSMS, formatMonthlyReport, getAdminPhoneNumbers } from '@/lib/sms-service'
 
-const prisma = new PrismaClient()
+const prisma = getPrisma()
 
 export const dynamic = 'force-dynamic'
 
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    const totalRevenue = revenueResult._sum.total || 0
+    const totalRevenue = Number(revenueResult._sum.total || 0)
 
     const successfulPayments = await prisma.order.count({
       where: {

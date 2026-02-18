@@ -158,7 +158,7 @@ export default function AdminOrders() {
                                             {order.user ? `${order.user.firstName} ${order.user.lastName}` : 'Unknown'}
                                         </td>
                                         <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
-                                            GH₵{order.total.toFixed(2)}
+                                            GH₵{Number(order.total).toFixed(2)}
                                         </td>
                                         <td className="px-6 py-4 text-sm">
                                             <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>

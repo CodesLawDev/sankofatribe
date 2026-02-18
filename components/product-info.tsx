@@ -22,7 +22,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
     const { addToCart } = useCart()
     const { showToast } = useToast()
     const { addToRecentlyViewed } = useRecentlyViewed()
-    const { formatPrice, convertPrice } = useCurrency()
+    const { formatPrice, convertPrice, isLoading: currencyLoading } = useCurrency()
     const router = useRouter()
     const [selectedSize, setSelectedSize] = useState(product.sizes?.[0]?.size || '')
     const [selectedColor, setSelectedColor] = useState(product.colors?.[0]?.name || '')
@@ -41,7 +41,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
 
     const selectedSizeStock = getStockForSize(selectedSize)
     const isSizeOutOfStock = selectedSizeStock === 0
-    const displayPrice = formatPrice(convertPrice(product.price))
+    const displayPrice = !currencyLoading ? formatPrice(convertPrice(product.price)) : '₵--'
 
     const handleAddToCart = async () => {
         if (!selectedSize) {

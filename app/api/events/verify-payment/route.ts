@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getPrisma } from '@/lib/auth-utils';
 import { serverClient } from '@/lib/sanity-server';
 import { sendSMS } from '@/lib/sms-service';
+import hubtelService from '@/lib/hubtel';
 import QRCode from 'qrcode';
 
 const prisma = getPrisma();
@@ -12,278 +13,303 @@ interface AttendeeInfo {
   phone: string;
 }
 
+// =============================================================================
+// Shared ticket generation logic
+// =============================================================================
+
+async function generateTickets(orderId: string, attendees: AttendeeInfo[]) {
+  const order = await prisma.eventTicketOrder.findUnique({
+    where: { id: orderId },
+    include: { tier: true },
+  });
+
+  if (!order) {
+    return { error: 'Order not found', status: 404 };
+  }
+
+  // Fetch event details
+  const eventQuery = `*[_type == "event" && _id == $eventId][0] {
+    _id, title, slug, eventDate, endDate, venue, address, city,
+    "imageUrl": image.asset->url
+  }`;
+  const event = await serverClient.fetch(eventQuery, { eventId: order.eventId });
+  if (!event) {
+    return { error: 'Event not found', status: 404 };
+  }
+
+  // Check existing tickets
+  const existingTickets = await prisma.eventTicket.findMany({
+    where: { orderId: order.id },
+  });
+  if (existingTickets.length > 0) {
+    return { success: true, orderId: order.id, tickets: existingTickets, event, alreadyGenerated: true };
+  }
+
+  // Generate tickets
+  const eventAbbrev = event.title
+    .split(' ')
+    .filter((word: string) => word.length > 2)
+    .slice(0, 3)
+    .map((word: string) => word[0].toUpperCase())
+    .join('');
+
+  const lastTicket = await prisma.eventTicket.findFirst({
+    where: { eventId: order.eventId },
+    orderBy: { ticketId: 'desc' },
+    take: 1,
+  });
+
+  let nextTicketNumber = 1;
+  if (lastTicket?.ticketId) {
+    const match = lastTicket.ticketId.match(/(\d+)$/);
+    if (match) nextTicketNumber = parseInt(match[1], 10) + 1;
+  }
+
+  const ticketDataArray = await Promise.all(
+    attendees.map(async (attendee, index) => {
+      const ticketNumber = String(nextTicketNumber + index).padStart(3, '0');
+      const ticketId = `${eventAbbrev}-${ticketNumber}`;
+      const qrCodeData = JSON.stringify({
+        ticketId, eventId: order.eventId,
+        attendeeName: attendee.name, attendeeEmail: attendee.email,
+      });
+      const qrCodeUrl = await QRCode.toDataURL(qrCodeData, {
+        errorCorrectionLevel: 'H', width: 400, margin: 2,
+      });
+      return {
+        ticketId, orderId: order.id, eventId: order.eventId, tierId: order.tierId,
+        attendeeName: attendee.name, attendeeEmail: attendee.email,
+        attendeePhone: attendee.phone, qrCode: qrCodeUrl, status: 'AVAILABLE' as const,
+      };
+    })
+  );
+
+  const tickets = [];
+  for (const ticketData of ticketDataArray) {
+    try {
+      const ticket = await prisma.eventTicket.create({ data: ticketData });
+      tickets.push(ticket);
+    } catch (error: any) {
+      if (error.code === 'P2002' && error.meta?.target?.includes('ticketId')) {
+        const existing = await prisma.eventTicket.findUnique({ where: { ticketId: ticketData.ticketId } });
+        if (existing) tickets.push(existing);
+        else throw error;
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  // Update order + tier
+  await prisma.eventTicketOrder.update({
+    where: { id: order.id },
+    data: { paymentStatus: 'success' },
+  });
+  await prisma.eventTicketTier.update({
+    where: { id: order.tierId },
+    data: { sold: { increment: order.ticketCount } },
+  });
+
+  // SMS
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://sankofatribe.com';
+  if (order.buyerPhone && tickets.length > 0) {
+    try {
+      const ticketList = tickets.map((t: any) => t.ticketId).join(', ');
+      const downloadLink = `${baseUrl}/api/tickets/${tickets[0].ticketId}?format=image`;
+      const smsMessage = `SANKOFA TRIBE\n\n${event.title}\n${new Date(event.eventDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}\n\nTicket(s): ${ticketList}\n\nDownload: ${downloadLink}`;
+      await sendSMS(order.buyerPhone, smsMessage);
+    } catch (smsError) {
+      console.error('SMS send failed:', smsError);
+    }
+  }
+
+  return { success: true, orderId: order.id, tickets, event, alreadyGenerated: false };
+}
+
+// =============================================================================
+// POST /api/events/verify-payment
+// Supports both Paystack (reference) and Hubtel (clientReference + provider)
+// =============================================================================
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { reference } = body;
+    const { reference, provider = 'paystack', clientReference } = body;
 
-    if (!reference) {
-      return NextResponse.json(
-        { error: 'Payment reference is required' },
-        { status: 400 }
-      );
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://sankofatribe.com';
+
+    // ---- Hubtel ----
+    if (provider === 'hubtel') {
+      const orderId = clientReference || reference;
+      if (!orderId) {
+        return NextResponse.json({ error: 'Client reference is required' }, { status: 400 });
+      }
+
+      // Check order — may need to wait for GET handler or webhook to mark it paid
+      let order = await prisma.eventTicketOrder.findUnique({
+        where: { id: orderId },
+        include: { tickets: true },
+      });
+
+      if (!order) {
+        return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+      }
+
+      // If not yet confirmed, wait briefly then re-check DB
+      // NOTE: Avoid calling Hubtel status API here — the GET handler already
+      // made one call, and Hubtel rate-limits aggressively (429).
+      // The confirmation page retries this endpoint with backoff.
+      if (order.paymentStatus !== 'success') {
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        order = await prisma.eventTicketOrder.findUnique({
+          where: { id: orderId },
+          include: { tickets: true },
+        });
+        if (!order) {
+          return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+        }
+      }
+
+      // Still not confirmed — try Hubtel status API (only if >5s since redirect)
+      if (order.paymentStatus !== 'success') {
+        try {
+          const hubtelResult = await hubtelService.checkStatus(orderId);
+          if (hubtelResult.success) {
+            await prisma.eventTicketOrder.update({
+              where: { id: orderId },
+              data: { paymentStatus: 'success' },
+            });
+            order = await prisma.eventTicketOrder.findUnique({
+              where: { id: orderId },
+              include: { tickets: true },
+            });
+            if (!order) {
+              return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+            }
+          }
+        } catch (err) {
+          // Log but don't fail — return retryable so confirmation page tries again
+          console.error('Hubtel status check failed:', err instanceof Error ? err.message : err);
+        }
+      }
+
+      if (!order) {
+        return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+      }
+
+      if (order.paymentStatus !== 'success') {
+        return NextResponse.json(
+          { error: 'Payment not yet confirmed. Please wait a moment and try again.', retryable: true },
+          { status: 400 }
+        );
+      }
+
+      // Tickets already generated?
+      if (order.tickets.length > 0) {
+        return NextResponse.json({
+          success: true,
+          orderId: order.id,
+          tickets: order.tickets,
+          message: 'Tickets already generated',
+        });
+      }
+
+      // Read attendees from the database (stored at purchase time)
+      let attendees: AttendeeInfo[] = [];
+      if (order.attendees) {
+        attendees = order.attendees as unknown as AttendeeInfo[];
+      } else if (body.attendees && Array.isArray(body.attendees)) {
+        // Fallback: accept from request body
+        attendees = body.attendees;
+      }
+      if (!attendees.length) {
+        return NextResponse.json(
+          { error: 'Attendees information not found for this order' },
+          { status: 400 }
+        );
+      }
+
+      const result = await generateTickets(orderId, attendees);
+      if ('error' in result) {
+        return NextResponse.json({ error: result.error }, { status: result.status || 500 });
+      }
+
+      return NextResponse.json({
+        success: true,
+        orderId: result.orderId,
+        event: result.event ? {
+          title: result.event.title, date: result.event.eventDate,
+          venue: result.event.venue, imageUrl: result.event.imageUrl,
+        } : undefined,
+        tickets: result.tickets?.map((t: any) => ({
+          ticketId: t.ticketId, attendeeName: t.attendeeName,
+          attendeeEmail: t.attendeeEmail,
+          downloadUrl: `${baseUrl}/api/tickets/${t.ticketId}?format=image`,
+          qrCode: t.qrCode,
+        })),
+        message: result.alreadyGenerated ? 'Tickets already generated' : 'Tickets generated successfully.',
+      });
     }
 
-    // Verify payment with Paystack (using CodeTickets credentials)
-    const paystackSecretKey = process.env.CODETICKETS_PAYSTACK_SECRET_KEY;
+    // ---- Paystack (default) ----
+    if (!reference) {
+      return NextResponse.json({ error: 'Payment reference is required' }, { status: 400 });
+    }
+
+    const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
     if (!paystackSecretKey) {
-      return NextResponse.json(
-        { error: 'CodeTickets payment configuration error' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Payment configuration error' }, { status: 500 });
     }
 
     const verifyResponse = await fetch(
       `https://api.paystack.co/transaction/verify/${reference}`,
-      {
-        headers: {
-          Authorization: `Bearer ${paystackSecretKey}`,
-        },
-      }
+      { headers: { Authorization: `Bearer ${paystackSecretKey}` } }
     );
-
     const verifyData = await verifyResponse.json();
 
     if (!verifyData.status || verifyData.data.status !== 'success') {
-      return NextResponse.json(
-        { error: 'Payment verification failed' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Payment verification failed' }, { status: 400 });
     }
 
-    // Get metadata first (contains orderId)
     const metadata = verifyData.data.metadata;
-    
-    if (!metadata || !metadata.orderId) {
-      console.error('Missing orderId in Paystack metadata:', { metadata });
-      return NextResponse.json(
-        { error: 'Invalid payment metadata - missing order ID' },
-        { status: 400 }
-      );
+    if (!metadata?.orderId) {
+      return NextResponse.json({ error: 'Invalid payment metadata - missing order ID' }, { status: 400 });
     }
 
-    // Get order by orderId (from metadata)
-    const order = await prisma.eventTicketOrder.findUnique({
-      where: { id: metadata.orderId },
-      include: { tier: true },
-    });
-
-    if (!order) {
-      return NextResponse.json(
-        { error: 'Order not found' },
-        { status: 404 }
-      );
+    // Read attendees from the database (stored at purchase time)
+    const paystackOrder = await prisma.eventTicketOrder.findUnique({ where: { id: metadata.orderId } });
+    let attendees: AttendeeInfo[] = [];
+    if (paystackOrder?.attendees) {
+      attendees = paystackOrder.attendees as unknown as AttendeeInfo[];
+    } else if (metadata?.attendees) {
+      try { attendees = JSON.parse(metadata.attendees); } catch {}
+    }
+    if (!attendees.length) {
+      return NextResponse.json({ error: 'Attendees information not found for this order' }, { status: 400 });
     }
 
-    // Fetch event details from Sanity
-    const eventQuery = `*[_type == "event" && _id == $eventId][0] {
-      _id,
-      title,
-      slug,
-      eventDate,
-      endDate,
-      venue,
-      address,
-      city,
-      "imageUrl": image.asset->url
-    }`;
-    
-    let event;
-    try {
-      event = await serverClient.fetch(eventQuery, { eventId: order.eventId });
-    } catch (sanityError) {
-      console.error('Sanity fetch error:', {
-        eventId: order.eventId,
-        error: sanityError,
-      });
-      return NextResponse.json(
-        { error: 'Failed to fetch event details' },
-        { status: 500 }
-      );
-    }
-    
-    if (!event) {
-      console.error('Event not found in Sanity:', { eventId: order.eventId });
-      return NextResponse.json(
-        { error: 'Event not found' },
-        { status: 404 }
-      );
-    }
-
-    // Check if tickets already generated
-    const existingTickets = await prisma.eventTicket.findMany({
-      where: { orderId: order.id },
-    });
-
-    if (existingTickets.length > 0) {
-      return NextResponse.json({
-        success: true,
-        orderId: order.id,
-        tickets: existingTickets,
-        message: 'Tickets already generated',
-      });
-    }
-
-    // Parse attendees from metadata
-    if (!metadata.attendees) {
-      console.error('Missing attendees in Paystack metadata:', { metadata });
-      return NextResponse.json(
-        { error: 'Invalid payment metadata - missing attendees' },
-        { status: 400 }
-      );
-    }
-
-    let attendees: AttendeeInfo[];
-    try {
-      attendees = JSON.parse(metadata.attendees);
-    } catch (parseError) {
-      console.error('Failed to parse attendees:', {
-        attendeesString: metadata.attendees,
-        error: parseError,
-      });
-      return NextResponse.json(
-        { error: 'Failed to parse attendee information' },
-        { status: 400 }
-      );
-    }
-
-    // Generate tickets with unique IDs and QR codes
-    const eventAbbrev = event.title
-      .split(' ')
-      .filter((word: string) => word.length > 2)
-      .slice(0, 3)
-      .map((word: string) => word[0].toUpperCase())
-      .join('');
-    
-    // Get the highest ticket number already used for this event to avoid duplicates
-    const lastTicket = await prisma.eventTicket.findFirst({
-      where: { eventId: order.eventId },
-      orderBy: { ticketId: 'desc' },
-      take: 1,
-    });
-    
-    let nextTicketNumber = 1;
-    if (lastTicket && lastTicket.ticketId) {
-      const match = lastTicket.ticketId.match(/(\d+)$/);
-      if (match) {
-        nextTicketNumber = parseInt(match[1], 10) + 1;
-      }
-    }
-    
-    // Build ticket data
-    const ticketDataArray = await Promise.all(
-      attendees.map(async (attendee, index) => {
-        const ticketNumber = String(nextTicketNumber + index).padStart(3, '0');
-        const ticketId = `${eventAbbrev}-${ticketNumber}`;
-        
-        // Generate QR code data URL containing ticket ID for scanning
-        const qrCodeData = JSON.stringify({
-          ticketId,
-          eventId: order.eventId,
-          attendeeName: attendee.name,
-          attendeeEmail: attendee.email,
-        });
-        
-        const qrCodeUrl = await QRCode.toDataURL(qrCodeData, {
-          errorCorrectionLevel: 'H',
-          width: 400,
-          margin: 2,
-        });
-
-        return {
-          ticketId,
-          orderId: order.id,
-          eventId: order.eventId,
-          tierId: order.tierId,
-          attendeeName: attendee.name,
-          attendeeEmail: attendee.email,
-          attendeePhone: attendee.phone,
-          qrCode: qrCodeUrl,
-          status: 'AVAILABLE' as const,
-        };
-      })
-    );
-
-    // Try to create tickets, handling duplicates gracefully
-    const tickets = [];
-    for (const ticketData of ticketDataArray) {
-      try {
-        const ticket = await prisma.eventTicket.create({
-          data: ticketData,
-        });
-        tickets.push(ticket);
-      } catch (error: any) {
-        // If ticket already exists (duplicate key), fetch it instead
-        if (error.code === 'P2002' && error.meta?.target?.includes('ticketId')) {
-          console.log('Ticket already exists, fetching existing:', { ticketId: ticketData.ticketId });
-          const existingTicket = await prisma.eventTicket.findUnique({
-            where: { ticketId: ticketData.ticketId },
-          });
-          if (existingTicket) {
-            tickets.push(existingTicket);
-          } else {
-            console.error('Could not find existing ticket after duplicate error:', { ticketId: ticketData.ticketId });
-            throw error;
-          }
-        } else {
-          console.error('Unexpected error creating ticket:', { error: error.code, target: error.meta?.target });
-          throw error;
-        }
-      }
-    }
-
-    // Update order payment status
-    await prisma.eventTicketOrder.update({
-      where: { id: order.id },
-      data: { paymentStatus: 'success' },
-    });
-
-    // Update sold count
-    await prisma.eventTicketTier.update({
-      where: { id: order.tierId },
-      data: { sold: { increment: order.ticketCount } },
-    });
-
-    // Send SMS confirmation to buyer using existing SMS service
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://sankofatribe.com';
-    
-    if (order.buyerPhone) {
-      try {
-        const ticketList = tickets.map((t: any) => t.ticketId).join(', ');
-        const downloadLink = `${baseUrl}/api/tickets/${tickets[0].ticketId}?format=image`;
-        const smsMessage = `SANKOFA TRIBE\n\n${event.title}\n${new Date(event.eventDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}\n\nTicket(s): ${ticketList}\n\nDownload: ${downloadLink}`;
-        
-        await sendSMS(order.buyerPhone, smsMessage);
-      } catch (smsError) {
-        console.error('SMS send failed:', smsError);
-        // Don't fail the whole request if SMS fails
-      }
+    const result = await generateTickets(metadata.orderId, attendees);
+    if ('error' in result) {
+      return NextResponse.json({ error: result.error }, { status: result.status || 500 });
     }
 
     return NextResponse.json({
       success: true,
-      orderId: order.id,
-      event: {
-        title: event.title,
-        date: event.eventDate,
-        venue: event.venue,
-        imageUrl: event.imageUrl,
-      },
-      tickets: tickets.map((t: any) => ({
-        ticketId: t.ticketId,
-        attendeeName: t.attendeeName,
+      orderId: result.orderId,
+      event: result.event ? {
+        title: result.event.title, date: result.event.eventDate,
+        venue: result.event.venue, imageUrl: result.event.imageUrl,
+      } : undefined,
+      tickets: result.tickets?.map((t: any) => ({
+        ticketId: t.ticketId, attendeeName: t.attendeeName,
         attendeeEmail: t.attendeeEmail,
         downloadUrl: `${baseUrl}/api/tickets/${t.ticketId}?format=image`,
         qrCode: t.qrCode,
       })),
-      message: 'Tickets generated successfully. SMS sent to buyer.',
+      message: result.alreadyGenerated ? 'Tickets already generated' : 'Tickets generated successfully.',
     });
   } catch (error) {
-    console.error('Payment verification error:', {
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      details: error,
-    });
+    console.error('Payment verification error:', error);
     return NextResponse.json(
       { error: 'Failed to verify payment', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }

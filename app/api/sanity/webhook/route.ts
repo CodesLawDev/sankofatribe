@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
+import { getPrisma } from '@/lib/auth-utils'
 import { serverClient } from '@/lib/sanity-server'
 
-const prisma = new PrismaClient()
+const prisma = getPrisma()
 
 export async function POST(req: NextRequest) {
   const secretHeader = req.headers.get('x-webhook-secret')

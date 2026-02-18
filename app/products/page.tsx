@@ -39,6 +39,18 @@ async function getCategories() {
     return categories
 }
 
+async function getCampaignBySlug(slug: string) {
+    const query = `*[_type == "campaign" && slug.current == "${slug}"][0] {
+        _id,
+        name,
+        slug,
+        "includedProducts": includedProducts[]-> {_id, slug},
+        "includedCategories": includedCategories[]-> {_id, slug}
+    }`
+    const campaign = await client.fetch(query, {}, { next: { revalidate: 300 } })
+    return campaign
+}
+
 export const metadata = {
     title: 'All Products - SANKOFA',
     description: 'Browse all premium fashion products from SANKOFA',
@@ -50,22 +62,28 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Re
         getCategories()
     ])
 
+    let campaignData = null
+    if (searchParams?.campaign) {
+        campaignData = await getCampaignBySlug(searchParams.campaign)
+    }
+
     const initialFilters = {
         audience: (searchParams?.audience || '').toLowerCase(),
         category: (searchParams?.category || '').toLowerCase(),
         priceRange: (searchParams?.priceRange || ''),
         sortBy: (searchParams?.sortBy || 'newest'),
+        campaign: (searchParams?.campaign || ''),
     }
 
     return (
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12 py-12 md:py-20">
             <div className="mb-12 text-center">
                 <h1 className="text-2xl md:text-3xl font-light tracking-wider uppercase mb-3">
-                    All Products
+                    {campaignData ? campaignData.name : 'All Products'}
                 </h1>
             </div>
 
-            <ProductsWithFilters products={products} categories={categories} initialFilters={initialFilters} />
+            <ProductsWithFilters products={products} categories={categories} initialFilters={initialFilters} campaignData={campaignData} />
         </div>
     )
 }
