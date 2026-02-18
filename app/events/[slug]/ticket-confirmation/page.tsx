@@ -33,6 +33,8 @@ export default function TicketConfirmationPage() {
   const [tickets, setTickets] = useState<TicketData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [retryCount, setRetryCount] = useState(0);
+  const MAX_RETRIES = 5;
 
   useEffect(() => {
     const verifyPayment = async () => {
@@ -58,6 +60,11 @@ export default function TicketConfirmationPage() {
 
         if (!response.ok) {
           const errorData = await response.json();
+          // If retryable (Hubtel webhook delay) and we haven't exhausted retries
+          if (errorData.retryable && retryCount < MAX_RETRIES) {
+            setRetryCount(prev => prev + 1);
+            return; // useEffect will re-trigger via retryCount dependency
+          }
           throw new Error(errorData.error || 'Payment verification failed');
         }
 
@@ -81,7 +88,7 @@ export default function TicketConfirmationPage() {
     };
 
     verifyPayment();
-  }, [reference]);
+  }, [reference, retryCount]);
 
   if (loading) {
     return (

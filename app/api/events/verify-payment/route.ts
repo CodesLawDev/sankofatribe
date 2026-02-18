@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getPrisma } from '@/lib/auth-utils';
 import { serverClient } from '@/lib/sanity-server';
 import { sendSMS } from '@/lib/sms-service';
-import hubtelService from '@/lib/hubtel';
 import QRCode from 'qrcode';
 
 const prisma = getPrisma();
@@ -145,11 +144,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Client reference is required' }, { status: 400 });
       }
 
-      // Check if Hubtel payment was successful
-      let paymentConfirmed = false;
-
-      // First check if webhook already updated the order
-      const order = await prisma.eventTicketOrder.findUnique({
+      // Check order — may need to wait for GET handler or webhook to mark it paid
+      let order = await prisma.eventTicketOrder.findUnique({
         where: { id: orderId },
         include: { tickets: true },
       });
@@ -158,20 +154,24 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Order not found' }, { status: 404 });
       }
 
-      if (order.paymentStatus === 'success') {
-        paymentConfirmed = true;
-      } else {
-        // Check with Hubtel API
-        try {
-          const hubtelResult = await hubtelService.checkStatus(orderId);
-          paymentConfirmed = hubtelResult.success;
-        } catch (err) {
-          console.error('Hubtel status check failed:', err);
+      // If not yet confirmed, wait briefly for webhook/redirect handler to process
+      if (order.paymentStatus !== 'success') {
+        // Wait 3 seconds and re-check (webhook or GET handler may be processing)
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        order = await prisma.eventTicketOrder.findUnique({
+          where: { id: orderId },
+          include: { tickets: true },
+        });
+        if (!order) {
+          return NextResponse.json({ error: 'Order not found' }, { status: 404 });
         }
       }
 
-      if (!paymentConfirmed) {
-        return NextResponse.json({ error: 'Payment not yet confirmed' }, { status: 400 });
+      if (order.paymentStatus !== 'success') {
+        return NextResponse.json(
+          { error: 'Payment not yet confirmed. Please wait a moment and try again.', retryable: true },
+          { status: 400 }
+        );
       }
 
       // Tickets already generated?

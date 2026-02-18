@@ -142,12 +142,14 @@ export async function GET(request: NextRequest) {
     if (provider === 'hubtel') {
       const clientReference = searchParams.get('clientReference');
       const eventSlug = searchParams.get('eventSlug');
+      // Hubtel appends status info to the returnUrl on redirect
+      const hubtelStatus = searchParams.get('Status') || searchParams.get('status');
 
       if (!clientReference) {
         return NextResponse.redirect(`${baseUrl}/events?error=missing_reference`);
       }
 
-      // Check order in DB first (webhook POST may have already processed it)
+      // Look up order
       const order = await prisma.eventTicketOrder.findUnique({
         where: { id: clientReference },
         include: { tier: true, tickets: true },
@@ -157,7 +159,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(`${baseUrl}/events?error=order_not_found`);
       }
 
-      // Already fully processed?
+      // Already fully processed (webhook may have beaten us)
       if (order.tickets.length > 0) {
         const slug = eventSlug || await getEventSlug(order.eventId);
         return NextResponse.redirect(
@@ -165,26 +167,32 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      // Check if payment was confirmed (by webhook or check Hubtel API)
-      let paymentConfirmed = order.paymentStatus === 'success';
+      // Determine if payment succeeded:
+      // 1. Hubtel URL param (most reliable on redirect)
+      // 2. DB status (webhook may have set it)
+      const paymentConfirmed =
+        (hubtelStatus && hubtelStatus.toLowerCase() === 'success') ||
+        order.paymentStatus === 'success';
 
       if (!paymentConfirmed) {
-        try {
-          const hubtelResult = await hubtelService.checkStatus(clientReference);
-          paymentConfirmed = hubtelResult.success;
-        } catch (err) {
-          console.error('[payment-callback] Hubtel status check failed:', err instanceof Error ? err.message : err);
-        }
-      }
-
-      if (!paymentConfirmed) {
+        console.error('[payment-callback] Hubtel payment not confirmed. URL status:', hubtelStatus, 'DB status:', order.paymentStatus);
         return NextResponse.redirect(`${baseUrl}/events?error=payment_failed`);
       }
 
-      // Payment confirmed — generate tickets from DB attendees
-      const attendeesFromDb = order.attendees as unknown as AttendeeInfo[] | null;
-      if (attendeesFromDb && attendeesFromDb.length > 0) {
-        await fulfillTicketOrder(clientReference, attendeesFromDb, baseUrl);
+      // Payment confirmed — mark order and generate tickets
+      try {
+        const attendeesFromDb = order.attendees as unknown as AttendeeInfo[] | null;
+        if (attendeesFromDb && attendeesFromDb.length > 0) {
+          await fulfillTicketOrder(clientReference, attendeesFromDb, baseUrl);
+        } else {
+          // At minimum mark payment as success
+          await prisma.eventTicketOrder.update({
+            where: { id: clientReference },
+            data: { paymentStatus: 'success' },
+          });
+        }
+      } catch (err) {
+        console.error('[payment-callback] Hubtel fulfillment error:', err);
       }
 
       const slug = eventSlug || await getEventSlug(order.eventId);
