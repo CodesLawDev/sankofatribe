@@ -147,25 +147,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(`${baseUrl}/events?error=missing_reference`);
       }
 
-      // Check status with Hubtel
-      const hubtelResult = await hubtelService.checkStatus(clientReference);
-
-      if (!hubtelResult.success) {
-        // Maybe webhook already handled it — check order status
-        const order = await prisma.eventTicketOrder.findUnique({
-          where: { id: clientReference },
-          include: { tickets: true },
-        });
-        if (order?.paymentStatus === 'success' && order.tickets.length > 0) {
-          const slug = eventSlug || await getEventSlug(order.eventId);
-          return NextResponse.redirect(
-            `${baseUrl}/events/${slug}/ticket-confirmation?reference=${clientReference}&provider=hubtel`
-          );
-        }
-        return NextResponse.redirect(`${baseUrl}/events?error=payment_failed`);
-      }
-
-      // Get attendees from metadata (stored in the order's associated purchase)
+      // Check order in DB first (webhook POST may have already processed it)
       const order = await prisma.eventTicketOrder.findUnique({
         where: { id: clientReference },
         include: { tier: true, tickets: true },
@@ -175,6 +157,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(`${baseUrl}/events?error=order_not_found`);
       }
 
+      // Already fully processed?
       if (order.tickets.length > 0) {
         const slug = eventSlug || await getEventSlug(order.eventId);
         return NextResponse.redirect(
@@ -182,12 +165,31 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      // For Hubtel, attendees aren't in Hubtel metadata — they're stored in the
-      // verify-payment route or we need to look them up. We'll call the verify
-      // route which handles this.
-      // Redirect to the verify-payment endpoint which will generate tickets
+      // Check if payment was confirmed (by webhook or check Hubtel API)
+      let paymentConfirmed = order.paymentStatus === 'success';
+
+      if (!paymentConfirmed) {
+        try {
+          const hubtelResult = await hubtelService.checkStatus(clientReference);
+          paymentConfirmed = hubtelResult.success;
+        } catch (err) {
+          console.error('[payment-callback] Hubtel status check failed:', err instanceof Error ? err.message : err);
+        }
+      }
+
+      if (!paymentConfirmed) {
+        return NextResponse.redirect(`${baseUrl}/events?error=payment_failed`);
+      }
+
+      // Payment confirmed — generate tickets from DB attendees
+      const attendeesFromDb = order.attendees as unknown as AttendeeInfo[] | null;
+      if (attendeesFromDb && attendeesFromDb.length > 0) {
+        await fulfillTicketOrder(clientReference, attendeesFromDb, baseUrl);
+      }
+
+      const slug = eventSlug || await getEventSlug(order.eventId);
       return NextResponse.redirect(
-        `${baseUrl}/events/${eventSlug || await getEventSlug(order.eventId)}/ticket-confirmation?reference=${clientReference}&provider=hubtel`
+        `${baseUrl}/events/${slug}/ticket-confirmation?reference=${clientReference}&provider=hubtel`
       );
     }
 

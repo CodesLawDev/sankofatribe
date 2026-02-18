@@ -127,7 +127,8 @@ class HubtelService {
       throw new Error('Hubtel is not configured.')
     }
 
-    const url = `${BASE_URL}/status?clientReference=${encodeURIComponent(clientReference)}&merchantAccountNumber=${this.merchantAccountNumber}`
+    // Hubtel Online Checkout status endpoint
+    const url = `https://payproxyapi.hubtel.com/items/${encodeURIComponent(clientReference)}`
 
     const response = await axios.get(url, { headers: this.headers })
     const d = response.data
