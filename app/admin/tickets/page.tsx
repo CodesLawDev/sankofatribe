@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { PrismaClient } from '@prisma/client'
+import { serverClient } from '@/lib/sanity-server'
 import TicketVerifier from '@/components/admin/ticket-verifier'
 import AttendeeList from '@/components/admin/attendee-list'
 import OrdersTable from '@/components/admin/orders-table'
@@ -8,6 +9,93 @@ import TicketsTabs from '@/components/admin/tickets-tabs'
 const prisma = new PrismaClient()
 
 export const dynamic = 'force-dynamic'
+
+// ---------------------------------------------------------------------------
+// Auto-sync: fetch all published events from Sanity → upsert into EventRecord
+// ---------------------------------------------------------------------------
+async function syncEventsFromSanity() {
+  try {
+    const sanityEvents = await serverClient.fetch<any[]>(`*[_type == "event"]{
+      _id, title, slug, eventDate, endDate, status, featured,
+      ticketInfo {
+        isFree, maxCapacity, currency,
+        ticketTiers[]{ _key, name, description, price, quantity, currency }
+      },
+      location { venue, address, city, isVirtual, virtualLink }
+    }`)
+
+    if (!sanityEvents || sanityEvents.length === 0) return
+
+    for (const ev of sanityEvents) {
+      const slug = ev?.slug?.current || null
+      const loc = ev?.location || {}
+
+      await prisma.eventRecord.upsert({
+        where: { sanityId: ev._id },
+        update: {
+          slug,
+          title: ev.title,
+          eventDate: new Date(ev.eventDate),
+          endDate: ev.endDate ? new Date(ev.endDate) : null,
+          status: ev.status || 'upcoming',
+          featured: Boolean(ev.featured),
+          venue: loc.venue || null,
+          address: loc.address || null,
+          city: loc.city || null,
+          isVirtual: Boolean(loc.isVirtual),
+          virtualLink: loc.virtualLink || null,
+        },
+        create: {
+          sanityId: ev._id,
+          slug,
+          title: ev.title,
+          eventDate: new Date(ev.eventDate),
+          endDate: ev.endDate ? new Date(ev.endDate) : null,
+          status: ev.status || 'upcoming',
+          featured: Boolean(ev.featured),
+          venue: loc.venue || null,
+          address: loc.address || null,
+          city: loc.city || null,
+          isVirtual: Boolean(loc.isVirtual),
+          virtualLink: loc.virtualLink || null,
+        },
+      })
+
+      // Mirror ticket tiers
+      const tiers = ev?.ticketInfo?.ticketTiers
+      if (Array.isArray(tiers) && tiers.length > 0) {
+        for (const tier of tiers) {
+          const existing = await prisma.eventTicketTier.findFirst({
+            where: { eventId: ev._id, name: tier.name },
+          })
+          if (existing) {
+            await prisma.eventTicketTier.update({
+              where: { id: existing.id },
+              data: {
+                price: tier.price ?? 0,
+                quantity: tier.quantity ?? 0,
+                description: tier.description || null,
+              },
+            })
+          } else {
+            await prisma.eventTicketTier.create({
+              data: {
+                eventId: ev._id,
+                name: tier.name,
+                price: tier.price ?? 0,
+                quantity: tier.quantity ?? 0,
+                description: tier.description || null,
+                sold: 0,
+              },
+            })
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error('[admin/tickets] Auto-sync from Sanity failed:', err)
+  }
+}
 
 const formatCurrency = (amount: number | null | undefined, currency = 'GHS') => {
   const value = typeof amount === 'number' && Number.isFinite(amount) ? amount : 0
@@ -29,6 +117,9 @@ const formatDate = (value: Date | string | null | undefined) => {
 type SearchParams = { eventId?: string }
 
 export default async function AdminTicketsPage({ searchParams }: { searchParams?: SearchParams }) {
+  // Auto-sync events from Sanity so new events always appear
+  await syncEventsFromSanity()
+
   type EventRecordResult = Awaited<ReturnType<typeof prisma.eventRecord.findMany>>
   type TierResult = Awaited<ReturnType<typeof prisma.eventTicketTier.findMany>>
   type OrderWithTier = Awaited<ReturnType<typeof prisma.eventTicketOrder.findMany<{ include: { tier: true } }>>>
