@@ -74,14 +74,8 @@ export default function TicketConfirmationPage() {
         const data = await response.json();
         
         if (data.success && data.tickets) {
-          // Fetch full ticket data for each ticket
-          const ticketPromises = data.tickets.map(async (t: any) => {
-            const ticketResponse = await fetch(`/api/tickets/${t.ticketId}`);
-            return ticketResponse.json();
-          });
-          
-          const ticketsData = await Promise.all(ticketPromises);
-          setTickets(ticketsData);
+          // The verify-payment endpoint now returns full ticket+order data directly
+          setTickets(data.tickets);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to verify payment');
@@ -260,7 +254,7 @@ export default function TicketConfirmationPage() {
             <div className="flex justify-between">
               <span className="text-neutral-600">Total Amount</span>
               <span className="font-semibold">
-                {firstTicket.order.currency} {firstTicket.order.totalAmount.toFixed(2)}
+                {firstTicket.order.currency} {Number(firstTicket.order.totalAmount).toFixed(2)}
               </span>
             </div>
             <div className="flex justify-between">

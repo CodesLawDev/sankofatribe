@@ -42,7 +42,7 @@ async function generateTickets(orderId: string, attendees: AttendeeInfo[]) {
     where: { orderId: order.id },
   });
   if (existingTickets.length > 0) {
-    return { success: true, orderId: order.id, tickets: existingTickets, event, alreadyGenerated: true };
+    return { success: true, orderId: order.id, tickets: existingTickets, event, alreadyGenerated: true, tier: order.tier };
   }
 
   // Generate tickets
@@ -84,20 +84,22 @@ async function generateTickets(orderId: string, attendees: AttendeeInfo[]) {
     })
   );
 
-  const tickets = [];
-  for (const ticketData of ticketDataArray) {
-    try {
-      const ticket = await prisma.eventTicket.create({ data: ticketData });
-      tickets.push(ticket);
-    } catch (error: any) {
-      if (error.code === 'P2002' && error.meta?.target?.includes('ticketId')) {
-        const existing = await prisma.eventTicket.findUnique({ where: { ticketId: ticketData.ticketId } });
-        if (existing) tickets.push(existing);
-        else throw error;
-      } else {
-        throw error;
-      }
-    }
+  // Batch-insert all tickets at once
+  let tickets;
+  try {
+    await prisma.eventTicket.createMany({ data: ticketDataArray, skipDuplicates: true });
+    tickets = await prisma.eventTicket.findMany({
+      where: { orderId: order.id },
+      orderBy: { ticketId: 'asc' },
+    });
+  } catch (error: any) {
+    console.error('Ticket creation error:', error);
+    // Fallback: if createMany fails, tickets may already exist
+    tickets = await prisma.eventTicket.findMany({
+      where: { orderId: order.id },
+      orderBy: { ticketId: 'asc' },
+    });
+    if (tickets.length === 0) throw error;
   }
 
   // Update order + tier
@@ -123,7 +125,54 @@ async function generateTickets(orderId: string, attendees: AttendeeInfo[]) {
     }
   }
 
-  return { success: true, orderId: order.id, tickets, event, alreadyGenerated: false };
+  return {
+    success: true, orderId: order.id, tickets, event, alreadyGenerated: false,
+    tier: order.tier,
+  };
+}
+
+/** Build a unified response with full ticket+order data so the client doesn't need extra fetches */
+function buildTicketsResponse(
+  result: any,
+  baseUrl: string,
+  orderOverride?: { orderId: string; buyerName: string; totalAmount: any; currency: string }
+) {
+  const orderInfo = orderOverride || {
+    orderId: result.orderId,
+    buyerName: result.tickets?.[0]?.attendeeName || '',
+    totalAmount: 0,
+    currency: 'GHS',
+  };
+  return {
+    success: true,
+    orderId: result.orderId,
+    event: result.event ? {
+      title: result.event.title, date: result.event.eventDate,
+      venue: result.event.venue, imageUrl: result.event.imageUrl,
+    } : undefined,
+    tickets: result.tickets?.map((t: any) => ({
+      ticket: {
+        ticketId: t.ticketId,
+        eventId: t.eventId,
+        attendeeName: t.attendeeName,
+        attendeeEmail: t.attendeeEmail,
+        attendeePhone: t.attendeePhone,
+        tierName: result.tier?.name || '',
+        tierDescription: result.tier?.description || '',
+        status: t.status,
+        qrCode: t.qrCode,
+        createdAt: t.createdAt,
+      },
+      order: {
+        orderId: orderInfo.orderId,
+        buyerName: orderInfo.buyerName,
+        totalAmount: Number(orderInfo.totalAmount),
+        currency: orderInfo.currency,
+        paymentStatus: 'success',
+      },
+    })),
+    message: result.alreadyGenerated ? 'Tickets already generated' : 'Tickets generated successfully.',
+  };
 }
 
 // =============================================================================
@@ -148,29 +197,15 @@ export async function POST(request: NextRequest) {
       // Check order — may need to wait for GET handler or webhook to mark it paid
       let order = await prisma.eventTicketOrder.findUnique({
         where: { id: orderId },
-        include: { tickets: true },
+        include: { tickets: true, tier: true },
       });
 
       if (!order) {
         return NextResponse.json({ error: 'Order not found' }, { status: 404 });
       }
 
-      // If not yet confirmed, wait briefly then re-check DB
-      // NOTE: Avoid calling Hubtel status API here — the GET handler already
-      // made one call, and Hubtel rate-limits aggressively (429).
-      // The confirmation page retries this endpoint with backoff.
-      if (order.paymentStatus !== 'success') {
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        order = await prisma.eventTicketOrder.findUnique({
-          where: { id: orderId },
-          include: { tickets: true },
-        });
-        if (!order) {
-          return NextResponse.json({ error: 'Order not found' }, { status: 404 });
-        }
-      }
-
-      // Still not confirmed — try Hubtel status API (only if >5s since redirect)
+      // If already confirmed, skip all waiting
+      // Otherwise try Hubtel status API, then short wait + re-check
       if (order.paymentStatus !== 'success') {
         try {
           const hubtelResult = await hubtelService.checkStatus(orderId);
@@ -179,25 +214,25 @@ export async function POST(request: NextRequest) {
               where: { id: orderId },
               data: { paymentStatus: 'success' },
             });
-            order = await prisma.eventTicketOrder.findUnique({
-              where: { id: orderId },
-              include: { tickets: true },
-            });
-            if (!order) {
-              return NextResponse.json({ error: 'Order not found' }, { status: 404 });
-            }
           }
         } catch (err) {
-          // Log but don't fail — return retryable so confirmation page tries again
           console.error('Hubtel status check failed:', err instanceof Error ? err.message : err);
         }
+
+        // Brief wait then re-fetch to pick up webhook or status update
+        await new Promise(resolve => setTimeout(resolve, 2000));
       }
 
-      if (!order) {
+      // Definitive re-fetch after all waiting / status checks
+      const confirmedOrder = await prisma.eventTicketOrder.findUnique({
+        where: { id: orderId },
+        include: { tickets: true, tier: true },
+      });
+      if (!confirmedOrder) {
         return NextResponse.json({ error: 'Order not found' }, { status: 404 });
       }
 
-      if (order.paymentStatus !== 'success') {
+      if (confirmedOrder.paymentStatus !== 'success') {
         return NextResponse.json(
           { error: 'Payment not yet confirmed. Please wait a moment and try again.', retryable: true },
           { status: 400 }
@@ -205,19 +240,28 @@ export async function POST(request: NextRequest) {
       }
 
       // Tickets already generated?
-      if (order.tickets.length > 0) {
-        return NextResponse.json({
-          success: true,
-          orderId: order.id,
-          tickets: order.tickets,
-          message: 'Tickets already generated',
-        });
+      if (confirmedOrder.tickets.length > 0) {
+        const orderInfo = {
+          orderId: confirmedOrder.id,
+          buyerName: confirmedOrder.buyerName,
+          totalAmount: confirmedOrder.totalAmount,
+          currency: confirmedOrder.currency,
+        };
+        const eventQuery = `*[_type == "event" && _id == $eventId][0] { _id, title, eventDate, venue, "imageUrl": image.asset->url }`;
+        const evt = await serverClient.fetch(eventQuery, { eventId: confirmedOrder.eventId });
+        return NextResponse.json(
+          buildTicketsResponse(
+            { orderId: confirmedOrder.id, tickets: confirmedOrder.tickets, event: evt, alreadyGenerated: true, tier: confirmedOrder.tier ?? undefined },
+            baseUrl,
+            orderInfo
+          )
+        );
       }
 
       // Read attendees from the database (stored at purchase time)
       let attendees: AttendeeInfo[] = [];
-      if (order.attendees) {
-        attendees = order.attendees as unknown as AttendeeInfo[];
+      if (confirmedOrder.attendees) {
+        attendees = confirmedOrder.attendees as unknown as AttendeeInfo[];
       } else if (body.attendees && Array.isArray(body.attendees)) {
         // Fallback: accept from request body
         attendees = body.attendees;
@@ -234,21 +278,14 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: result.error }, { status: result.status || 500 });
       }
 
-      return NextResponse.json({
-        success: true,
-        orderId: result.orderId,
-        event: result.event ? {
-          title: result.event.title, date: result.event.eventDate,
-          venue: result.event.venue, imageUrl: result.event.imageUrl,
-        } : undefined,
-        tickets: result.tickets?.map((t: any) => ({
-          ticketId: t.ticketId, attendeeName: t.attendeeName,
-          attendeeEmail: t.attendeeEmail,
-          downloadUrl: `${baseUrl}/api/tickets/${t.ticketId}?format=image`,
-          qrCode: t.qrCode,
-        })),
-        message: result.alreadyGenerated ? 'Tickets already generated' : 'Tickets generated successfully.',
-      });
+      return NextResponse.json(
+        buildTicketsResponse(result, baseUrl, {
+          orderId: confirmedOrder.id,
+          buyerName: confirmedOrder.buyerName,
+          totalAmount: confirmedOrder.totalAmount,
+          currency: confirmedOrder.currency,
+        })
+      );
     }
 
     // ---- Paystack (default) ----
@@ -293,21 +330,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: result.error }, { status: result.status || 500 });
     }
 
-    return NextResponse.json({
-      success: true,
-      orderId: result.orderId,
-      event: result.event ? {
-        title: result.event.title, date: result.event.eventDate,
-        venue: result.event.venue, imageUrl: result.event.imageUrl,
-      } : undefined,
-      tickets: result.tickets?.map((t: any) => ({
-        ticketId: t.ticketId, attendeeName: t.attendeeName,
-        attendeeEmail: t.attendeeEmail,
-        downloadUrl: `${baseUrl}/api/tickets/${t.ticketId}?format=image`,
-        qrCode: t.qrCode,
-      })),
-      message: result.alreadyGenerated ? 'Tickets already generated' : 'Tickets generated successfully.',
-    });
+    return NextResponse.json(
+      buildTicketsResponse(result, baseUrl, paystackOrder ? {
+        orderId: paystackOrder.id,
+        buyerName: paystackOrder.buyerName,
+        totalAmount: paystackOrder.totalAmount,
+        currency: paystackOrder.currency,
+      } : undefined)
+    );
   } catch (error) {
     console.error('Payment verification error:', error);
     return NextResponse.json(
