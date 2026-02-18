@@ -7,7 +7,11 @@ import { CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline"
 import { useCart } from "@/lib/cart-context"
 
 // =============================================================================
-// /checkout/verify — Paystack redirects here with ?reference=xxx
+// /checkout/verify — Payment providers redirect here after checkout
+//
+// Paystack: ?reference=xxx
+// Hubtel:   ?provider=hubtel&clientReference=ORD-xxx
+//
 // The page calls the server-side verify API which handles everything:
 //   order update, stock decrement, SMS, payment record.
 // Client only shows status and clears the cart on success.
@@ -17,20 +21,24 @@ function VerifyPaymentContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const reference = searchParams?.get("reference")
+  const clientReference = searchParams?.get("clientReference")
+  const provider = searchParams?.get("provider") || "paystack"
   const { clearCart } = useCart()
 
   const [status, setStatus] = useState<"verifying" | "success" | "failed">("verifying")
   const [message, setMessage] = useState("Verifying your payment…")
 
   useEffect(() => {
-    if (!reference) {
+    const ref = provider === "hubtel" ? (clientReference || reference) : reference
+
+    if (!ref) {
       setStatus("failed")
       setMessage("No payment reference found.")
       return
     }
 
     // Prevent duplicate verification on React strict-mode double-mount
-    const key = `payment_verified_${reference}`
+    const key = `payment_verified_${ref}`
     if (typeof sessionStorage !== "undefined" && sessionStorage.getItem(key)) {
       setStatus("success")
       setMessage("Payment already verified!")
@@ -41,7 +49,15 @@ function VerifyPaymentContent() {
 
     const verify = async () => {
       try {
-        const res = await fetch(`/api/payment/verify?reference=${reference}`)
+        const params = new URLSearchParams()
+        if (provider === "hubtel") {
+          params.set("provider", "hubtel")
+          params.set("clientReference", ref)
+        } else {
+          params.set("reference", ref)
+        }
+
+        const res = await fetch(`/api/payment/verify?${params.toString()}`)
         const data = await res.json()
 
         if (data.success) {
@@ -62,7 +78,7 @@ function VerifyPaymentContent() {
 
     verify()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reference])
+  }, [reference, clientReference, provider])
 
   return (
     <main className="min-h-screen pt-24 flex items-center justify-center">
