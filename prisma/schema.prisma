@@ -265,6 +265,9 @@ model EventTicketOrder {
   totalAmount           Float       // Total price
   currency              String      @default("GHS") @db.VarChar(3)
   
+  // Attendee data (stored at purchase time for both providers)
+  attendees             Json?       // JSON array of { name, email, phone }
+  
   // Payment info
   paymentStatus         String      @default("pending") // pending, completed, failed
   paymentReference      String?     // Paystack reference

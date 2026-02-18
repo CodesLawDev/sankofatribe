@@ -68,7 +68,7 @@ async function sendSMS(phone: string, message: string): Promise<boolean> {
 }
 
 async function verifyAndFixOrder(orderId: string): Promise<VerificationResult> {
-  const paystackSecretKey = process.env.CODETICKETS_PAYSTACK_SECRET_KEY;
+  const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
   if (!paystackSecretKey) {
     return {
       orderId,

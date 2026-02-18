@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getPrisma } from '@/lib/auth-utils';
 import { serverClient } from '@/lib/sanity-server';
 import { nanoid } from 'nanoid';
+import paymentService, { generateReference } from '@/lib/payment';
+import hubtelService from '@/lib/hubtel';
 
 const prisma = getPrisma();
 
@@ -30,6 +32,7 @@ export async function POST(
       currency = 'GHS',
       tierPrice,
       tierQuantity,
+      provider = 'paystack',
     }: {
       tierId: string;
       ticketCount: number;
@@ -41,6 +44,7 @@ export async function POST(
       currency: string;
       tierPrice?: number;
       tierQuantity?: number;
+      provider?: 'paystack' | 'hubtel';
     } = body;
 
     // Validate input
@@ -142,6 +146,7 @@ export async function POST(
         ticketCount,
         totalAmount,
         currency,
+        attendees: attendees as any, // Store attendees at purchase time for both providers
         paymentStatus: isFree ? 'success' : 'pending',
         paymentReference: isFree ? `FREE-${nanoid(10)}` : '',
       },
@@ -182,11 +187,43 @@ export async function POST(
       });
     }
 
-    // For paid tickets, initiate Paystack payment (using CodeTickets credentials)
-    const paystackSecretKey = process.env.CODETICKETS_PAYSTACK_SECRET_KEY;
+    // For paid tickets, initiate payment with selected provider
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+
+    if (provider === 'hubtel') {
+      // ---- Hubtel ----
+      if (!hubtelService.isConfigured) {
+        return NextResponse.json(
+          { error: 'Hubtel payment is not configured' },
+          { status: 500 }
+        );
+      }
+
+      const eventQuery = `*[_type == "event" && _id == $eventId][0] { title, "slug": slug.current }`;
+      const event = await serverClient.fetch(eventQuery, { eventId });
+      const eventTitle = event?.title || 'Event';
+
+      const result = await hubtelService.initializeCheckout({
+        amount: totalAmount,
+        description: `SankofaTribe Tickets: ${ticketCount}x ${tierId} for ${eventTitle}`,
+        clientReference: order.id,
+        returnUrl: `${siteUrl}/api/events/payment-callback?provider=hubtel&clientReference=${order.id}&eventSlug=${event?.slug || ''}`,
+        callbackUrl: `${siteUrl}/api/events/payment-callback`,
+      });
+
+      return NextResponse.json({
+        orderId: order.id,
+        paymentUrl: result.checkoutUrl,
+        reference: order.id,
+        provider: 'hubtel',
+      });
+    }
+
+    // ---- Paystack (default) ----
+    const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
     if (!paystackSecretKey) {
       return NextResponse.json(
-        { error: 'CodeTickets payment configuration error' },
+        { error: 'Paystack payment is not configured' },
         { status: 500 }
       );
     }
@@ -199,11 +236,10 @@ export async function POST(
       },
       body: JSON.stringify({
         email: buyerEmail,
-        amount: Math.round(totalAmount * 100), // Paystack expects amount in kobo (pesewas for GHS)
+        amount: Math.round(totalAmount * 100),
         currency,
         reference: order.id,
-        // Use dedicated callback route that handles verification and redirects
-        callback_url: `${process.env.NEXT_PUBLIC_SITE_URL}/api/events/payment-callback`,
+        callback_url: `${siteUrl}/api/events/payment-callback`,
         metadata: {
           orderId: order.id,
           eventId,

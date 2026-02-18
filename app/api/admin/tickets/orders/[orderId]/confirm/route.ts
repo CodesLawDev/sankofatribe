@@ -41,7 +41,7 @@ export async function POST(
     }
 
     // Verify with Paystack
-    const paystackSecretKey = process.env.CODETICKETS_PAYSTACK_SECRET_KEY;
+    const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
     if (!paystackSecretKey) {
       return NextResponse.json({ error: 'Paystack not configured' }, { status: 500 });
     }
@@ -74,17 +74,18 @@ export async function POST(
       }, { status: 400 });
     }
 
-    // Get attendees from metadata
-    const metadata = verifyData.data.metadata;
-    if (!metadata?.attendees) {
-      return NextResponse.json({ error: 'Missing attendees in payment metadata' }, { status: 400 });
+    // Get attendees — prefer DB (stored at purchase time), fallback to Paystack metadata
+    let attendees: AttendeeInfo[] = [];
+    if (order.attendees) {
+      attendees = order.attendees as unknown as AttendeeInfo[];
+    } else {
+      const metadata = verifyData.data.metadata;
+      if (metadata?.attendees) {
+        try { attendees = JSON.parse(metadata.attendees); } catch {}
+      }
     }
-
-    let attendees: AttendeeInfo[];
-    try {
-      attendees = JSON.parse(metadata.attendees);
-    } catch (e) {
-      return NextResponse.json({ error: 'Failed to parse attendees' }, { status: 400 });
+    if (!attendees.length) {
+      return NextResponse.json({ error: 'No attendees found for this order' }, { status: 400 });
     }
 
     // Fetch event from Sanity

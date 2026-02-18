@@ -29,6 +29,7 @@ interface TicketData {
 export default function TicketConfirmationPage() {
   const searchParams = useSearchParams();
   const reference = searchParams.get('reference');
+  const provider = searchParams.get('provider') || 'paystack';
   const [tickets, setTickets] = useState<TicketData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -42,10 +43,17 @@ export default function TicketConfirmationPage() {
       }
 
       try {
+        // Build request body based on provider
+        const body: Record<string, any> = { reference, provider };
+
+        if (provider === 'hubtel') {
+          body.clientReference = reference;
+        }
+
         const response = await fetch('/api/events/verify-payment', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ reference }),
+          body: JSON.stringify(body),
         });
 
         if (!response.ok) {
