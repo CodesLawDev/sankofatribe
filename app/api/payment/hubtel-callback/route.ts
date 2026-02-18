@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import hubtelService from '@/lib/hubtel'
-import { serverClient, assertSanityToken, decrementStock } from '@/lib/sanity-server'
+import { fulfillOrder } from '@/lib/fulfillOrder'
 
 // =============================================================================
 // POST /api/payment/hubtel-callback
@@ -16,6 +16,13 @@ export async function POST(request: NextRequest) {
 
     console.log('[hubtel-callback] received:', JSON.stringify(body, null, 2))
 
+    // ---- Webhook signature verification ----
+    const authHeader = request.headers.get('authorization')
+    if (!hubtelService.verifyWebhookSignature(body, authHeader)) {
+      console.error('[hubtel-callback] webhook signature verification failed')
+      return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 })
+    }
+
     const parsed = hubtelService.parseCallback(body)
 
     if (!parsed.success) {
@@ -29,109 +36,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'No order reference' })
     }
 
-    // ----- Fulfillment (same logic as Paystack verify) -----
+    // Use shared fulfillment logic (idempotent — safe to call from both
+    // the webhook and the verify endpoint)
     try {
-      assertSanityToken()
-
-      // Idempotency check
-      const order = await serverClient.getDocument(orderId)
-      if (!order) {
-        console.error('[hubtel-callback] order not found:', orderId)
-        return NextResponse.json({ success: false, message: 'Order not found' })
-      }
-
-      if (order.paymentStatus === 'paid') {
-        console.log('[hubtel-callback] order already fulfilled:', orderId)
-        return NextResponse.json({ success: true, alreadyProcessed: true })
-      }
-
-      // Create payment record
-      await serverClient.create({
-        _type: 'payment',
+      const result = await fulfillOrder({
+        orderId,
         reference: parsed.transactionId || orderId,
-        orderId: { _type: 'reference', _ref: orderId },
         amount: parsed.amount,
-        currency: 'GHS',
-        status: 'success',
-        customerPhone: parsed.customerPhone,
-        paymentMethod: `hubtel_${parsed.paymentMethod}`,
+        channel: `hubtel_${parsed.paymentMethod}`,
         provider: 'hubtel',
+        customerPhone: parsed.customerPhone,
         paidAt: new Date().toISOString(),
-        verifiedAt: new Date().toISOString(),
       })
 
-      // Update order
-      await serverClient
-        .patch(orderId)
-        .set({
-          paymentStatus: 'paid',
-          status: 'processing',
-          paymentReference: parsed.transactionId || orderId,
-          'metadata.paymentMethod': `hubtel_${parsed.paymentMethod}`,
-          'metadata.provider': 'hubtel',
-          'metadata.paidAt': new Date().toISOString(),
-        })
-        .commit()
-
-      // Decrement stock
-      if (order.items?.length) {
-        try {
-          await decrementStock(
-            order.items.map((item: any) => ({
-              productId: item.productId,
-              quantity: item.quantity,
-              selectedSize: item.selectedSize,
-            }))
-          )
-        } catch (stockErr) {
-          console.error('[hubtel-callback] stock decrement failed:', stockErr)
-        }
+      if (result.error) {
+        console.error('[hubtel-callback]', result.error)
+      } else {
+        console.log('[hubtel-callback] order fulfilled:', orderId, result.alreadyProcessed ? '(already processed)' : '')
       }
-
-      // SMS notifications (best-effort)
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
-
-      // Customer SMS
-      if (order.customer?.phone || parsed.customerPhone) {
-        fetch(`${siteUrl}/api/sms`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: 'payment_confirmation',
-            data: {
-              customerName: order.customer?.firstName
-                ? `${order.customer.firstName} ${order.customer.lastName || ''}`
-                : 'Valued Customer',
-              customerPhone: order.customer?.phone || parsed.customerPhone,
-              orderId,
-              amount: parsed.amount,
-              paymentMethod: `Hubtel ${parsed.paymentMethod}`,
-            },
-          }),
-        }).catch((e) => console.error('[hubtel-callback] customer SMS failed:', e))
-      }
-
-      // Admin SMS
-      fetch(`${siteUrl}/api/settings`)
-        .then((r) => r.json())
-        .then((settings) => {
-          const adminPhone = settings?.data?.adminPhone
-          if (adminPhone) {
-            return fetch(`${siteUrl}/api/sms`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                type: 'new_order_alert',
-                data: { adminPhone, orderId, total: parsed.amount },
-              }),
-            })
-          }
-        })
-        .catch((e) => console.error('[hubtel-callback] admin SMS failed:', e))
-
-      console.log('[hubtel-callback] order fulfilled:', orderId)
-    } catch (sanityErr) {
-      console.error('[hubtel-callback] Sanity error:', sanityErr)
+    } catch (err) {
+      console.error('[hubtel-callback] fulfillment error:', err)
     }
 
     // Always return 200 to Hubtel so they don't retry

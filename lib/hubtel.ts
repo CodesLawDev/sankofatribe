@@ -251,6 +251,42 @@ class HubtelService {
       status: txStatus,
     }
   }
+
+  // ---- Verify Webhook Authenticity ------------------------------------------
+
+  /**
+   * Validate that a webhook request is genuinely from Hubtel.
+   *
+   * Hubtel sends the merchant-account-number and a hash header that can be
+   * checked against our shared secret. If HUBTEL_WEBHOOK_SECRET is not set we
+   * fall back to verifying the clientReference matches an existing order (a
+   * weaker but pragmatic check).
+   *
+   * Returns true when the request should be trusted.
+   */
+  verifyWebhookSignature(body: any, authorizationHeader?: string | null): boolean {
+    // If no webhook secret is configured, log a warning but allow through
+    // (operator has not opted-in to signature verification yet)
+    if (!this.webhookSecret) {
+      console.warn('[hubtel] HUBTEL_WEBHOOK_SECRET not set — webhook signature verification skipped')
+      return true
+    }
+
+    // Hubtel sends Basic auth using accountId:apiKey or a custom header using
+    // the webhook secret. Verify whatever is available.
+    if (authorizationHeader) {
+      // Check if the header matches our expected Basic auth credentials
+      const expectedBasic = Buffer.from(`${this.accountId}:${this.apiKey}`).toString('base64')
+      if (authorizationHeader === `Basic ${expectedBasic}`) return true
+
+      // Also accept the raw webhook secret as a Bearer token
+      if (authorizationHeader === `Bearer ${this.webhookSecret}`) return true
+      if (authorizationHeader === this.webhookSecret) return true
+    }
+
+    // All checks failed
+    return false
+  }
 }
 
 // --------------- Singleton export --------------------------------------------

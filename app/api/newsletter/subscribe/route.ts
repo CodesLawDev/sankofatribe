@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
+import { getPrisma } from '@/lib/auth-utils'
 import { subscribeToMailchimp } from '@/lib/mailchimp'
 import { client as sanityClient } from '@/lib/sanity'
 
-const prisma = new PrismaClient()
+const prisma = getPrisma()
 
 /**
  * POST /api/newsletter/subscribe

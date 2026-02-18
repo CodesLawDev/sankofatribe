@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Instagram, Facebook, Twitter, Youtube } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { client } from '@/lib/sanity'
+import type { FooterData as FooterDataType } from '@/lib/layout-data'
 
 interface FooterLink {
     text: string
@@ -35,11 +36,19 @@ interface FooterData {
     showLegalLinks?: boolean
 }
 
-export default function Footer() {
+interface FooterProps {
+    /** Pre-fetched footer data from server */
+    initialData?: FooterDataType | null
+}
+
+export default function Footer({ initialData }: FooterProps = {}) {
     const currentYear = new Date().getFullYear()
-    const [footerData, setFooterData] = useState<FooterData | null>(null)
+    const [footerData, setFooterData] = useState<FooterData | null>(initialData ?? null)
 
     useEffect(() => {
+        // Only fetch client-side if server data was not provided
+        if (initialData !== undefined) return
+
         async function fetchFooterData() {
             try {
                 const query = `*[_type == "footerSettings"][0]{

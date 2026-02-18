@@ -5,6 +5,7 @@ import Footer from '@/components/footer'
 import { Providers } from './providers'
 import AnalyticsTracker from '@/components/analytics-tracker'
 import PullToRefresh from '@/components/pull-to-refresh'
+import { fetchLayoutData } from '@/lib/layout-data'
 
 export const viewport: Viewport = {
     width: 'device-width',
@@ -43,20 +44,22 @@ export const metadata: Metadata = {
     },
 }
 
-export default function RootLayout({
+export default async function RootLayout({
     children,
 }: {
     children: React.ReactNode
 }) {
+    const layoutData = await fetchLayoutData()
+
     return (
         <html lang="en" suppressHydrationWarning>
             <body className="bg-white text-black">
                 <Providers>
                     <AnalyticsTracker />
                     <PullToRefresh />
-                    <Header />
+                    <Header initialNavItems={layoutData.navItems} initialAnnouncement={layoutData.announcement} />
                     <main className="min-h-screen">{children}</main>
-                    <Footer />
+                    <Footer initialData={layoutData.footerData} />
                 </Providers>
             </body>
         </html>

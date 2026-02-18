@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
+import { getPrisma } from '@/lib/auth-utils'
 import { verifyToken } from '@/lib/auth-utils'
 import { cookies } from 'next/headers'
 
-const prisma = new PrismaClient()
+const prisma = getPrisma()
 
 export const dynamic = 'force-dynamic'
 
@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    const totalRevenue = revenueResult._sum.total || 0
+    const totalRevenue = Number(revenueResult._sum.total || 0)
 
     // Get successful and failed payments
     const successfulPayments = await prisma.order.count({

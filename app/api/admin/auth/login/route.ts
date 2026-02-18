@@ -1,12 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { loginUser, createToken } from '@/lib/auth-utils'
 import { cookies } from 'next/headers'
+import { createRateLimiter } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
+const adminLoginLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 5 })
+
 export async function POST(request: NextRequest) {
   try {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown'
+    if (!adminLoginLimiter.check(ip)) {
+      return NextResponse.json(
+        { error: 'Too many login attempts. Please try again later.' },
+        { status: 429 }
+      )
+    }
     const { email, password } = await request.json()
 
     if (!email || !password) {

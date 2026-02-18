@@ -140,7 +140,7 @@ export default function AdminCustomers() {
                                             {customer.totalOrders}
                                         </td>
                                         <td className="px-6 py-4 text-sm text-brand-dark dark:text-white font-medium">
-                                            GH₵{customer.totalSpent.toFixed(2)}
+                                            GH₵{Number(customer.totalSpent).toFixed(2)}
                                         </td>
                                         <td className="px-6 py-4 text-sm text-neutral-600 dark:text-gray-300">
                                             {new Date(customer.registeredAt).toLocaleDateString()}

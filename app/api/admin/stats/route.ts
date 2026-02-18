@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
     const uniqueCustomers = new Set(allOrders.map(o => o.userId)).size
 
     // Calculate total revenue
-    const totalRevenue = allOrders.reduce((sum, order) => sum + (order.total || 0), 0)
+    const totalRevenue = allOrders.reduce((sum, order) => sum + Number(order.total || 0), 0)
 
     // Calculate average order value
     const avgOrderValue = allOrders.length > 0 ? totalRevenue / allOrders.length : 0
@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
       const orderDate = new Date(order.createdAt)
       const dateStr = orderDate.toISOString().split('T')[0]
       const existing = dateMap.get(dateStr) || { revenue: 0, orders: 0 }
-      existing.revenue += order.total || 0
+      existing.revenue += Number(order.total || 0)
       existing.orders += 1
       dateMap.set(dateStr, existing)
     })
@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
       todayOrders: allOrders.filter(o => new Date(o.createdAt) >= today && new Date(o.createdAt) < tomorrow).length,
       todayRevenue: allOrders
         .filter(o => new Date(o.createdAt) >= today && new Date(o.createdAt) < tomorrow)
-        .reduce((sum, order) => sum + (order.total || 0), 0),
+        .reduce((sum, order) => sum + Number(order.total || 0), 0),
       paidOrders: allOrders.filter(o => o.paymentStatus === 'paid' || o.paymentStatus === 'success').length,
       unpaidOrders: allOrders.filter(o => o.paymentStatus === 'pending' || o.paymentStatus === 'failed').length,
       revenueByDay,

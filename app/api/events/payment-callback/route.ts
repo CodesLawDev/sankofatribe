@@ -291,6 +291,13 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     console.log('[events/payment-callback] Hubtel webhook:', JSON.stringify(body, null, 2));
 
+    // ---- Webhook signature verification ----
+    const authHeader = request.headers.get('authorization');
+    if (!hubtelService.verifyWebhookSignature(body, authHeader)) {
+      console.error('[events/payment-callback] webhook signature verification failed');
+      return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+    }
+
     const parsed = hubtelService.parseCallback(body);
     if (!parsed.success || !parsed.clientReference) {
       return NextResponse.json({ success: false, message: 'Payment not successful or missing reference' });

@@ -3,9 +3,15 @@ import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import type { UserRole, AdminUser } from './authTypes'
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'your-secret-key-change-this-in-production'
-)
+const JWT_SECRET = (() => {
+  const secret = process.env.JWT_SECRET
+  if (!secret) {
+    throw new Error(
+      'JWT_SECRET environment variable is not set. Refusing to start with an insecure default.'
+    )
+  }
+  return new TextEncoder().encode(secret)
+})()
 
 // Re-export types for convenience
 export type { UserRole, AdminUser }
@@ -33,7 +39,9 @@ export async function validateCredentials(username: string, password: string): P
 }
 
 export async function hashPassword(password: string): Promise<string> {
-  return password
+  const bcrypt = await import('bcryptjs')
+  const salt = await bcrypt.genSalt(10)
+  return bcrypt.hash(password, salt)
 }
 
 export async function createToken(user: AdminUser): Promise<string> {
