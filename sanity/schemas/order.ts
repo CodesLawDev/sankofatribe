@@ -52,6 +52,17 @@ export const order = defineType({
             type: 'string',
         }),
         defineField({
+            name: 'paymentProvider',
+            title: 'Payment Provider',
+            type: 'string',
+            options: {
+                list: [
+                    { title: 'Paystack', value: 'paystack' },
+                    { title: 'Hubtel', value: 'hubtel' },
+                ],
+            },
+        }),
+        defineField({
             name: 'customer',
             title: 'Customer',
             type: 'object',
@@ -99,6 +110,7 @@ export const order = defineType({
             type: 'object',
             fields: [
                 defineField({ name: 'paymentMethod', title: 'Payment Method', type: 'string' }),
+                defineField({ name: 'provider', title: 'Provider', type: 'string' }),
                 defineField({ name: 'paidAt', title: 'Paid At', type: 'datetime' }),
             ],
         } as any),
