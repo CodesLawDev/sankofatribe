@@ -127,25 +127,29 @@ class HubtelService {
       throw new Error('Hubtel is not configured.')
     }
 
-    // Hubtel Online Checkout status endpoint
-    const url = `https://payproxyapi.hubtel.com/items/${encodeURIComponent(clientReference)}`
+    // Hubtel RMSC transaction status endpoint
+    const url = `https://rmsc.hubtel.com/v1/merchantaccount/merchants/${this.merchantAccountNumber}/transactions/status?clientReference=${encodeURIComponent(clientReference)}`
 
     const response = await axios.get(url, { headers: this.headers })
     const d = response.data
 
     const isPaid =
       d?.ResponseCode === '0000' ||
+      d?.Data?.TransactionStatus === 'Success' ||
+      d?.Data?.PaymentStatus === 'Successful' ||
       d?.data?.transactionStatus === 'Paid' ||
       d?.data?.paymentStatus === 'Paid'
 
+    const data = d?.Data || d?.data || {}
+
     return {
       success: isPaid,
-      status: d?.data?.transactionStatus || d?.data?.paymentStatus || 'Unknown',
-      amount: d?.data?.amount || d?.data?.invoiceAmount || 0,
+      status: data?.TransactionStatus || data?.transactionStatus || data?.PaymentStatus || data?.paymentStatus || 'Unknown',
+      amount: data?.Amount || data?.amount || data?.InvoiceAmount || data?.invoiceAmount || 0,
       clientReference: clientReference,
-      transactionId: d?.data?.transactionId || d?.data?.hubtelTransactionId || '',
-      paymentMethod: d?.data?.paymentMethod || 'momo',
-      customerPhone: d?.data?.customerPhoneNumber || d?.data?.msisdn || '',
+      transactionId: data?.TransactionId || data?.transactionId || data?.HubtelTransactionId || '',
+      paymentMethod: data?.PaymentMethod || data?.paymentMethod || 'momo',
+      customerPhone: data?.CustomerPhoneNumber || data?.customerPhoneNumber || data?.Msisdn || '',
     }
   }
 

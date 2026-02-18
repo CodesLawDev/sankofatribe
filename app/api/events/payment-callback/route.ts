@@ -170,9 +170,19 @@ export async function GET(request: NextRequest) {
       // Determine if payment succeeded:
       // 1. Hubtel URL param (most reliable on redirect)
       // 2. DB status (webhook may have set it)
-      const paymentConfirmed =
+      // 3. Hubtel status check API (fallback)
+      let paymentConfirmed =
         (hubtelStatus && hubtelStatus.toLowerCase() === 'success') ||
         order.paymentStatus === 'success';
+
+      if (!paymentConfirmed) {
+        try {
+          const hubtelResult = await hubtelService.checkStatus(clientReference);
+          paymentConfirmed = hubtelResult.success;
+        } catch (err) {
+          console.error('[payment-callback] Hubtel status API check failed:', err instanceof Error ? err.message : err);
+        }
+      }
 
       if (!paymentConfirmed) {
         console.error('[payment-callback] Hubtel payment not confirmed. URL status:', hubtelStatus, 'DB status:', order.paymentStatus);

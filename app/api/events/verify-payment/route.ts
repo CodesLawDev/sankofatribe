@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getPrisma } from '@/lib/auth-utils';
 import { serverClient } from '@/lib/sanity-server';
 import { sendSMS } from '@/lib/sms-service';
+import hubtelService from '@/lib/hubtel';
 import QRCode from 'qrcode';
 
 const prisma = getPrisma();
@@ -154,9 +155,9 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Order not found' }, { status: 404 });
       }
 
-      // If not yet confirmed, wait briefly for webhook/redirect handler to process
+      // If not yet confirmed, wait briefly then check Hubtel API directly
       if (order.paymentStatus !== 'success') {
-        // Wait 3 seconds and re-check (webhook or GET handler may be processing)
+        // Wait 3 seconds for webhook/GET handler to process
         await new Promise(resolve => setTimeout(resolve, 3000));
         order = await prisma.eventTicketOrder.findUnique({
           where: { id: orderId },
@@ -165,6 +166,33 @@ export async function POST(request: NextRequest) {
         if (!order) {
           return NextResponse.json({ error: 'Order not found' }, { status: 404 });
         }
+      }
+
+      // Still not confirmed — try Hubtel status API directly
+      if (order.paymentStatus !== 'success') {
+        try {
+          const hubtelResult = await hubtelService.checkStatus(orderId);
+          if (hubtelResult.success) {
+            await prisma.eventTicketOrder.update({
+              where: { id: orderId },
+              data: { paymentStatus: 'success' },
+            });
+            // Re-fetch with updated status
+            order = await prisma.eventTicketOrder.findUnique({
+              where: { id: orderId },
+              include: { tickets: true },
+            });
+            if (!order) {
+              return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+            }
+          }
+        } catch (err) {
+          console.error('Hubtel status check failed:', err instanceof Error ? err.message : err);
+        }
+      }
+
+      if (!order) {
+        return NextResponse.json({ error: 'Order not found' }, { status: 404 });
       }
 
       if (order.paymentStatus !== 'success') {
