@@ -19,7 +19,7 @@ interface QuickViewModalProps {
 export default function QuickViewModal({ product, isOpen, onClose }: QuickViewModalProps) {
     const { addToCart } = useCart()
     const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist()
-    const { formatPrice, convertPrice } = useCurrency()
+    const { formatPrice, convertPrice, isLoading: currencyLoading } = useCurrency()
     const [selectedSize, setSelectedSize] = useState('')
     const [selectedColor, setSelectedColor] = useState('')
     const [quantity, setQuantity] = useState(1)
@@ -28,7 +28,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
     if (!isOpen || !product) return null
 
     const inWishlist = isInWishlist(product._id)
-    const displayPrice = formatPrice(convertPrice(product.price))
+    const displayPrice = !currencyLoading ? formatPrice(convertPrice(product.price)) : '₵--'
 
     const handleAddToCart = async () => {
         if (!selectedSize && product.sizes && product.sizes.length > 0) {

@@ -50,6 +50,22 @@ function buildMessage(type: SmsType, data: any) {
 
 export async function POST(req: NextRequest) {
     try {
+        // ---- Authentication: internal secret or admin JWT ----
+        const internalSecret = process.env.INTERNAL_API_SECRET
+        const providedSecret = req.headers.get('x-internal-secret')
+        if (!internalSecret || providedSecret !== internalSecret) {
+            // Fallback: check for admin JWT in cookie
+            const { verifyToken } = await import('@/lib/auth-utils')
+            const authToken = req.cookies.get('auth-token')?.value
+            const user = authToken ? await verifyToken(authToken) : null
+            if (!user || !['ADMIN', 'SUPERADMIN'].includes(user.role)) {
+                return NextResponse.json(
+                    { success: false, error: 'Unauthorized' },
+                    { status: 401 }
+                )
+            }
+        }
+
         const apiKey = process.env.BMS_API_KEY
         if (!apiKey) {
             return NextResponse.json({ success: false, error: 'Missing BMS_API_KEY env var' }, { status: 500 })

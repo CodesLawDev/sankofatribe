@@ -6,6 +6,14 @@ import { ShoppingBag, Search, Menu, X, Heart, User } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import SearchModal from './search-modal'
 import { client } from '@/lib/sanity'
+import type { NavItem as NavItemType, AnnouncementData as AnnouncementType } from '@/lib/layout-data'
+
+interface HeaderProps {
+    /** Pre-fetched navigation items from server */
+    initialNavItems?: NavItemType[]
+    /** Pre-fetched announcement from server */
+    initialAnnouncement?: AnnouncementType | null
+}
 
 interface NavItem {
     name: string
@@ -21,30 +29,25 @@ interface AnnouncementData {
     isActive: boolean
 }
 
-export default function Header() {
+const DEFAULT_NAV: NavItem[] = [
+    { name: 'New & Featured', href: '/products' },
+    { name: 'Men', href: '/category/men' },
+    { name: 'Women', href: '/category/women' },
+    { name: 'Kids', href: '/products' },
+    { name: 'Sale', href: '/products' },
+    { name: 'Events', href: '/events' },
+]
+
+export default function Header({ initialNavItems, initialAnnouncement }: HeaderProps = {}) {
     const { cartCount } = useCart()
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
     const [searchOpen, setSearchOpen] = useState(false)
-    const [mainNav, setMainNav] = useState<NavItem[]>([
-        { name: 'New & Featured', href: '/products' },
-        { name: 'Men', href: '/category/men' },
-        { name: 'Women', href: '/category/women' },
-        { name: 'Kids', href: '/products' },
-        { name: 'Sale', href: '/products' },
-        { name: 'Events', href: '/events' },
-    ])
-    const [announcement, setAnnouncement] = useState<AnnouncementData | null>(null)
+    const [mainNav, setMainNav] = useState<NavItem[]>(initialNavItems ?? DEFAULT_NAV)
+    const [announcement, setAnnouncement] = useState<AnnouncementData | null>(initialAnnouncement ?? null)
 
     useEffect(() => {
-        // Set fallback navigation immediately
-        setMainNav([
-            { name: 'New & Featured', href: '/products' },
-            { name: 'Men', href: '/category/men' },
-            { name: 'Women', href: '/category/women' },
-            { name: 'Kids', href: '/products' },
-            { name: 'Sale', href: '/products' },
-            { name: 'Events', href: '/events' },
-        ])
+        // Only fetch client-side if server data was not provided
+        if (initialNavItems && initialAnnouncement !== undefined) return
 
         async function fetchNavigation() {
             try {

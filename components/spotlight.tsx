@@ -11,7 +11,7 @@ interface SpotlightProps {
 }
 
 export default function Spotlight({ products }: SpotlightProps) {
-    const { formatPrice, convertPrice } = useCurrency()
+    const { formatPrice, convertPrice, isLoading: currencyLoading } = useCurrency()
 
     return (
         <section className="py-20 md:py-32 bg-white">
@@ -43,7 +43,7 @@ export default function Spotlight({ products }: SpotlightProps) {
                                     <h3 className="text-sm font-semibold mb-1 group-hover:opacity-70 transition-opacity">
                                         {product.name}
                                     </h3>
-                                    <p className="text-sm text-gray-600">{formatPrice(convertPrice(product.price))}</p>
+                                    <p className="text-sm text-gray-600">{!currencyLoading ? formatPrice(convertPrice(product.price)) : '₵--'}</p>
                                 </div>
                             </Link>
                         )

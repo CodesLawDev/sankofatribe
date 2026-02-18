@@ -19,7 +19,7 @@ export default function ProductCard({ product, onQuickView }: ProductCardProps) 
     const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist()
     const { addToCart } = useCart()
     const { showToast } = useToast()
-    const { formatPrice, convertPrice } = useCurrency()
+    const { formatPrice, convertPrice, isLoading: currencyLoading } = useCurrency()
     const inWishlist = isInWishlist(product._id)
     const [showOptions, setShowOptions] = useState(false)
     const [selectedSize, setSelectedSize] = useState(product.sizes?.[0]?.size || '')
@@ -36,7 +36,7 @@ export default function ProductCard({ product, onQuickView }: ProductCardProps) 
 
     const selectedSizeStock = getStockForSize(selectedSize)
     const isSizeOutOfStock = selectedSizeStock === 0
-    const displayPrice = formatPrice(convertPrice(product.price))
+    const displayPrice = !currencyLoading ? formatPrice(convertPrice(product.price)) : '₵--'
 
     const handleWishlistClick = (e: React.MouseEvent) => {
         e.preventDefault()

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { serverClient, assertSanityToken, validateOrderStock } from '@/lib/sanity-server'
+import { nanoid } from 'nanoid'
 
 export async function POST(req: NextRequest) {
   try {
@@ -7,15 +8,15 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json()
     const {
-      orderId = `ORD-${Date.now()}`,
       customer,
       shippingAddress,
       items,
-      subtotal = 0,
-      discount = 0,
       promoCode,
-      total = 0,
+      promoDiscount = 0,
     } = body || {}
+
+    // Generate orderId server-side (never trust client)
+    const orderId = `ORD-${Date.now()}-${nanoid(6)}`
 
     // ---- Validation ---------------------------------------------------------
 
@@ -32,10 +33,45 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Order must contain at least one item.' }, { status: 400 })
     }
 
+    // ---- Validate item fields -----------------------------------------------
+
+    for (const item of items) {
+      if (!item.productId || typeof item.productId !== 'string') {
+        return NextResponse.json({ success: false, error: 'Each item must have a valid productId.' }, { status: 400 })
+      }
+      if (!Number.isFinite(item.quantity) || item.quantity <= 0 || !Number.isInteger(item.quantity)) {
+        return NextResponse.json({ success: false, error: `Invalid quantity for product ${item.productId}.` }, { status: 400 })
+      }
+      if (!Number.isFinite(item.price) || item.price < 0) {
+        return NextResponse.json({ success: false, error: `Invalid price for product ${item.productId}.` }, { status: 400 })
+      }
+    }
+
+    // ---- Server-side price calculation from Sanity --------------------------
+
+    const productIds = items.map((item: any) => item.productId)
+    const priceQuery = `*[_type == "product" && _id in $ids] { _id, price, hasDiscount, discountedPrice }`
+    const products = await serverClient.fetch<Array<{ _id: string; price: number; hasDiscount?: boolean; discountedPrice?: number }>>(priceQuery, { ids: productIds })
+    const priceMap = new Map(products.map((p) => [p._id, p]))
+
+    let computedSubtotal = 0
+    const verifiedItems = items.map((item: any) => {
+      const product = priceMap.get(item.productId)
+      // Use the canonical price from Sanity, not from the client
+      const unitPrice = product
+        ? (product.hasDiscount && product.discountedPrice ? product.discountedPrice : product.price)
+        : item.price // fallback if product was somehow deleted between validation
+      computedSubtotal += unitPrice * item.quantity
+      return { ...item, price: unitPrice }
+    })
+
+    const discount = Math.max(0, Math.min(promoDiscount, computedSubtotal)) // clamp discount
+    const computedTotal = Math.round((computedSubtotal - discount) * 100) / 100
+
     // ---- Stock check --------------------------------------------------------
 
     const stockValidation = await validateOrderStock(
-      items.map((item: any) => ({
+      verifiedItems.map((item: any) => ({
         productId: item.productId,
         quantity: item.quantity,
         selectedSize: item.selectedSize,
@@ -68,19 +104,19 @@ export async function POST(req: NextRequest) {
         city: shippingAddress?.city || '',
         landmark: shippingAddress?.landmark || '',
       },
-      items,
-      subtotal,
+      items: verifiedItems,
+      subtotal: computedSubtotal,
       discount,
       promoCode: promoCode || undefined,
       shippingCost: 0,
       tax: 0,
-      total,
+      total: computedTotal,
       metadata: {},
     }
 
-    await serverClient.createOrReplace(orderDoc)
+    await serverClient.create(orderDoc)
 
-    return NextResponse.json({ success: true, orderId })
+    return NextResponse.json({ success: true, orderId, total: computedTotal, subtotal: computedSubtotal })
   } catch (error) {
     console.error('[orders/create] error:', error)
     const message = error instanceof Error ? error.message : 'Failed to create order'

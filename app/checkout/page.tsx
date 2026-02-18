@@ -107,13 +107,11 @@ export default function CheckoutPage() {
         return
       }
 
-      // 2. Create order
-      const orderId = `ORD-${Date.now()}`
+      // 2. Create order (server generates orderId and computes total)
       const orderRes = await fetch("/api/orders/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          orderId,
           customer: {
             firstName: form.firstName,
             lastName: form.lastName,
@@ -130,10 +128,8 @@ export default function CheckoutPage() {
             selectedSize: item.selectedSize,
             selectedColor: item.selectedColor,
           })),
-          subtotal: cartTotal,
-          discount,
           promoCode: appliedPromo?.code,
-          total: finalTotal,
+          promoDiscount: discount,
         }),
       })
 
@@ -149,13 +145,15 @@ export default function CheckoutPage() {
         throw new Error(orderData.error || "Failed to create order")
       }
 
-      // 3. Initialize payment with selected provider
+      const orderId = orderData.orderId
+
+      // 3. Initialize payment with selected provider (use server-computed total)
       const payRes = await fetch("/api/payment/initialize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: form.email,
-          amount: finalTotal,
+          amount: orderData.total || finalTotal,
           orderId,
           customerName: `${form.firstName} ${form.lastName}`,
           customerPhone: form.phone,
@@ -173,16 +171,7 @@ export default function CheckoutPage() {
         throw new Error(payData.error || "Failed to initialize payment")
       }
 
-      // 4. Increment promo usage
-      if (appliedPromo) {
-        fetch("/api/promo/validate", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code: appliedPromo.code }),
-        }).catch(() => {})
-      }
-
-      // 5. Redirect to hosted checkout (Paystack or Hubtel)
+      // 4. Redirect to hosted checkout (Paystack or Hubtel)
       window.location.href = payData.authorization_url
     } catch (err: any) {
       console.error("[checkout] error:", err)

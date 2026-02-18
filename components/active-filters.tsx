@@ -5,7 +5,7 @@ import { X } from 'lucide-react'
 interface FilterChip {
     label: string
     value: string
-    type: 'audience' | 'category' | 'priceRange'
+    type: 'audience' | 'category' | 'priceRange' | 'campaign'
 }
 
 interface ActiveFiltersProps {

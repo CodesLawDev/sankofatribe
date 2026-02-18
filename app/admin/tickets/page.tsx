@@ -1,12 +1,12 @@
 import Link from 'next/link'
-import { PrismaClient } from '@prisma/client'
+import { getPrisma } from '@/lib/auth-utils'
 import { serverClient } from '@/lib/sanity-server'
 import TicketVerifier from '@/components/admin/ticket-verifier'
 import AttendeeList from '@/components/admin/attendee-list'
 import OrdersTable from '@/components/admin/orders-table'
 import TicketsTabs from '@/components/admin/tickets-tabs'
 
-const prisma = new PrismaClient()
+const prisma = getPrisma()
 
 export const dynamic = 'force-dynamic'
 
@@ -97,8 +97,9 @@ async function syncEventsFromSanity() {
   }
 }
 
-const formatCurrency = (amount: number | null | undefined, currency = 'GHS') => {
-  const value = typeof amount === 'number' && Number.isFinite(amount) ? amount : 0
+const formatCurrency = (amount: any, currency = 'GHS') => {
+  const value = amount != null ? Number(amount) : 0
+  if (!Number.isFinite(value)) return `${currency} 0.00`
   return `${currency} ${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
@@ -182,7 +183,7 @@ export default async function AdminTicketsPage({ searchParams }: { searchParams?
       tiers = tierResult
       orders = orderResult
       tickets = ticketResult
-      eventRevenue = eventRevenueAgg._sum.totalAmount ?? 0
+      eventRevenue = Number(eventRevenueAgg._sum.totalAmount ?? 0)
       usedCount = used
       availableCount = available
       cancelledCount = cancelled
@@ -362,7 +363,7 @@ export default async function AdminTicketsPage({ searchParams }: { searchParams?
         buyerEmail: o.buyerEmail,
         buyerPhone: o.buyerPhone,
         ticketCount: o.ticketCount,
-        totalAmount: o.totalAmount,
+        totalAmount: Number(o.totalAmount),
         currency: o.currency,
         paymentStatus: o.paymentStatus,
         createdAt: o.createdAt.toISOString(),

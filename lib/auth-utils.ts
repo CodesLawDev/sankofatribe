@@ -11,9 +11,15 @@ export function getPrisma(): PrismaClient {
   return prismaInstance;
 }
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'your-secret-key-change-in-production'
-);
+const JWT_SECRET = (() => {
+  const secret = process.env.JWT_SECRET
+  if (!secret) {
+    throw new Error(
+      'JWT_SECRET environment variable is not set. Refusing to start with an insecure default.'
+    )
+  }
+  return new TextEncoder().encode(secret)
+})()
 
 export interface AuthPayload {
   userId: string;

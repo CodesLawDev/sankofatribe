@@ -33,7 +33,7 @@ I've built a comprehensive analytics and monthly SMS reporting system for your S
 - Quick links to detailed analytics
 
 ### 5. **Monthly SMS Reports**
-- Automated SMS via Twilio
+- Automated SMS via your existing BMS service
 - Sent to multiple admin phone numbers
 - Beautiful formatted reports
 - Scheduled for 1st of each month at 9 AM
@@ -49,10 +49,10 @@ I've built a comprehensive analytics and monthly SMS reporting system for your S
 - ✅ `app/api/analytics/track/route.ts` - Page view tracking endpoint
 - ✅ `app/api/admin/analytics/route.ts` - Analytics aggregation API
 - ✅ `app/api/admin/analytics/monthly-report/route.ts` - Monthly report generator
-- ✅ `app/api/cron/monthly-report/route.ts` - Vercel cron job endpoint
+- ✅ `app/api/cron/monthly-report/route.ts` - GitHub Actions triggered cron endpoint
 
 ### Services & Utilities
-- ✅ `lib/sms-service.ts` - Twilio SMS integration with formatting
+- ✅ `lib/sms-service.ts` - BMS SMS integration with formatting
 
 ### Frontend Components
 - ✅ `components/analytics-tracker.tsx` - Client-side page view tracker
@@ -60,8 +60,8 @@ I've built a comprehensive analytics and monthly SMS reporting system for your S
 - ✅ `app/layout.tsx` - Added analytics tracker to root layout
 
 ### Configuration
-- ✅ `vercel.json` - Cron job configuration
-- ✅ `.env.local.example` - Updated with Twilio variables
+- ✅ `.github/workflows/monthly-report.yml` - GitHub Actions cron scheduler
+- ✅ `.env.local.example` - Updated with SMS provider variables
 
 ### Documentation
 - ✅ `ANALYTICS_SMS_SETUP.md` - Complete setup guide (15+ pages)
@@ -98,15 +98,15 @@ Plus a beautiful "This Month's Performance" summary card!
 5. Session cookie set for unique visitor tracking
 
 ### Monthly SMS Report
-1. Vercel cron job runs on 1st of month at 9 AM
-2. Triggers `/api/cron/monthly-report`
+1. GitHub Actions workflow runs on 1st of month at 9 AM UTC
+2. Makes HTTP GET request to `/api/cron/monthly-report` with Authorization header
 3. Calls `/api/admin/analytics/monthly-report`
 4. Aggregates data from database:
    - Orders, revenue, payments
    - Page views, unique visitors
    - New customers
 5. Formats SMS message
-6. Sends via Twilio to all admin phones
+6. Sends via BMS to all admin phones
 7. Saves report to `MonthlyReport` table
 
 ---
@@ -266,7 +266,7 @@ CREATE TABLE "MonthlyReport" (
 - **Page tracking**: < 50ms overhead per page load
 - **Analytics queries**: Optimized with database indexes
 - **Dashboard load**: < 500ms for all metrics
-- **SMS delivery**: 1-3 seconds via Twilio
+- **SMS delivery**: 1-3 seconds via BMS
 
 ---
 
@@ -285,10 +285,11 @@ CREATE TABLE "MonthlyReport" (
 4. Ensure DATABASE_URL is correct
 
 ### Cron Job Not Running?
-1. Check Vercel Dashboard → Deployments → Logs
-2. Verify `CRON_SECRET` matches
-3. Ensure `NEXT_PUBLIC_BASE_URL` is production URL
-4. Check `vercel.json` is committed
+1. Check GitHub Actions logs: Repository → Actions → Monthly Analytics Report
+2. Verify GitHub Secrets are set: `BASE_URL` and `CRON_SECRET`
+3. Ensure `CRON_SECRET` in secrets matches your production `.env`
+4. Check `.github/workflows/monthly-report.yml` is committed
+5. Ensure production app has `CRON_SECRET` environment variable set
 
 ---
 
@@ -368,7 +369,7 @@ The Prisma migration has been successfully applied:
 
 ## 🎯 Next Steps
 
-1. **Add Twilio credentials** to your environment variables
+1. **Check `BMS_API_KEY`** is set in `.env.local`
 2. **Add admin phone number(s)** to `ADMIN_PHONE_NUMBER`
 3. **Test page tracking** by visiting your site
 4. **Manually trigger** first monthly report to test SMS
@@ -381,7 +382,7 @@ The Prisma migration has been successfully applied:
 - **BMS Dashboard**: https://bms.codeslaw.dev
 - **BMS SMS Logs**: Check your BMS admin panel
 - **Prisma Studio**: Run `npx prisma studio` to view database
-- **Vercel Cron Logs**: Dashboard → Deployments → Logs
+- **GitHub Actions Logs**: Repository → Actions → Monthly Analytics Report
 
 ---
 

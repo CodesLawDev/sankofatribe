@@ -89,7 +89,8 @@ export async function validateOrderStock(items: Array<{ productId: string; quant
 }
 
 /**
- * Decrement stock for order items (call this after successful payment)
+ * Decrement stock for order items using a Sanity transaction (atomic).
+ * Call this after successful payment.
  */
 export async function decrementStock(items: Array<{ productId: string; quantity: number; selectedSize?: string }>) {
     assertSanityToken()
@@ -111,8 +112,8 @@ export async function decrementStock(items: Array<{ productId: string; quantity:
         }>>(query, { ids: productIds })
         const productMap = new Map(products.map((p) => [p._id, p]))
         
-        // Create batch of updates
-        const updates = []
+        // Build a single transaction for all updates
+        let transaction = serverClient.transaction()
         
         for (const item of items) {
             const product = productMap.get(item.productId)
@@ -134,11 +135,8 @@ export async function decrementStock(items: Array<{ productId: string; quantity:
                     return s
                 })
                 
-                updates.push(
-                    serverClient
-                        .patch(item.productId)
-                        .set({ sizes: updatedSizes })
-                )
+                const patch = serverClient.patch(item.productId).set({ sizes: updatedSizes })
+                transaction = (transaction as any).patch(patch)
             } else {
                 // Decrement from first available size (fallback)
                 const updatedSizes = [...product.sizes]
@@ -154,16 +152,13 @@ export async function decrementStock(items: Array<{ productId: string; quantity:
                     remaining -= toDeduct
                 }
                 
-                updates.push(
-                    serverClient
-                        .patch(item.productId)
-                        .set({ sizes: updatedSizes })
-                )
+                const patch = serverClient.patch(item.productId).set({ sizes: updatedSizes })
+                transaction = (transaction as any).patch(patch)
             }
         }
         
-        // Execute all updates
-        await Promise.all(updates.map(update => update.commit()))
+        // Commit all updates atomically
+        await transaction.commit()
         
         return { success: true }
     } catch (error) {

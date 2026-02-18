@@ -1,0 +1,23 @@
+name: Monthly Analytics Report
+
+on:
+  schedule:
+    - cron: '0 9 1 * *'  # 9 AM UTC on the 1st of every month
+  workflow_dispatch:
+
+jobs:
+  send-monthly-report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call monthly-report cron endpoint
+        env:
+          BASE_URL: ${{ secrets.BASE_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$BASE_URL" ]; then echo "BASE_URL secret is required" && exit 1; fi
+          if [ -z "$CRON_SECRET" ]; then echo "CRON_SECRET secret is required" && exit 1; fi
+          echo "Triggering monthly report at $BASE_URL"
+          curl -sS -X GET "$BASE_URL/api/cron/monthly-report" \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            -H "Accept: application/json" \
+            --fail

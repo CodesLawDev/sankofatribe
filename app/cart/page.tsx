@@ -60,7 +60,7 @@ export default function CartPage() {
                                     <div className="flex items-center justify-between mt-6">
                                         <div className="flex items-center gap-3">
                                             <button
-                                                onClick={() => updateQuantity(item.id, item.quantity - 1, item.maxStock || 0)}
+                                                onClick={() => updateQuantity(item.id, item.quantity - 1, item.maxStock || 0, item.selectedSize, item.selectedColor)}
                                                     className="w-8 h-8 border border-gray-300 hover:border-black focus:ring-2 focus:ring-brand-primary flex items-center justify-center transition-colors"
                                                 aria-label="Decrease quantity"
                                             >
@@ -68,7 +68,7 @@ export default function CartPage() {
                                             </button>
                                             <span className="w-10 text-center text-sm">{item.quantity}</span>
                                             <button
-                                                onClick={() => updateQuantity(item.id, item.quantity + 1, item.maxStock || 0)}
+                                                onClick={() => updateQuantity(item.id, item.quantity + 1, item.maxStock || 0, item.selectedSize, item.selectedColor)}
                                                     className="w-8 h-8 border border-gray-300 hover:border-black focus:ring-2 focus:ring-brand-primary flex items-center justify-center transition-colors"
                                                 aria-label="Increase quantity"
                                             >
@@ -77,7 +77,7 @@ export default function CartPage() {
                                         </div>
 
                                         <button
-                                            onClick={() => removeFromCart(item.id)}
+                                            onClick={() => removeFromCart(item.id, item.selectedSize, item.selectedColor)}
                                                 className="text-red-600 hover:text-red-700 focus:ring-2 focus:ring-red-500 flex items-center gap-2 text-xs uppercase tracking-wide transition-colors rounded px-2 py-1"
                                         >
                                             <X className="h-4 w-4" />

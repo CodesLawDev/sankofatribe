@@ -1,8 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { serverClient, assertSanityToken } from '@/lib/sanity-server'
+import { jwtVerify } from 'jose'
+
+const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET)
 
 export async function POST(req: NextRequest) {
     try {
+        // ---- Authentication: require admin JWT ----
+        const token = req.cookies.get('auth-token')?.value
+        if (!token || !process.env.JWT_SECRET) {
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+        }
+        try {
+            const { payload } = await jwtVerify(token, JWT_SECRET!)
+            if (payload.role !== 'ADMIN' && payload.role !== 'SUPERADMIN') {
+                return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 })
+            }
+        } catch {
+            return NextResponse.json({ success: false, error: 'Invalid or expired token' }, { status: 401 })
+        }
+
         assertSanityToken()
 
         const body = await req.json()
@@ -22,16 +39,19 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ success: true, alreadyProcessed: true })
         }
 
+        const paymentStatus = paymentData?.paymentStatus
+        if (!paymentStatus) {
+            return NextResponse.json({ success: false, error: 'paymentStatus is required in paymentData' }, { status: 400 })
+        }
+
         await serverClient
             .patch(orderId)
             .set({
-                paymentStatus: paymentData?.paymentStatus || 'paid',
+                paymentStatus,
                 paymentReference: paymentData?.paymentReference,
-                status: 'processing',
-                metadata: {
-                    paymentMethod: paymentData?.paymentMethod,
-                    paidAt: paymentData?.paidAt,
-                },
+                status: paymentStatus === 'paid' ? 'processing' : existing.status,
+                'metadata.paymentMethod': paymentData?.paymentMethod,
+                'metadata.paidAt': paymentData?.paidAt,
             })
             .commit()
 
