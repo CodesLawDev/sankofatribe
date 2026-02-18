@@ -121,9 +121,33 @@ class HubtelService {
   }
 
   // ---- Check Payment Status -------------------------------------------------
-  // Docs: https://developers.hubtel.com/docs/business/api_documentation/payment_apis/online_checkout
-  // GET https://api-txnstatus.hubtel.com/transactions/{POS_Sales_ID}/status?clientReference={ref}
-  // NOTE: Only whitelisted IPs can reach this endpoint (max 4 IPs per service).
+  // Uses the RMSC endpoint (no IP whitelisting required).
+  // Official docs endpoint (api-txnstatus.hubtel.com) requires IP whitelisting.
+  //
+  // RMSC Response shape (verified 2026-02-18):
+  // {
+  //   "ResponseCode": "0000",
+  //   "Data": [                          ← NOTE: Array, not object
+  //     {
+  //       "StartDate": "2026-02-18T09:00:51.197315",
+  //       "InvoiceStatus": "Success",
+  //       "TransactionStatus": "Success",
+  //       "TransactionId": "bd1538b6d0804d62a6527c45fafde924",
+  //       "NetworkTransactionId": "75497247252",
+  //       "CheckoutId": "bd1538b6d0804d62a6527c45fafde924",
+  //       "TransactionType": "RECEIVE-MONEY",
+  //       "PaymentMethod": "MOBILE-MONEY",
+  //       "ClientReference": "cmlrsxfwe00099mbgq4984m36",
+  //       "CurrencyCode": "GHS",
+  //       "TransactionAmount": 0.11,
+  //       "Fee": 0,
+  //       "AmountAfterFees": 0.1,
+  //       "MobileNumber": "233557382057",
+  //       "ProviderResponseCode": "SUCCESSFUL",
+  //       "ProviderDescription": "The MTN Mobile Money payment has been approved..."
+  //     }
+  //   ]
+  // }
 
   async checkStatus(clientReference: string): Promise<HubtelVerificationResult> {
     if (!this.isConfigured) {
@@ -133,13 +157,10 @@ class HubtelService {
     // Hubtel RMSC transaction status endpoint (no IP whitelisting required)
     const url = `https://rmsc.hubtel.com/v1/merchantaccount/merchants/${this.merchantAccountNumber}/transactions/status?clientReference=${encodeURIComponent(clientReference)}`
 
-    console.log('[hubtel] checkStatus URL:', url)
     const response = await axios.get(url, { headers: this.headers })
     const d = response.data
 
-    console.log('[hubtel] checkStatus raw response:', JSON.stringify(d, null, 2))
-
-    // RMSC returns Data as an ARRAY of transactions, not a single object
+    // RMSC returns Data as an ARRAY of transactions — take the first entry
     const rawData = d?.data || d?.Data
     const data = Array.isArray(rawData) ? rawData[0] : rawData || {}
 
@@ -153,8 +174,6 @@ class HubtelService {
       responseCode === '0000' &&
       (statusFromData === 'Success' || statusFromData === 'Paid')
 
-    console.log('[hubtel] checkStatus parsed — responseCode:', responseCode, 'status:', statusFromData, 'isPaid:', isPaid)
-
     return {
       success: isPaid,
       status: statusFromData || 'Unknown',
@@ -167,6 +186,26 @@ class HubtelService {
   }
 
   // ---- Validate Webhook Callback --------------------------------------------
+
+  // Callback POST payload (per Hubtel docs):
+  // {
+  //   "ResponseCode": "0000",
+  //   "Status": "Success",
+  //   "Data": {                           ← NOTE: Object, not array
+  //     "CheckoutId": "59e2fbbff4e443b98e09346881ac7e9a",
+  //     "SalesInvoiceId": "e96ccfb4746045bba13f425bd573a31c",
+  //     "ClientReference": "Kaks545253",
+  //     "Status": "Success",
+  //     "Amount": 0.5,
+  //     "CustomerPhoneNumber": "233242825109",
+  //     "PaymentDetails": {
+  //       "MobileMoneyNumber": "233242825109",
+  //       "PaymentType": "mobilemoney",
+  //       "Channel": "mtn-gh"
+  //     },
+  //     "Description": "The MTN Mobile Money payment has been approved..."
+  //   }
+  // }
 
   /**
    * Parse and validate the Hubtel callback payload.

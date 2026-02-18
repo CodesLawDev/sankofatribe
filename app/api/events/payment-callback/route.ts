@@ -188,9 +188,7 @@ export async function GET(request: NextRequest) {
       if (!paymentConfirmed) {
         // Single status API call as last resort
         try {
-          console.log('[payment-callback] Trying Hubtel checkStatus for:', clientReference);
           const hubtelResult = await hubtelService.checkStatus(clientReference);
-          console.log('[payment-callback] checkStatus result:', JSON.stringify(hubtelResult));
           if (hubtelResult.success) {
             paymentConfirmed = true;
             await prisma.eventTicketOrder.update({
@@ -199,7 +197,7 @@ export async function GET(request: NextRequest) {
             });
           }
         } catch (err: any) {
-          console.error('[payment-callback] Hubtel status check failed:', err?.response?.status, err?.response?.data ? JSON.stringify(err.response.data) : err?.message);
+          console.error('[payment-callback] Hubtel status check failed:', err?.response?.status, err?.message);
         }
       }
 
