@@ -166,42 +166,38 @@ export async function GET(request: NextRequest) {
       }
 
       // Determine if payment succeeded:
-      // The webhook (POST) or status API should confirm payment.
       // Hubtel does NOT append status params to returnUrl, so we rely on:
       // 1. DB status (webhook may have set it already)
-      // 2. Hubtel status check API (fallback)
-      // 3. Wait + retry if neither confirms yet (race condition with webhook)
+      // 2. Wait for webhook to arrive, then re-check DB
+      // 3. Single Hubtel status API call as last resort
+      // NOTE: Keep API calls minimal — Hubtel rate-limits at ~1 req/5s
       let paymentConfirmed = order.paymentStatus === 'success';
 
       if (!paymentConfirmed) {
-        // Wait briefly for webhook to arrive, then re-check
-        for (let attempt = 0; attempt < 3 && !paymentConfirmed; attempt++) {
-          await new Promise(resolve => setTimeout(resolve, 2000)); // 2s per attempt
+        // Wait 4 seconds for webhook to arrive, then re-check DB
+        await new Promise(resolve => setTimeout(resolve, 4000));
+        const refreshed = await prisma.eventTicketOrder.findUnique({
+          where: { id: clientReference },
+          include: { tickets: true },
+        });
+        if (refreshed?.paymentStatus === 'success' || (refreshed?.tickets?.length ?? 0) > 0) {
+          paymentConfirmed = true;
+        }
+      }
 
-          // Re-check DB (webhook may have arrived)
-          const refreshed = await prisma.eventTicketOrder.findUnique({
-            where: { id: clientReference },
-            include: { tickets: true },
-          });
-          if (refreshed?.paymentStatus === 'success' || (refreshed?.tickets?.length ?? 0) > 0) {
+      if (!paymentConfirmed) {
+        // Single status API call as last resort
+        try {
+          const hubtelResult = await hubtelService.checkStatus(clientReference);
+          if (hubtelResult.success) {
             paymentConfirmed = true;
-            break;
+            await prisma.eventTicketOrder.update({
+              where: { id: clientReference },
+              data: { paymentStatus: 'success' },
+            });
           }
-
-          // Try Hubtel status API
-          try {
-            const hubtelResult = await hubtelService.checkStatus(clientReference);
-            if (hubtelResult.success) {
-              paymentConfirmed = true;
-              // Mark order as paid
-              await prisma.eventTicketOrder.update({
-                where: { id: clientReference },
-                data: { paymentStatus: 'success' },
-              });
-            }
-          } catch (err) {
-            console.error(`[payment-callback] Hubtel status check attempt ${attempt + 1} failed:`, err instanceof Error ? err.message : err);
-          }
+        } catch (err) {
+          console.error('[payment-callback] Hubtel status check failed:', err instanceof Error ? err.message : err);
         }
       }
 

@@ -155,9 +155,11 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Order not found' }, { status: 404 });
       }
 
-      // If not yet confirmed, wait briefly then check Hubtel API directly
+      // If not yet confirmed, wait briefly then re-check DB
+      // NOTE: Avoid calling Hubtel status API here — the GET handler already
+      // made one call, and Hubtel rate-limits aggressively (429).
+      // The confirmation page retries this endpoint with backoff.
       if (order.paymentStatus !== 'success') {
-        // Wait 3 seconds for webhook/GET handler to process
         await new Promise(resolve => setTimeout(resolve, 3000));
         order = await prisma.eventTicketOrder.findUnique({
           where: { id: orderId },
@@ -168,7 +170,7 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Still not confirmed — try Hubtel status API directly
+      // Still not confirmed — try Hubtel status API (only if >5s since redirect)
       if (order.paymentStatus !== 'success') {
         try {
           const hubtelResult = await hubtelService.checkStatus(orderId);
@@ -177,7 +179,6 @@ export async function POST(request: NextRequest) {
               where: { id: orderId },
               data: { paymentStatus: 'success' },
             });
-            // Re-fetch with updated status
             order = await prisma.eventTicketOrder.findUnique({
               where: { id: orderId },
               include: { tickets: true },
@@ -187,6 +188,7 @@ export async function POST(request: NextRequest) {
             }
           }
         } catch (err) {
+          // Log but don't fail — return retryable so confirmation page tries again
           console.error('Hubtel status check failed:', err instanceof Error ? err.message : err);
         }
       }

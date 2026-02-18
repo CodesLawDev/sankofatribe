@@ -62,6 +62,9 @@ export default function TicketConfirmationPage() {
           const errorData = await response.json();
           // If retryable (Hubtel webhook delay) and we haven't exhausted retries
           if (errorData.retryable && retryCount < MAX_RETRIES) {
+            // Exponential backoff: 5s, 8s, 12s, 18s, 25s
+            const delay = (5 + retryCount * 4) * 1000;
+            await new Promise(resolve => setTimeout(resolve, delay));
             setRetryCount(prev => prev + 1);
             return; // useEffect will re-trigger via retryCount dependency
           }
