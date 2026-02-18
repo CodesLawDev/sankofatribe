@@ -1,287 +1,171 @@
-import axios from 'axios';
+import axios from 'axios'
 
-// Paystack API configuration for Mobile Money payments
-const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY || '';
-const PAYSTACK_BASE_URL = 'https://api.paystack.co';
+// =============================================================================
+// Paystack Payment Service — Ghana (GHS / pesewas)
+// =============================================================================
 
-export type PaymentChannel = 'mobile_money' | 'card' | 'bank_transfer';
-export type MobileMoneyProvider = 'mtn' | 'vodafone' | 'airteltigo';
+const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY || ''
+const PAYSTACK_BASE_URL = 'https://api.paystack.co'
 
-export interface PaymentInitialization {
-  email: string;
-  amount: number; // in pesewas (GHS * 100)
-  reference?: string;
-  callback_url?: string;
-  channels?: PaymentChannel[];
-  metadata?: {
-    orderId: string;
-    customerName: string;
-    customerPhone: string;
-    items: Array<{
-      name: string;
-      quantity: number;
-      price: number;
-    }>;
-  };
+// --------------- Types -------------------------------------------------------
+
+export type PaymentChannel = 'mobile_money' | 'card' | 'bank_transfer'
+
+export interface InitializePaymentParams {
+  email: string
+  /** Amount in GHS (e.g. 150.00) — converted to pesewas internally */
+  amount: number
+  orderId: string
+  customerName: string
+  customerPhone: string
+  items: Array<{ name: string; quantity: number; price: number }>
+  channels?: PaymentChannel[]
+  callbackUrl?: string
 }
 
-export interface PaymentVerification {
-  reference: string;
+export interface PaymentResult {
+  success: boolean
+  authorization_url: string
+  access_code: string
+  reference: string
 }
 
-export interface MobileMoneyCharge {
-  email: string;
-  amount: number;
-  phone: string;
-  provider: MobileMoneyProvider;
-  reference?: string;
-  metadata?: any;
+export interface VerificationResult {
+  success: boolean
+  status: string
+  amount: number        // pesewas
+  amountGHS: number     // GHS
+  channel: string
+  reference: string
+  paidAt: string | null
+  currency: string
+  metadata: Record<string, any>
+  customer: { email: string; phone?: string }
 }
 
-class PaymentService {
-  private secretKey: string;
+// --------------- Helpers -----------------------------------------------------
+
+/** Convert GHS to pesewas (Paystack smallest unit for GHS). */
+export function toPesewas(ghs: number): number {
+  return Math.round(ghs * 100)
+}
+
+/** Convert pesewas back to GHS. */
+export function toGHS(pesewas: number): number {
+  return pesewas / 100
+}
+
+/** Generate a unique payment reference. */
+export function generateReference(): string {
+  const ts = Date.now().toString(36)
+  const rand = Math.random().toString(36).substring(2, 10)
+  return `ST-${ts}-${rand}`.toUpperCase()
+}
+
+// --------------- Service Class -----------------------------------------------
+
+class PaystackService {
+  private secretKey: string
 
   constructor(secretKey?: string) {
-    this.secretKey = secretKey || PAYSTACK_SECRET_KEY;
+    this.secretKey = secretKey || PAYSTACK_SECRET_KEY
   }
 
-  /**
-   * Convert GHS to pesewas (Paystack's smallest currency unit)
-   */
-  static toPesewas(amount: number): number {
-    return Math.round(amount * 100);
-  }
-
-  /**
-   * Convert pesewas to GHS
-   */
-  static toGHS(pesewas: number): number {
-    return pesewas / 100;
-  }
-
-  /**
-   * Initialize payment transaction
-   */
-  async initializePayment(data: PaymentInitialization) {
-    try {
-      if (!this.secretKey) {
-        throw new Error('Paystack secret key is not configured');
-      }
-
-      console.log('=== PAYSTACK API CALL ===')
-      console.log('Email:', data.email)
-      console.log('Amount (pesewas):', data.amount)
-      console.log('Channels:', data.channels)
-      console.log('Callback URL:', data.callback_url)
-      console.log('Metadata orderId:', data.metadata?.orderId)
-
-      const response = await axios.post(
-        `${PAYSTACK_BASE_URL}/transaction/initialize`,
-        {
-          email: data.email,
-          amount: data.amount,
-          reference: data.reference || this.generateReference(),
-          callback_url: data.callback_url,
-          channels: data.channels || ['mobile_money', 'card'],
-          metadata: data.metadata,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${this.secretKey}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      console.log('=== PAYSTACK RESPONSE ===')
-      console.log('Status:', response.data?.status)
-      console.log('Reference:', response.data?.data?.reference)
-      console.log('Auth URL exists:', !!response.data?.data?.authorization_url)
-
-      if (!response.data || response.data.status !== true) {
-        throw new Error(response.data?.message || 'Paystack returned unsuccessful status')
-      }
-
-      if (!response.data?.data?.authorization_url) {
-        throw new Error('No authorization URL returned from Paystack')
-      }
-
-      return {
-        success: true,
-        data: response.data.data,
-        authorization_url: response.data.data.authorization_url,
-        access_code: response.data.data.access_code,
-        reference: response.data.data.reference,
-      };
-    } catch (error: any) {
-      console.error('=== PAYSTACK ERROR ===')
-      console.error('Error status:', error.response?.status)
-      console.error('Error data:', JSON.stringify(error.response?.data, null, 2))
-      console.error('Error message:', error.message)
-      console.error('Full error:', error)
-      
-      throw new Error(
-        error.response?.data?.message || 
-        error.response?.data?.errors?.[0] ||
-        error.message || 
-        'Failed to initialize payment'
-      );
+  private get headers() {
+    return {
+      Authorization: `Bearer ${this.secretKey}`,
+      'Content-Type': 'application/json',
     }
   }
 
-  /**
-   * Verify payment transaction
-   */
-  async verifyPayment(reference: string) {
-    try {
-      const response = await axios.get(
-        `${PAYSTACK_BASE_URL}/transaction/verify/${reference}`,
-        {
-          headers: {
-            Authorization: `Bearer ${this.secretKey}`,
-          },
-        }
-      );
+  // ---- Initialize -----------------------------------------------------------
 
-      return {
-        success: response.data.data.status === 'success',
-        data: response.data.data,
-        status: response.data.data.status,
-        amount: response.data.data.amount,
-        reference: response.data.data.reference,
-      };
-    } catch (error: any) {
-      console.error('Payment verification error:', error.response?.data || error);
-      throw new Error(error.response?.data?.message || 'Failed to verify payment');
+  async initializePayment(params: InitializePaymentParams): Promise<PaymentResult> {
+    if (!this.secretKey) {
+      throw new Error('Paystack secret key is not configured')
+    }
+
+    const reference = generateReference()
+    const amountPesewas = toPesewas(params.amount)
+
+    const callbackUrl =
+      params.callbackUrl ||
+      `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/checkout/verify`
+
+    const payload = {
+      email: params.email,
+      amount: amountPesewas,
+      currency: 'GHS',
+      reference,
+      callback_url: callbackUrl,
+      channels: params.channels || ['mobile_money', 'card'],
+      metadata: {
+        orderId: params.orderId,
+        customerName: params.customerName,
+        customerPhone: params.customerPhone,
+        items: params.items,
+        custom_fields: [
+          { display_name: 'Order ID', variable_name: 'order_id', value: params.orderId },
+          { display_name: 'Customer', variable_name: 'customer', value: params.customerName },
+        ],
+      },
+    }
+
+    const response = await axios.post(
+      `${PAYSTACK_BASE_URL}/transaction/initialize`,
+      payload,
+      { headers: this.headers }
+    )
+
+    if (!response.data?.status || !response.data?.data?.authorization_url) {
+      throw new Error(response.data?.message || 'Failed to initialize payment with Paystack')
+    }
+
+    return {
+      success: true,
+      authorization_url: response.data.data.authorization_url,
+      access_code: response.data.data.access_code,
+      reference: response.data.data.reference,
     }
   }
 
-  /**
-   * Charge customer with Mobile Money
-   */
-  async chargeMobileMoney(data: MobileMoneyCharge) {
-    try {
-      const response = await axios.post(
-        `${PAYSTACK_BASE_URL}/charge`,
-        {
-          email: data.email,
-          amount: data.amount,
-          mobile_money: {
-            phone: data.phone,
-            provider: data.provider,
-          },
-          reference: data.reference || this.generateReference(),
-          metadata: data.metadata,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${this.secretKey}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+  // ---- Verify ---------------------------------------------------------------
 
-      return {
-        success: true,
-        data: response.data.data,
-        reference: response.data.data.reference,
-        status: response.data.data.status,
-      };
-    } catch (error: any) {
-      console.error('Mobile money charge error:', error.response?.data || error);
-      throw new Error(error.response?.data?.message || 'Failed to charge mobile money');
+  async verifyPayment(reference: string): Promise<VerificationResult> {
+    if (!this.secretKey) {
+      throw new Error('Paystack secret key is not configured')
     }
-  }
 
-  /**
-   * Get payment details
-   */
-  async getPaymentDetails(reference: string) {
-    try {
-      const response = await axios.get(
-        `${PAYSTACK_BASE_URL}/transaction/${reference}`,
-        {
-          headers: {
-            Authorization: `Bearer ${this.secretKey}`,
-          },
-        }
-      );
+    const response = await axios.get(
+      `${PAYSTACK_BASE_URL}/transaction/verify/${encodeURIComponent(reference)}`,
+      { headers: this.headers }
+    )
 
-      return {
-        success: true,
-        data: response.data.data,
-      };
-    } catch (error: any) {
-      console.error('Error fetching payment details:', error.response?.data || error);
-      throw new Error('Failed to fetch payment details');
+    const d = response.data?.data
+    if (!d) {
+      throw new Error('Empty response from Paystack verification')
     }
-  }
 
-  /**
-   * Generate unique reference for payment
-   */
-  private generateReference(): string {
-    return `REF-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-  }
-
-  /**
-   * Create payment plan (for subscriptions)
-   */
-  async createPaymentPlan(planData: {
-    interval: string;
-    amount: number;
-    plan_code?: string;
-    description?: string;
-  }) {
-    try {
-      const response = await axios.post(
-        `${PAYSTACK_BASE_URL}/plan`,
-        planData,
-        {
-          headers: {
-            Authorization: `Bearer ${this.secretKey}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      return {
-        success: true,
-        data: response.data.data,
-      };
-    } catch (error: any) {
-      console.error('Error creating payment plan:', error.response?.data || error);
-      throw new Error('Failed to create payment plan');
-    }
-  }
-
-  /**
-   * List all customers
-   */
-  async listCustomers(options?: { perPage?: number; page?: number }) {
-    try {
-      const response = await axios.get(
-        `${PAYSTACK_BASE_URL}/customer`,
-        {
-          params: options,
-          headers: {
-            Authorization: `Bearer ${this.secretKey}`,
-          },
-        }
-      );
-
-      return {
-        success: true,
-        data: response.data.data,
-        meta: response.data.meta,
-      };
-    } catch (error: any) {
-      console.error('Error fetching customers:', error.response?.data || error);
-      throw new Error('Failed to fetch customers');
+    return {
+      success: d.status === 'success',
+      status: d.status,
+      amount: d.amount,
+      amountGHS: toGHS(d.amount),
+      channel: d.channel,
+      reference: d.reference,
+      paidAt: d.paid_at || null,
+      currency: d.currency || 'GHS',
+      metadata: d.metadata || {},
+      customer: {
+        email: d.customer?.email || '',
+        phone: d.customer?.phone,
+      },
     }
   }
 }
 
-// eslint-disable-next-line import/no-anonymous-default-export
-export default new PaymentService();
-export { PaymentService };
+// --------------- Singleton export --------------------------------------------
+
+const paymentService = new PaystackService()
+export default paymentService
+export { PaystackService }
