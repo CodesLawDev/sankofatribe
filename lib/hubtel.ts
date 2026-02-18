@@ -133,24 +133,36 @@ class HubtelService {
     // Hubtel RMSC transaction status endpoint (no IP whitelisting required)
     const url = `https://rmsc.hubtel.com/v1/merchantaccount/merchants/${this.merchantAccountNumber}/transactions/status?clientReference=${encodeURIComponent(clientReference)}`
 
+    console.log('[hubtel] checkStatus URL:', url)
     const response = await axios.get(url, { headers: this.headers })
     const d = response.data
 
-    // Response shape per docs:
-    // { responseCode: "0000", message: "Successful", data: { status: "Paid", transactionId, amount, ... } }
-    const data = d?.data || d?.Data || {}
+    console.log('[hubtel] checkStatus raw response:', JSON.stringify(d, null, 2))
+
+    // RMSC returns Data as an ARRAY of transactions, not a single object
+    const rawData = d?.data || d?.Data
+    const data = Array.isArray(rawData) ? rawData[0] : rawData || {}
+
+    const responseCode = d?.responseCode || d?.ResponseCode || ''
+    const statusFromData =
+      data?.TransactionStatus || data?.transactionStatus ||
+      data?.InvoiceStatus || data?.invoiceStatus ||
+      data?.status || data?.Status || ''
+
     const isPaid =
-      (d?.responseCode === '0000' || d?.ResponseCode === '0000') &&
-      (data?.status === 'Paid' || data?.Status === 'Paid' || data?.Status === 'Success')
+      responseCode === '0000' &&
+      (statusFromData === 'Success' || statusFromData === 'Paid')
+
+    console.log('[hubtel] checkStatus parsed — responseCode:', responseCode, 'status:', statusFromData, 'isPaid:', isPaid)
 
     return {
       success: isPaid,
-      status: data?.status || data?.Status || 'Unknown',
-      amount: data?.amount || data?.Amount || 0,
+      status: statusFromData || 'Unknown',
+      amount: data?.TransactionAmount || data?.transactionAmount || data?.Amount || data?.amount || 0,
       clientReference: clientReference,
-      transactionId: data?.transactionId || data?.TransactionId || '',
-      paymentMethod: data?.paymentMethod || data?.PaymentMethod || 'momo',
-      customerPhone: data?.customerPhoneNumber || data?.CustomerPhoneNumber || '',
+      transactionId: data?.TransactionId || data?.transactionId || '',
+      paymentMethod: data?.PaymentMethod || data?.paymentMethod || 'momo',
+      customerPhone: data?.MobileNumber || data?.mobileNumber || data?.CustomerPhoneNumber || data?.customerPhoneNumber || '',
     }
   }
 
