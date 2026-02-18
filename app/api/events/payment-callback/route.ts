@@ -142,8 +142,6 @@ export async function GET(request: NextRequest) {
     if (provider === 'hubtel') {
       const clientReference = searchParams.get('clientReference');
       const eventSlug = searchParams.get('eventSlug');
-      // Hubtel appends status info to the returnUrl on redirect
-      const hubtelStatus = searchParams.get('Status') || searchParams.get('status');
 
       if (!clientReference) {
         return NextResponse.redirect(`${baseUrl}/events?error=missing_reference`);
@@ -168,43 +166,68 @@ export async function GET(request: NextRequest) {
       }
 
       // Determine if payment succeeded:
-      // 1. Hubtel URL param (most reliable on redirect)
-      // 2. DB status (webhook may have set it)
-      // 3. Hubtel status check API (fallback)
-      let paymentConfirmed =
-        (hubtelStatus && hubtelStatus.toLowerCase() === 'success') ||
-        order.paymentStatus === 'success';
+      // The webhook (POST) or status API should confirm payment.
+      // Hubtel does NOT append status params to returnUrl, so we rely on:
+      // 1. DB status (webhook may have set it already)
+      // 2. Hubtel status check API (fallback)
+      // 3. Wait + retry if neither confirms yet (race condition with webhook)
+      let paymentConfirmed = order.paymentStatus === 'success';
 
       if (!paymentConfirmed) {
-        try {
-          const hubtelResult = await hubtelService.checkStatus(clientReference);
-          paymentConfirmed = hubtelResult.success;
-        } catch (err) {
-          console.error('[payment-callback] Hubtel status API check failed:', err instanceof Error ? err.message : err);
-        }
-      }
+        // Wait briefly for webhook to arrive, then re-check
+        for (let attempt = 0; attempt < 3 && !paymentConfirmed; attempt++) {
+          await new Promise(resolve => setTimeout(resolve, 2000)); // 2s per attempt
 
-      if (!paymentConfirmed) {
-        console.error('[payment-callback] Hubtel payment not confirmed. URL status:', hubtelStatus, 'DB status:', order.paymentStatus);
-        return NextResponse.redirect(`${baseUrl}/events?error=payment_failed`);
-      }
-
-      // Payment confirmed — mark order and generate tickets
-      try {
-        const attendeesFromDb = order.attendees as unknown as AttendeeInfo[] | null;
-        if (attendeesFromDb && attendeesFromDb.length > 0) {
-          await fulfillTicketOrder(clientReference, attendeesFromDb, baseUrl);
-        } else {
-          // At minimum mark payment as success
-          await prisma.eventTicketOrder.update({
+          // Re-check DB (webhook may have arrived)
+          const refreshed = await prisma.eventTicketOrder.findUnique({
             where: { id: clientReference },
-            data: { paymentStatus: 'success' },
+            include: { tickets: true },
           });
+          if (refreshed?.paymentStatus === 'success' || (refreshed?.tickets?.length ?? 0) > 0) {
+            paymentConfirmed = true;
+            break;
+          }
+
+          // Try Hubtel status API
+          try {
+            const hubtelResult = await hubtelService.checkStatus(clientReference);
+            if (hubtelResult.success) {
+              paymentConfirmed = true;
+              // Mark order as paid
+              await prisma.eventTicketOrder.update({
+                where: { id: clientReference },
+                data: { paymentStatus: 'success' },
+              });
+            }
+          } catch (err) {
+            console.error(`[payment-callback] Hubtel status check attempt ${attempt + 1} failed:`, err instanceof Error ? err.message : err);
+          }
         }
-      } catch (err) {
-        console.error('[payment-callback] Hubtel fulfillment error:', err);
       }
 
+      // Even if not confirmed yet, redirect to confirmation page — it has retry logic
+      if (!paymentConfirmed) {
+        console.warn('[payment-callback] Hubtel payment not confirmed after retries. DB status:', order.paymentStatus, '— redirecting to confirmation page for client-side retry');
+      }
+
+      // Only attempt ticket generation if payment is confirmed
+      if (paymentConfirmed) {
+        try {
+          const attendeesFromDb = order.attendees as unknown as AttendeeInfo[] | null;
+          if (attendeesFromDb && attendeesFromDb.length > 0) {
+            await fulfillTicketOrder(clientReference, attendeesFromDb, baseUrl);
+          } else {
+            await prisma.eventTicketOrder.update({
+              where: { id: clientReference },
+              data: { paymentStatus: 'success' },
+            });
+          }
+        } catch (err) {
+          console.error('[payment-callback] Hubtel fulfillment error:', err);
+        }
+      }
+
+      // Always redirect to confirmation page — it has client-side retry logic
       const slug = eventSlug || await getEventSlug(order.eventId);
       return NextResponse.redirect(
         `${baseUrl}/events/${slug}/ticket-confirmation?reference=${clientReference}&provider=hubtel`

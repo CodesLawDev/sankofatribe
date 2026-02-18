@@ -33,18 +33,18 @@ export interface HubtelCallbackData {
   ResponseCode: string
   Status: string
   Data: {
-    Amount: number
-    AmountAfterCharges: number
-    AmountCharged: number
     CheckoutId: string
+    SalesInvoiceId: string
     ClientReference: string
+    Status: string
+    Amount: number
     CustomerPhoneNumber: string
+    PaymentDetails: {
+      MobileMoneyNumber: string
+      PaymentType: string
+      Channel: string
+    }
     Description: string
-    ExternalTransactionId: string
-    Fee: number
-    PaymentMethod: string
-    TransactionId: string
-    TransactionStatus: string
   }
 }
 
@@ -121,35 +121,36 @@ class HubtelService {
   }
 
   // ---- Check Payment Status -------------------------------------------------
+  // Docs: https://developers.hubtel.com/docs/business/api_documentation/payment_apis/online_checkout
+  // GET https://api-txnstatus.hubtel.com/transactions/{POS_Sales_ID}/status?clientReference={ref}
+  // NOTE: Only whitelisted IPs can reach this endpoint (max 4 IPs per service).
 
   async checkStatus(clientReference: string): Promise<HubtelVerificationResult> {
     if (!this.isConfigured) {
       throw new Error('Hubtel is not configured.')
     }
 
-    // Hubtel RMSC transaction status endpoint
+    // Hubtel RMSC transaction status endpoint (no IP whitelisting required)
     const url = `https://rmsc.hubtel.com/v1/merchantaccount/merchants/${this.merchantAccountNumber}/transactions/status?clientReference=${encodeURIComponent(clientReference)}`
 
     const response = await axios.get(url, { headers: this.headers })
     const d = response.data
 
+    // Response shape per docs:
+    // { responseCode: "0000", message: "Successful", data: { status: "Paid", transactionId, amount, ... } }
+    const data = d?.data || d?.Data || {}
     const isPaid =
-      d?.ResponseCode === '0000' ||
-      d?.Data?.TransactionStatus === 'Success' ||
-      d?.Data?.PaymentStatus === 'Successful' ||
-      d?.data?.transactionStatus === 'Paid' ||
-      d?.data?.paymentStatus === 'Paid'
-
-    const data = d?.Data || d?.data || {}
+      (d?.responseCode === '0000' || d?.ResponseCode === '0000') &&
+      (data?.status === 'Paid' || data?.Status === 'Paid' || data?.Status === 'Success')
 
     return {
       success: isPaid,
-      status: data?.TransactionStatus || data?.transactionStatus || data?.PaymentStatus || data?.paymentStatus || 'Unknown',
-      amount: data?.Amount || data?.amount || data?.InvoiceAmount || data?.invoiceAmount || 0,
+      status: data?.status || data?.Status || 'Unknown',
+      amount: data?.amount || data?.Amount || 0,
       clientReference: clientReference,
-      transactionId: data?.TransactionId || data?.transactionId || data?.HubtelTransactionId || '',
-      paymentMethod: data?.PaymentMethod || data?.paymentMethod || 'momo',
-      customerPhone: data?.CustomerPhoneNumber || data?.customerPhoneNumber || data?.Msisdn || '',
+      transactionId: data?.transactionId || data?.TransactionId || '',
+      paymentMethod: data?.paymentMethod || data?.PaymentMethod || 'momo',
+      customerPhone: data?.customerPhoneNumber || data?.CustomerPhoneNumber || '',
     }
   }
 
@@ -174,16 +175,16 @@ class HubtelService {
     const responseCode = body?.ResponseCode || body?.responseCode || ''
     const statusField = body?.Status || body?.status || ''
 
+    // Callback uses Data.Status = "Success" (not TransactionStatus per docs)
     const txStatus =
-      data?.TransactionStatus ||
-      data?.transactionStatus ||
+      data?.Status ||
+      data?.status ||
       statusField ||
       ''
 
     const isPaid =
-      responseCode === '0000' ||
-      txStatus === 'Paid' ||
-      txStatus === 'Success'
+      responseCode === '0000' &&
+      (txStatus === 'Success' || txStatus === 'Paid')
 
     return {
       success: isPaid,
@@ -191,9 +192,9 @@ class HubtelService {
         data?.ClientReference || data?.clientReference || '',
       amount: data?.Amount || data?.amount || 0,
       transactionId:
-        data?.TransactionId || data?.transactionId || '',
+        data?.SalesInvoiceId || data?.CheckoutId || data?.TransactionId || data?.transactionId || '',
       paymentMethod:
-        data?.PaymentMethod || data?.paymentMethod || 'momo',
+        data?.PaymentDetails?.PaymentType || data?.PaymentMethod || data?.paymentMethod || 'momo',
       customerPhone:
         data?.CustomerPhoneNumber || data?.customerPhoneNumber || '',
       status: txStatus,
