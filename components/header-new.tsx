@@ -174,14 +174,14 @@ export default function Header({ initialNavItems, initialAnnouncement }: HeaderP
                                 {/* Cart */}
                                 <Link
                                     href="/cart"
-                                    className="relative p-2 hover:bg-gray-50 rounded-lg transition-colors text-gray-700 hover:text-black"
+                                    className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-lg transition-colors text-gray-700 hover:text-black"
                                     aria-label="Shopping bag"
                                     title="Shopping bag"
                                 >
                                     <ShoppingBag className="h-5 w-5 sm:h-5 sm:w-5" strokeWidth={1.5} />
                                     {cartCount > 0 && (
-                                        <span className="absolute top-1 right-1 bg-black text-white text-[9px] sm:text-[10px] font-bold rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center">
-                                            {cartCount > 9 ? '9+' : cartCount}
+                                        <span className="bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5">
+                                            {cartCount}
                                         </span>
                                     )}
                                 </Link>

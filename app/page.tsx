@@ -49,6 +49,7 @@ async function getHomePageData() {
       discountValue,
       discountStartDate,
       discountEndDate,
+      weight,
       "categories": categories[]-> {
         _id,
         name,
@@ -71,6 +72,7 @@ async function getHomePageData() {
       discountValue,
       discountStartDate,
       discountEndDate,
+      weight,
       "categories": categories[]-> {
         _id,
         name,

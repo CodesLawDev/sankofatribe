@@ -35,6 +35,12 @@ export const product = defineType({
             rows: 5,
         },
         defineField({
+            name: 'weight',
+            title: 'Weight',
+            type: 'number',
+            description: 'Weight of the product in KG (e.g., 0.70)',
+        }),
+        defineField({
             name: 'price',
             title: 'Price',
             type: 'number',
