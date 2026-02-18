@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { urlFor, Product } from '@/lib/sanity'
-import { Heart, ShoppingBag, Plus, Minus } from 'lucide-react'
+import { Heart, ShoppingBag, Plus, Minus, Eye } from 'lucide-react'
 import { useWishlist } from '@/lib/wishlist-context'
 import { useCart } from '@/lib/cart-context'
 import { useState } from 'react'
@@ -122,6 +122,21 @@ export default function ProductCard({ product, onQuickView }: ProductCardProps) 
                             />
                         </button>
                     </div>
+
+                    {/* Quick View Button */}
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-max opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-4 group-hover:translate-y-0 z-10">
+                        <button
+                            onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                onQuickView?.(product)
+                            }}
+                            className="px-4 py-2 bg-white/90 backdrop-blur-sm text-black rounded-full hover:bg-black hover:text-white transition-all shadow-lg flex items-center gap-2"
+                        >
+                            <Eye className="w-4 h-4" />
+                            <span className="text-sm font-medium">Quick View</span>
+                        </button>
+                    </div>
                 </div>
             </Link>
 
@@ -158,25 +173,6 @@ export default function ProductCard({ product, onQuickView }: ProductCardProps) 
                         </div>
                     )}
                 </div>
-
-                {/* Size Stock Indicator - Show only when sizes have varied stock */}
-                {product.sizes && product.sizes.length > 0 && product.inStock && (
-                    <div className="text-xs text-gray-600 pt-1">
-                        <div className="flex flex-wrap gap-2">
-                            {product.sizes.map((sizeObj: any, idx: number) => (
-                                <span key={`${sizeObj.size}-${idx}`} className={`px-2 py-0.5 rounded text-xs ${
-                                    sizeObj.stock > 5 
-                                        ? 'bg-green-100 text-green-700'
-                                        : sizeObj.stock > 0
-                                        ? 'bg-yellow-100 text-yellow-700'
-                                        : 'bg-red-100 text-red-700'
-                                }`}>
-                                    {sizeObj.size}: {sizeObj.stock}
-                                </span>
-                            ))}
-                        </div>
-                    </div>
-                )}
 
                 {/* Size/Color/Quantity Options */}
                 {showOptions && (

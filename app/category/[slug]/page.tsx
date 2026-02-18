@@ -10,6 +10,7 @@ async function getCategoryProducts(categorySlug: string) {
     price,
     inStock,
     sizes[]{size, stock},
+    weight,
     "categories": categories[]-> {
       _id,
       name,

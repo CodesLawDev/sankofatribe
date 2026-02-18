@@ -44,6 +44,7 @@ export interface Product {
     discountValue?: number
     discountStartDate?: string
     discountEndDate?: string
+    weight?: number
 }
 
 export interface Category {

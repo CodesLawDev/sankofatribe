@@ -19,6 +19,7 @@ async function getAllProducts() {
     discountValue,
     discountStartDate,
     discountEndDate,
+    weight,
     "categories": categories[]-> {
       _id,
       name,

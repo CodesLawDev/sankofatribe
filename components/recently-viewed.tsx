@@ -3,11 +3,14 @@
 import { useRecentlyViewed } from '@/lib/recently-viewed-context'
 import ProductCard from './product-card'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
+import { Product } from '@/lib/sanity'
+import QuickViewModal from './quick-view-modal'
 
 export default function RecentlyViewed() {
     const { recentlyViewed } = useRecentlyViewed()
     const scrollRef = useRef<HTMLDivElement>(null)
+    const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null)
 
     if (recentlyViewed.length === 0) return null
 
@@ -50,11 +53,20 @@ export default function RecentlyViewed() {
                 >
                     {recentlyViewed.map((product) => (
                         <div key={product._id} className="flex-shrink-0 w-64">
-                            <ProductCard product={product} />
+                            <ProductCard 
+                                product={product} 
+                                onQuickView={setQuickViewProduct} 
+                            />
                         </div>
                     ))}
                 </div>
             </div>
+
+            <QuickViewModal
+                product={quickViewProduct}
+                isOpen={!!quickViewProduct}
+                onClose={() => setQuickViewProduct(null)}
+            />
         </section>
     )
 }
