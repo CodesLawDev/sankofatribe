@@ -1,4 +1,5 @@
 import { serverClient, assertSanityToken, decrementStock } from '@/lib/sanity-server'
+import { syncOrderUpdateToDb, syncPaymentToDb } from '@/lib/sync-to-db'
 
 // =============================================================================
 // Shared order fulfilment logic
@@ -55,11 +56,39 @@ export async function fulfillOrder(opts: FulfillOrderOpts): Promise<FulfillResul
       paymentStatus: 'paid',
       status: 'processing',
       paymentReference: opts.reference,
+      paymentProvider: opts.provider,
       'metadata.paymentMethod': opts.channel,
       'metadata.provider': opts.provider,
       'metadata.paidAt': opts.paidAt || new Date().toISOString(),
     })
     .commit()
+
+  // ---- Sync to Postgres (non-blocking) -----------------------------------
+  const paidAtStr = opts.paidAt || new Date().toISOString()
+
+  syncOrderUpdateToDb({
+    sanityId:         opts.orderId,
+    status:           'processing',
+    paymentStatus:    'paid',
+    paymentReference: opts.reference,
+    paymentProvider:  opts.provider,
+    paymentMethod:    opts.channel,
+    paidAt:           paidAtStr,
+  }).catch((e) => console.error('[fulfillOrder] DB order sync failed:', e))
+
+  syncPaymentToDb({
+    reference:      opts.reference,
+    sanityOrderId:  opts.orderId,
+    amount:         opts.amount,
+    currency:       'GHS',
+    status:         'success',
+    provider:       opts.provider,
+    paymentMethod:  opts.channel,
+    customerEmail:  opts.customerEmail,
+    customerPhone:  opts.customerPhone,
+    paidAt:         paidAtStr,
+    verifiedAt:     new Date().toISOString(),
+  }).catch((e) => console.error('[fulfillOrder] DB payment sync failed:', e))
 
   // Decrement stock
   if (order.items?.length) {

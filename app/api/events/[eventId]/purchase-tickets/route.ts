@@ -149,6 +149,7 @@ export async function POST(
         attendees: attendees as any, // Store attendees at purchase time for both providers
         paymentStatus: isFree ? 'success' : 'pending',
         paymentReference: isFree ? `FREE-${nanoid(10)}` : '',
+        paymentMethod: provider, // Store the actual provider (paystack or hubtel)
       },
     });
 

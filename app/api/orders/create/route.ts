@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { serverClient, assertSanityToken, validateOrderStock } from '@/lib/sanity-server'
 import { nanoid } from 'nanoid'
+import { syncOrderToDb } from '@/lib/sync-to-db'
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,6 +14,7 @@ export async function POST(req: NextRequest) {
       items,
       promoCode,
       promoDiscount = 0,
+      provider = 'paystack',
     } = body || {}
 
     // Generate orderId server-side (never trust client)
@@ -111,10 +113,33 @@ export async function POST(req: NextRequest) {
       shippingCost: 0,
       tax: 0,
       total: computedTotal,
-      metadata: {},
+      paymentProvider: provider,
+      metadata: {
+        provider,
+      },
     }
 
     await serverClient.create(orderDoc)
+
+    // Sync to Postgres (fire-and-forget, non-blocking)
+    syncOrderToDb({
+      sanityId: orderId,
+      orderId,
+      orderDate: orderDoc.orderDate,
+      status: orderDoc.status,
+      paymentStatus: orderDoc.paymentStatus,
+      paymentProvider: provider,
+      customer: orderDoc.customer,
+      shippingAddress: orderDoc.shippingAddress,
+      items: verifiedItems,
+      subtotal: computedSubtotal,
+      discount,
+      shippingCost: 0,
+      tax: 0,
+      total: computedTotal,
+      promoCode: promoCode || undefined,
+      metadata: { provider },
+    }).catch((e) => console.error('[orders/create] DB sync failed:', e))
 
     return NextResponse.json({ success: true, orderId, total: computedTotal, subtotal: computedSubtotal })
   } catch (error) {

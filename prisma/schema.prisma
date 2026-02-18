@@ -100,8 +100,9 @@ model Address {
 model Order {
   id                    String      @id @default(cuid())
   orderNumber           String      @unique
-  userId                String
-  user                  User        @relation("UserOrders", fields: [userId], references: [id], onDelete: Cascade)
+  sanityId              String?     @unique  // Sanity document _id (for store orders synced from Sanity)
+  userId                String?
+  user                  User?       @relation("UserOrders", fields: [userId], references: [id], onDelete: Cascade)
   
   // Order details
   subtotal              Decimal     @db.Decimal(10, 2)
@@ -117,12 +118,27 @@ model Order {
   status                OrderStatus @default(PENDING)
   paymentStatus         String      @default("pending")
   
+  // Payment info
+  paymentReference      String?
+  paymentProvider       String?     // "paystack" | "hubtel"
+  paymentMethod         String?     // "card", "mobile_money", etc.
+  paidAt                DateTime?
+  
+  // Guest customer info (when no userId)
+  customerEmail         String?     @db.VarChar(255)
+  customerPhone         String?     @db.VarChar(20)
+  customerFirstName     String?     @db.VarChar(100)
+  customerLastName      String?     @db.VarChar(100)
+  
   // Shipping
   shippingAddressId     String?
   shippingAddress       Address?    @relation("OrderShippingAddress", fields: [shippingAddressId], references: [id], onDelete: SetNull)
+  shippingCity          String?     @db.VarChar(100)
+  shippingLandmark      String?     @db.VarChar(255)
   
   // Items
   items                 OrderItem[]
+  payments              Payment[]
   
   // Metadata
   notes                 String?     @db.Text
@@ -130,8 +146,10 @@ model Order {
   updatedAt             DateTime    @updatedAt
   
   @@index([userId])
+  @@index([sanityId])
   @@index([status])
   @@index([createdAt])
+  @@index([customerEmail])
 }
 
 model OrderItem {
@@ -377,5 +395,60 @@ model NewsletterSubscriber {
 
   @@index([email])
   @@index([status])
+}
+
+// Payment records synced from Sanity
+model Payment {
+  id                String    @id @default(cuid())
+  sanityId          String?   @unique  // Sanity document _id
+  reference         String    @unique  // Paystack/Hubtel reference
+  orderId           String
+  order             Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  amount            Decimal   @db.Decimal(10, 2)
+  currency          String    @default("GHS") @db.VarChar(3)
+  status            String    @default("pending") // success, failed, pending
+  provider          String?   // "paystack" | "hubtel"
+  paymentMethod     String?   // "card", "mobile_money", etc.
+
+  customerEmail     String?   @db.VarChar(255)
+  customerPhone     String?   @db.VarChar(20)
+
+  paidAt            DateTime?
+  verifiedAt        DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([orderId])
+  @@index([reference])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// Mirror of Sanity products for DB queries and joins
+model ProductRecord {
+  id            String    @id @default(cuid())
+  sanityId      String    @unique
+  slug          String?   @unique
+  name          String
+  price         Decimal   @db.Decimal(10, 2)
+
+  // Discount info
+  hasDiscount   Boolean   @default(false)
+  discountType  String?   // "percentage" | "fixed"
+  discountValue Decimal?  @db.Decimal(10, 2)
+
+  // Status
+  inStock       Boolean   @default(true)
+  featured      Boolean   @default(false)
+  soldCount     Int       @default(0)
+  audience      String?   // "men", "women", "kids", "unisex"
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([sanityId])
+  @@index([slug])
+  @@index([featured])
 }
 
