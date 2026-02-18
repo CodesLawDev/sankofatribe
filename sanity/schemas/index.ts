@@ -15,8 +15,9 @@ import { payment } from './payment'
 import { promoCode } from './promoCode'
 import { campaign } from './campaign'
 import { career } from './career'
-import { newsletterSubscriber } from './newsletterSubscriber'
-import { aboutPage } from './aboutPage'
+import { event } from './event'
+import faq from './faq'
+import textPage from './textPage'
 
 export const schemaTypes = [
     product,
@@ -36,7 +37,8 @@ export const schemaTypes = [
     promoCode,
     campaign,
     career,
-    newsletterSubscriber,
-    aboutPage,
+    event,
+    faq,
+    textPage,
 ]
 

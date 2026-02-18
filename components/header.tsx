@@ -15,6 +15,7 @@ export default function Header() {
         { name: 'Women', href: '/category/women' },
         { name: 'Men', href: '/category/men' },
         { name: 'Shop All', href: '/products' },
+        { name: 'Events', href: '/events' },
     ]
 
     return (

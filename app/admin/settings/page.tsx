@@ -20,8 +20,8 @@ interface SiteSettings {
     lastUpdated?: string
   }
   geoLocation?: {
-    ghanaCurrencyCountries: string[]
-    defaultCountry: string
+    ghanaCurrencyCountries?: string[]
+    defaultCountry?: string
   }
 }
 
@@ -111,12 +111,12 @@ export default function SettingsPage() {
   const session = getAdminSession()
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-brand-cream">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-50">
+      <div className="bg-brand-cream border-b border-brand-primary/10 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href="/admin" className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-black">
+            <Link href="/admin" className="inline-flex items-center gap-2 text-sm text-neutral-600 hover:text-brand-dark">
               <ArrowLeft className="h-4 w-4" />
               Back to Admin
             </Link>
@@ -153,8 +153,8 @@ export default function SettingsPage() {
         {settings && (
           <div className="space-y-6">
             {/* General Settings */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h2 className="text-lg font-medium uppercase tracking-wider mb-6">General Settings</h2>
+            <div className="bg-brand-cream rounded-lg border border-brand-primary/10 p-6 shadow-sm">
+              <h2 className="text-lg font-medium uppercase tracking-wider mb-6 text-brand-dark">General Settings</h2>
               
               <div className="space-y-4">
                 <div>
@@ -205,8 +205,8 @@ export default function SettingsPage() {
             </div>
 
             {/* Currency & Exchange Rate */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h2 className="text-lg font-medium uppercase tracking-wider mb-6">Currency & Exchange Rate</h2>
+            <div className="bg-brand-cream rounded-lg border border-brand-primary/10 p-6 shadow-sm">
+              <h2 className="text-lg font-medium uppercase tracking-wider mb-6 text-brand-dark">Currency & Exchange Rate</h2>
               
               <div className="space-y-4">
                 <div>
@@ -247,12 +247,56 @@ export default function SettingsPage() {
               </div>
             </div>
 
+            {/* Geo Location Settings */}
+            <div className="bg-brand-cream rounded-lg border border-brand-primary/10 p-6 shadow-sm">
+              <h2 className="text-lg font-medium uppercase tracking-wider mb-6 text-brand-dark">Geo Location Settings</h2>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Default Country Code</label>
+                  <input
+                    type="text"
+                    value={settings.geoLocation?.defaultCountry || 'GH'}
+                    onChange={(e) => setSettings({
+                      ...settings,
+                      geoLocation: {
+                        ...settings.geoLocation,
+                        defaultCountry: e.target.value.toUpperCase(),
+                      },
+                    })}
+                    placeholder="GH"
+                    maxLength={2}
+                    className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-black"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">ISO country code (e.g., GH for Ghana)</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Countries Using GHS</label>
+                  <textarea
+                    value={(settings.geoLocation?.ghanaCurrencyCountries || []).join(', ')}
+                    onChange={(e) => setSettings({
+                      ...settings,
+                      geoLocation: {
+                        ...settings.geoLocation,
+                        ghanaCurrencyCountries: e.target.value.split(',').map(c => c.trim().toUpperCase()).filter(c => c),
+                      },
+                    })}
+                    rows={3}
+                    placeholder="GH, BJ, TG"
+                    className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-black"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Comma-separated ISO country codes</p>
+                </div>
+              </div>
+            </div>
+
             {/* Action Buttons */}
             <div className="flex gap-4">
               <Button
                 onClick={handleSave}
                 disabled={isSaving}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 bg-brand-primary text-brand-cream hover:bg-brand-primary/90"
               >
                 <Save className="h-4 w-4" />
                 {isSaving ? 'Saving...' : 'Save Changes'}

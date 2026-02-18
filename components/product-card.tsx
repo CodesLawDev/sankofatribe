@@ -145,15 +145,37 @@ export default function ProductCard({ product, onQuickView }: ProductCardProps) 
                 </div>
 
                 {/* Stock Indicator */}
-                {product.inStock && product.sizes && (
-                    (() => {
-                        const validSizes = product.sizes.filter((s: any) => s != null)
-                        const minStock = validSizes.length > 0 ? Math.min(...validSizes.map((s: any) => s.stock || 0)) : 0
-                        if (minStock > 0 && minStock <= 3) {
-                            return <p className="text-xs text-red-600 font-medium pt-1">Low stock</p>
-                        }
-                        return null
-                    })()
+                <div className="pt-1">
+                    {product.inStock ? (
+                        <div className="text-xs text-green-600 font-medium flex items-center gap-1">
+                            <span className="inline-block w-2 h-2 bg-green-600 rounded-full"></span>
+                            In Stock
+                        </div>
+                    ) : (
+                        <div className="text-xs text-red-600 font-medium flex items-center gap-1">
+                            <span className="inline-block w-2 h-2 bg-red-600 rounded-full"></span>
+                            Out of stock
+                        </div>
+                    )}
+                </div>
+
+                {/* Size Stock Indicator - Show only when sizes have varied stock */}
+                {product.sizes && product.sizes.length > 0 && product.inStock && (
+                    <div className="text-xs text-gray-600 pt-1">
+                        <div className="flex flex-wrap gap-2">
+                            {product.sizes.map((sizeObj: any, idx: number) => (
+                                <span key={`${sizeObj.size}-${idx}`} className={`px-2 py-0.5 rounded text-xs ${
+                                    sizeObj.stock > 5 
+                                        ? 'bg-green-100 text-green-700'
+                                        : sizeObj.stock > 0
+                                        ? 'bg-yellow-100 text-yellow-700'
+                                        : 'bg-red-100 text-red-700'
+                                }`}>
+                                    {sizeObj.size}: {sizeObj.stock}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
                 )}
 
                 {/* Size/Color/Quantity Options */}

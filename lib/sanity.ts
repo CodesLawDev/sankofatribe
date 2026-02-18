@@ -128,6 +128,7 @@ export interface Campaign {
     bannerTitle?: string
     bannerSubtitle?: string
     showOnHomepage?: boolean
+    showAsPopup?: boolean
     discountType: 'percentage' | 'fixed' | 'custom'
     discountValue?: number
     includedProducts?: Product[]
@@ -175,12 +176,6 @@ export interface SiteSettings {
     logo?: SanityImage
     description?: string
     mainNavigation?: { title: string; link: string }[]
-    footerText?: string
-    socialLinks?: {
-        instagram?: string
-        facebook?: string
-        twitter?: string
-    }
 }
 
 export interface Career {
@@ -204,4 +199,45 @@ export interface Career {
     postedAt?: string
     closingDate?: string
     featured?: boolean
+}
+
+export interface Event {
+    _id: string
+    _type: 'event'
+    title: string
+    slug: { current: string }
+    image: SanityImage
+    summary: string
+    description?: any
+    eventDate: string
+    endDate?: string
+    location?: {
+        venue?: string
+        address?: string
+        city?: string
+        isVirtual?: boolean
+        virtualLink?: string
+    }
+    category?: 'fashion-show' | 'popup' | 'workshop' | 'launch' | 'sale' | 'community' | 'other'
+    ticketInfo?: {
+        isFree?: boolean
+        price?: number
+        currency?: string
+        ticketUrl?: string
+        ticketTiers?: Array<{
+            _key: string
+            name: string
+            description?: string
+            price: number
+            quantity: number
+            sold?: number
+        }>
+        maxCapacity?: number
+    }
+    registrationUrl?: string
+    status: 'upcoming' | 'ongoing' | 'completed' | 'cancelled'
+    featured?: boolean
+    showAsPopup?: boolean
+    gallery?: SanityImage[]
+    publishedAt?: string
 }

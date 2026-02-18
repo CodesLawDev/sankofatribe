@@ -53,7 +53,7 @@ export default function CartPage() {
                                                 <p className="text-xs text-gray-600">Color: {item.selectedColor}</p>
                                             )}
                                         </div>
-                                        <p className="text-sm font-medium">${item.price.toFixed(2)}</p>
+                                        <p className="text-sm font-medium">GH₵{item.price.toFixed(2)}</p>
                                     </div>
 
                                     {/* Quantity Controls */}
@@ -98,16 +98,16 @@ export default function CartPage() {
                         <div className="space-y-4 mb-8">
                             <div className="flex justify-between text-sm">
                                 <span className="text-gray-600">Subtotal</span>
-                                <span>${cartTotal.toFixed(2)}</span>
+                                <span>GH₵{cartTotal.toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between text-sm">
                                 <span className="text-gray-600">Shipping</span>
-                                <span>{cartTotal > 100 ? 'FREE' : '$10.00'}</span>
+                                <span>Calculated at checkout</span>
                             </div>
                             <div className="border-t border-gray-200 pt-4">
                                 <div className="flex justify-between font-medium text-base">
                                     <span>Total</span>
-                                    <span>${(cartTotal + (cartTotal > 100 ? 0 : 10)).toFixed(2)}</span>
+                                    <span>GH₵{cartTotal.toFixed(2)}</span>
                                 </div>
                             </div>
                         </div>
@@ -123,12 +123,6 @@ export default function CartPage() {
                                 Continue Shopping
                             </Button>
                         </Link>
-
-                        {cartTotal < 100 && (
-                            <p className="text-xs text-gray-500 mt-6 text-center">
-                                Add ${(100 - cartTotal).toFixed(2)} more for free shipping
-                            </p>
-                        )}
                     </div>
                 </div>
             </div>

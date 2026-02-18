@@ -133,10 +133,10 @@ export default function AdminPage() {
     }, [])
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-darkbg">
+        <div className="min-h-screen bg-brand-cream dark:bg-darkbg">
             {/* Top Bar */}
-            <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-4 sticky top-0 z-30">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <div className="bg-brand-cream dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-4 sticky top-0 z-30">
+                <h1 className="text-2xl font-bold text-brand-dark dark:text-white">
                     Dashboard
                 </h1>
             </div>
@@ -209,10 +209,10 @@ export default function AdminPage() {
                                 <div className="bg-white dark:bg-gray-900 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-800 hover:shadow-lg transition-shadow cursor-pointer h-full">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="text-gray-600 dark:text-gray-400 text-sm font-medium">
+                                            <p className="text-neutral-600 dark:text-gray-400 text-sm font-medium">
                                                 {stat.label}
                                             </p>
-                                            <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                                            <p className="text-2xl font-bold text-brand-dark dark:text-white mt-1">
                                                 {stat.value}
                                             </p>
                                         </div>
@@ -229,7 +229,7 @@ export default function AdminPage() {
                 {/* Monthly Analytics Summary */}
                 <div className="bg-white dark:bg-gray-900 rounded-lg shadow border border-gray-200 dark:border-gray-800 p-6 mb-8">
                     <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                        <h2 className="text-lg font-bold text-brand-dark dark:text-white">
                             This Month&apos;s Performance
                         </h2>
                         <Link 
@@ -243,36 +243,36 @@ export default function AdminPage() {
                         <div className="flex flex-col">
                             <div className="flex items-center gap-2 mb-2">
                                 <Activity className="w-5 h-5 text-purple-500" />
-                                <span className="text-gray-600 dark:text-gray-400 text-sm">Traffic</span>
+                                <span className="text-neutral-600 dark:text-gray-400 text-sm">Traffic</span>
                             </div>
-                            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                            <div className="text-2xl font-bold text-brand-dark dark:text-white">
                                 {analyticsLoading ? '...' : analytics.totalPageViews.toLocaleString()}
                             </div>
-                            <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                            <div className="text-sm text-neutral-500 dark:text-gray-400 mt-1">
                                 {analyticsLoading ? '...' : analytics.uniqueVisitors.toLocaleString()} unique visitors
                             </div>
                         </div>
                         <div className="flex flex-col">
                             <div className="flex items-center gap-2 mb-2">
                                 <ShoppingCart className="w-5 h-5 text-blue-500" />
-                                <span className="text-gray-600 dark:text-gray-400 text-sm">Orders</span>
+                                <span className="text-neutral-600 dark:text-gray-400 text-sm">Orders</span>
                             </div>
-                            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                            <div className="text-2xl font-bold text-brand-dark dark:text-white">
                                 {statsLoading ? '...' : stats.totalOrders}
                             </div>
-                            <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                            <div className="text-sm text-neutral-500 dark:text-gray-400 mt-1">
                                 GH₵{statsLoading ? '...' : stats.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })} revenue
                             </div>
                         </div>
                         <div className="flex flex-col">
                             <div className="flex items-center gap-2 mb-2">
                                 <Users className="w-5 h-5 text-cyan-500" />
-                                <span className="text-gray-600 dark:text-gray-400 text-sm">Growth</span>
+                                <span className="text-neutral-600 dark:text-gray-400 text-sm">Growth</span>
                             </div>
-                            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                            <div className="text-2xl font-bold text-brand-dark dark:text-white">
                                 {analyticsLoading ? '...' : analytics.newCustomers}
                             </div>
-                            <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                            <div className="text-sm text-neutral-500 dark:text-gray-400 mt-1">
                                 new customers this month
                             </div>
                         </div>
@@ -281,22 +281,22 @@ export default function AdminPage() {
 
                 {/* Quick Actions */}
                 <div className="bg-white dark:bg-gray-900 rounded-lg shadow border border-gray-200 dark:border-gray-800 p-6 mb-8">
-                    <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+                    <h2 className="text-lg font-bold text-brand-dark dark:text-white mb-4">
                         Quick Actions
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <Link
                             href="/admin/orders"
-                            className="block p-4 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-center"
+                            className="block p-4 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-brand-cream dark:hover:bg-gray-800 transition-colors text-center"
                         >
-                            <ShoppingCart className="w-6 h-6 text-black dark:text-white mb-2 mx-auto" />
-                            <p className="font-medium text-gray-900 dark:text-white">
+                            <ShoppingCart className="w-6 h-6 text-brand-dark dark:text-white mb-2 mx-auto" />
+                            <p className="font-medium text-brand-dark dark:text-white">
                                 View All Orders
                             </p>
                         </Link>
                         <Link
                             href="/admin/orders?status=processing"
-                            className="block p-4 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-center"
+                            className="block p-4 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-brand-cream dark:hover:bg-gray-800 transition-colors text-center"
                         >
                             <Truck className="w-6 h-6 text-black dark:text-white mb-2 mx-auto" />
                             <p className="font-medium text-gray-900 dark:text-white">

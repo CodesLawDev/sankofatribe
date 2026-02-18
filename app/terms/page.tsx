@@ -1,17 +1,8 @@
-import { client } from '@/lib/sanity'
-
-async function getContentPage(slug: string) {
-    const query = `*[_type == "contentPage" && slug.current == $slug][0]`
-    try {
-        return await client.fetch(query, { slug }, { next: { revalidate: 0 } })
-    } catch (error) {
-        console.error('Error fetching content page:', error)
-        return null
-    }
-}
+import { getTextPage } from '@/lib/content'
+import { PortableText } from '@portabletext/react'
 
 export default async function TermsPage() {
-    const pageData = await getContentPage('terms')
+    const pageData = await getTextPage('terms')
 
     return (
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -20,7 +11,7 @@ export default async function TermsPage() {
             </h1>
             <div className="prose prose-lg max-w-none text-black">
                 {pageData?.content ? (
-                    <div dangerouslySetInnerHTML={{ __html: pageData.content }} />
+                    <PortableText value={pageData.content} />
                 ) : (
                     <div className="space-y-4 text-black">
                         <p>Please read these terms of service carefully before using our website.</p>

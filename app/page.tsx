@@ -1,11 +1,11 @@
 import { client, urlFor } from '@/lib/sanity'
-import type { HomePage, Product, Category } from '@/lib/sanity'
+import type { HomePage, Product, Category, Event, Campaign } from '@/lib/sanity'
 import PremiumHeroBanner from '@/components/premium-hero-banner'
 import RewardsCallout from '@/components/rewards-callout'
 import FeaturedCategories from '@/components/featured-categories'
 import Spotlight from '@/components/spotlight'
 import ProductGrid from '@/components/product-grid'
-import CampaignBanner from '@/components/campaign-banner'
+import PopupModalWrapper from '@/components/popup-modal-wrapper'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
@@ -91,23 +91,6 @@ async function getHomePageData() {
     return homePage
 }
 
-async function getActiveCampaigns() {
-    const now = new Date().toISOString()
-    const query = `*[_type == "campaign" && isActive == true && showOnHomepage == true && startDate <= "${now}" && endDate >= "${now}"] | order(_createdAt desc)[0] {
-      _id,
-      name,
-      slug,
-      bannerImage,
-      bannerTitle,
-      bannerSubtitle,
-      "includedProducts": includedProducts[]-> {_id, slug},
-      "includedCategories": includedCategories[]-> {_id, slug}
-    }`
-    
-    const campaign = await client.fetch(query, {}, { next: { revalidate: 300 } })
-    return campaign
-}
-
 async function getCategories() {
     const query = `*[_type == "category" && !defined(parentCategory)] | order(name asc)[0...6] {
       _id,
@@ -124,6 +107,55 @@ async function getCategories() {
 
     const categories = await client.fetch<Category[]>(query, {}, { next: { revalidate: 0 } })
     return categories
+}
+
+async function getPopupEvents() {
+    const query = `*[_type == "event" && showAsPopup == true && status != "cancelled"] | order(_createdAt desc)[0] {
+    _id,
+    title,
+    slug,
+    image,
+    summary,
+    description,
+    eventDate,
+    endDate,
+    location,
+    category,
+    status,
+    registrationUrl
+  }`
+
+    try {
+        const event = await client.fetch<Event | null>(query, {}, { next: { revalidate: 3600 } })
+        return event
+    } catch (error) {
+        console.error('Error fetching popup event:', error)
+        return null
+    }
+}
+
+async function getPopupCampaigns() {
+    const query = `*[_type == "campaign" && showAsPopup == true && isActive == true] | order(_createdAt desc)[0] {
+    _id,
+    name,
+    slug,
+    bannerImage,
+    bannerTitle,
+    bannerSubtitle,
+    description,
+    startDate,
+    endDate,
+    discountType,
+    discountValue
+  }`
+
+    try {
+        const campaign = await client.fetch<Campaign | null>(query, {}, { next: { revalidate: 3600 } })
+        return campaign
+    } catch (error) {
+        console.error('Error fetching popup campaign:', error)
+        return null
+    }
 }
 
 async function getFeaturedProducts() {
@@ -150,13 +182,14 @@ async function getFeaturedProducts() {
 
 export default async function HomePage() {
     const homePageData = await getHomePageData()
-    const activeCampaign = await getActiveCampaigns()
 
-    const [categories, featuredProducts] = await Promise.all([
+    const [categories, featuredProducts, popupEvent, popupCampaign] = await Promise.all([
         getCategories(),
         homePageData?.latestCollectionProducts ? Promise.resolve(homePageData.latestCollectionProducts) : 
         homePageData?.featuredProducts ? Promise.resolve(homePageData.featuredProducts) : 
-        getFeaturedProducts()
+        getFeaturedProducts(),
+        getPopupEvents(),
+        getPopupCampaigns(),
     ])
 
     const cmsFeaturedCategories = (homePageData?.featuredCategories || []).map((cat) => ({
@@ -187,13 +220,6 @@ export default async function HomePage() {
 
     return (
         <div className="bg-white text-black">
-            {/* Campaign Banner - Shows active sales campaign at top */}
-            {activeCampaign && activeCampaign._id && (
-                <div className="px-4 sm:px-6 lg:px-12 mx-auto max-w-7xl">
-                    <CampaignBanner campaign={activeCampaign} />
-                </div>
-            )}
-
             {/* Hero Banners - Mixed full-width and cards */}
             {homePageData?.heroBanners && homePageData.heroBanners.length > 0 ? (
                 <div className="space-y-8 md:space-y-12 lg:space-y-16">
@@ -308,6 +334,12 @@ export default async function HomePage() {
             <RewardsCallout />
 
             {/* Removed extra grid/benefits sections per request */}
+
+            {/* Popup Modals for Events & Campaigns */}
+            <PopupModalWrapper 
+                popupEvent={popupEvent}
+                popupCampaign={popupCampaign}
+            />
         </div>
     )
 }

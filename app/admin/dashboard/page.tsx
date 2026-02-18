@@ -9,28 +9,24 @@ import {
     Users,
     ShoppingCart,
     Settings,
-    LogOut,
-    Menu,
-    X,
     DollarSign,
     Clock,
     Truck,
     CheckCircle,
     XCircle,
     TrendingUp,
+    MessageSquare,
+    ArrowUpRight,
+    ArrowDownRight,
+    CreditCard
 } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 interface User {
     id: string
     email: string
     role: string
     username?: string
-}
-
-interface SidebarLink {
-    href: string
-    label: string
-    icon: React.ReactNode
 }
 
 interface DashboardStats {
@@ -47,6 +43,11 @@ interface DashboardStats {
     unpaidOrders: number
 }
 
+interface SMSBalance {
+    balance: number
+    currency: string
+}
+
 const initialStats: DashboardStats = {
     totalOrders: 0,
     totalRevenue: 0,
@@ -61,6 +62,11 @@ const initialStats: DashboardStats = {
     unpaidOrders: 0,
 }
 
+const initialSMSBalance: SMSBalance = {
+    balance: 0,
+    currency: 'GHS',
+}
+
 const pickNumber = (value: any): number => {
     if (typeof value === 'number') return value
     if (typeof value === 'string') return parseFloat(value) || 0
@@ -70,10 +76,11 @@ const pickNumber = (value: any): number => {
 export default function AdminDashboard() {
     const router = useRouter()
     const [user, setUser] = useState<User | null>(null)
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true)
     const [isLoading, setIsLoading] = useState(true)
     const [stats, setStats] = useState<DashboardStats>(initialStats)
     const [statsLoading, setStatsLoading] = useState(true)
+    const [smsBalance, setSmsBalance] = useState<SMSBalance>(initialSMSBalance)
+    const [smsLoading, setSmsLoading] = useState(true)
 
     // Helper function to fetch stats
     const fetchStats = async () => {
@@ -108,6 +115,31 @@ export default function AdminDashboard() {
         }
     }
 
+    // Helper function to fetch SMS balance
+    const fetchSMSBalance = async () => {
+        try {
+            setSmsLoading(true)
+            const response = await fetch('/api/admin/sms/balance', {
+                credentials: 'include',
+                cache: 'no-store' as any,
+            })
+            if (response.ok) {
+                const data = await response.json()
+                setSmsBalance({
+                    balance: data.balance || 0,
+                    currency: data.currency || 'GHS',
+                })
+            } else {
+                setSmsBalance(initialSMSBalance)
+            }
+        } catch (error) {
+            console.error('Failed to fetch SMS balance:', error)
+            setSmsBalance(initialSMSBalance)
+        } finally {
+            setSmsLoading(false)
+        }
+    }
+
     // Fetch user session on mount
     useEffect(() => {
         const fetchSession = async () => {
@@ -124,8 +156,8 @@ export default function AdminDashboard() {
                             role: userData.role,
                             username: userData.firstName || userData.email,
                         })
-                        // Fetch stats after user is confirmed
-                        await fetchStats()
+                        // Fetch stats and SMS balance after user is confirmed
+                        await Promise.all([fetchStats(), fetchSMSBalance()])
                     } else {
                         router.push('/admin/login')
                     }
@@ -143,324 +175,209 @@ export default function AdminDashboard() {
         fetchSession()
     }, [router])
 
-    const handleLogout = async () => {
-        try {
-            await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
-            router.push('/admin/login')
-        } catch (error) {
-            console.error('Logout error:', error)
-        }
-    }
-
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-gray-50 dark:bg-darkbg flex items-center justify-center">
-                <div className="text-center">
-                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-black dark:border-white"></div>
-                    <p className="mt-4 text-gray-600 dark:text-gray-400">Loading...</p>
+            <div className="flex h-96 items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="h-8 w-8 animate-spin rounded-full border-2 border-black border-t-transparent" />
+                    <p className="text-sm text-gray-500">Loading dashboard...</p>
                 </div>
             </div>
         )
     }
 
-    const sidebarLinks: SidebarLink[] = [
-        {
-            href: '/admin/dashboard',
-            label: 'Dashboard',
-            icon: <LayoutDashboard className="w-5 h-5" />,
-        },
-        {
-            href: '/admin/products',
-            label: 'Products',
-            icon: <Package className="w-5 h-5" />,
-        },
-        {
-            href: '/admin/orders',
-            label: 'Orders',
-            icon: <ShoppingCart className="w-5 h-5" />,
-        },
-        {
-            href: '/admin/customers',
-            label: 'Customers',
-            icon: <Users className="w-5 h-5" />,
-        },
-        {
-            href: '/admin/settings',
-            label: 'Settings',
-            icon: <Settings className="w-5 h-5" />,
-        },
-    ]
-
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-darkbg flex">
-            {/* Sidebar */}
-            <div
-                className={`${
-                    isSidebarOpen ? 'w-64' : 'w-20'
-                } bg-black dark:bg-gray-900 text-white transition-all duration-300 flex flex-col fixed h-screen left-0 top-0 z-40`}
-            >
-                {/* Logo */}
-                <div className="p-4 border-b border-gray-800 flex items-center justify-between">
-                    {isSidebarOpen && (
-                        <h2 className="font-bold text-lg whitespace-nowrap">SANKOFA TRIBE</h2>
-                    )}
-                    <button
-                        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                        className="p-1 hover:bg-gray-800 rounded-lg"
-                    >
-                        {isSidebarOpen ? (
-                            <X className="w-5 h-5" />
-                        ) : (
-                            <Menu className="w-5 h-5" />
-                        )}
-                    </button>
+        <div className="space-y-8">
+            {/* Header Section */}
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h2 className="text-3xl font-bold tracking-tight text-gray-900">Dashboard</h2>
+                    <p className="text-gray-500">
+                        Welcome back, {user?.username}. Here&apos;s what&apos;s happening today.
+                    </p>
                 </div>
-
-                {/* Navigation */}
-                <nav className="flex-1 px-3 py-6 space-y-2 overflow-y-auto">
-                    {sidebarLinks.map((link) => (
-                        <Link
-                            key={link.href}
-                            href={link.href}
-                            className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 transition-colors group"
-                        >
-                            {link.icon}
-                            {isSidebarOpen && (
-                                <span className="text-sm font-medium group-hover:text-gray-200">
-                                    {link.label}
-                                </span>
-                            )}
-                        </Link>
-                    ))}
-                </nav>
-
-                {/* User Section */}
-                <div className="border-t border-gray-800 p-3 space-y-2">
-                    {isSidebarOpen && user && (
-                        <div className="px-3 py-2 text-xs">
-                            <p className="text-gray-400">Logged in as</p>
-                            <p className="font-medium text-white truncate">{user.username}</p>
-                        </div>
-                    )}
-                    <button
-                        onClick={handleLogout}
-                        className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-red-600 transition-colors text-sm font-medium"
-                    >
-                        <LogOut className="w-5 h-5" />
-                        {isSidebarOpen && <span>Logout</span>}
-                    </button>
+                <div className="flex items-center gap-2">
+                    <Link href="/admin/orders">
+                        <button className="inline-flex items-center justify-center rounded-md bg-black px-4 py-2 text-sm font-medium text-white shadow hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all">
+                            View Orders
+                        </button>
+                    </Link>
                 </div>
             </div>
 
-            {/* Main Content */}
-            <div
-                className={`${
-                    isSidebarOpen ? 'ml-64' : 'ml-20'
-                } flex-1 transition-all duration-300`}
-            >
-                {/* Top Bar */}
-                <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between sticky top-0 z-30">
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                        Dashboard
-                    </h1>
-                    <div className="flex items-center gap-4">
-                        <div className="text-right">
-                            <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                {user?.username}
-                            </p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
-                                {user?.role}
-                            </p>
+            {/* Key Stats Row */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <Card className="border-gray-100 shadow-sm transition-all hover:shadow-md">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-gray-500">
+                            Total Revenue
+                        </CardTitle>
+                        <DollarSign className="h-4 w-4 text-gray-400" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-gray-900">
+                            GH₵{statsLoading ? '...' : stats.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </div>
-                    </div>
-                </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                            Lifetime revenue
+                        </p>
+                    </CardContent>
+                </Card>
 
-                {/* Dashboard Content */}
-                <div className="p-6">
-                    {/* Stats Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                        {[
-                            {
-                                label: 'Total Orders',
-                                value: statsLoading ? '...' : stats.totalOrders,
-                                icon: ShoppingCart,
-                                color: 'bg-blue-500',
-                                href: '/admin/orders',
-                            },
-                            {
-                                label: 'Total Revenue',
-                                value: statsLoading ? '...' : `GH₵${stats.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-                                icon: DollarSign,
-                                color: 'bg-green-500',
-                                href: '/admin/orders',
-                            },
-                            {
-                                label: 'Pending Orders',
-                                value: statsLoading ? '...' : stats.pendingOrders,
-                                icon: Clock,
-                                color: 'bg-yellow-500',
-                                href: '/admin/orders?status=pending',
-                            },
-                            {
-                                label: 'Processing',
-                                value: statsLoading ? '...' : stats.processingOrders,
-                                icon: Truck,
-                                color: 'bg-purple-500',
-                                href: '/admin/orders?status=processing',
-                            },
-                            {
-                                label: 'Shipped',
-                                value: statsLoading ? '...' : stats.shippedOrders,
-                                icon: TrendingUp,
-                                color: 'bg-indigo-500',
-                                href: '/admin/orders?status=shipped',
-                            },
-                            {
-                                label: 'Delivered',
-                                value: statsLoading ? '...' : stats.deliveredOrders,
-                                icon: CheckCircle,
-                                color: 'bg-emerald-500',
-                                href: '/admin/orders?status=delivered',
-                            },
-                            {
-                                label: 'Cancelled',
-                                value: statsLoading ? '...' : stats.cancelledOrders,
-                                icon: XCircle,
-                                color: 'bg-red-600',
-                                href: '/admin/orders?status=cancelled',
-                            },
-                            {
-                                label: "Today's Orders",
-                                value: statsLoading ? '...' : stats.todayOrders,
-                                icon: TrendingUp,
-                                color: 'bg-cyan-500',
-                                href: '/admin/orders?date=today',
-                            },
-                        ].map((stat, i) => {
-                            const IconComponent = stat.icon
-                            return (
-                                <Link key={i} href={stat.href}>
-                                    <div className="bg-white dark:bg-gray-900 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-800 hover:shadow-lg transition-shadow cursor-pointer h-full">
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <p className="text-gray-600 dark:text-gray-400 text-sm font-medium">
-                                                    {stat.label}
-                                                </p>
-                                                <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                                                    {stat.value}
-                                                </p>
-                                            </div>
-                                            <div className={`${stat.color} p-3 rounded-lg`}>
-                                                <IconComponent className="w-6 h-6 text-white" />
-                                            </div>
-                                        </div>
+                <Card className="border-gray-100 shadow-sm transition-all hover:shadow-md">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-gray-500">
+                            Orders Today
+                        </CardTitle>
+                        <ShoppingCart className="h-4 w-4 text-gray-400" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-gray-900">
+                            {statsLoading ? '...' : stats.todayOrders}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                           <span className={stats.todayOrders > 0 ? "text-green-600 font-medium" : "text-gray-500"}>
+                                {stats.todayOrders > 0 ? '+' : ''}{stats.todayOrders}
+                           </span> since midnight
+                        </p>
+                    </CardContent>
+                </Card>
+
+                <Card className="border-gray-100 shadow-sm transition-all hover:shadow-md">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-gray-500">
+                            Pending Orders
+                        </CardTitle>
+                        <Clock className="h-4 w-4 text-orange-400" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-gray-900">
+                            {statsLoading ? '...' : stats.pendingOrders}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                            Requires attention
+                        </p>
+                    </CardContent>
+                </Card>
+
+                <Card className="border-gray-100 shadow-sm transition-all hover:shadow-md">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-gray-500">
+                            SMS Credits
+                        </CardTitle>
+                        <MessageSquare className="h-4 w-4 text-blue-400" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-gray-900">
+                            {smsLoading ? '...' : smsBalance.balance.toLocaleString()}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                            {smsBalance.currency} balance
+                        </p>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Detailed Stats Grid */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+                {/* Order Status Cards - Span 4 columns */}
+                <Card className="col-span-full lg:col-span-4 border-gray-100 shadow-sm">
+                    <CardHeader>
+                        <CardTitle className="text-lg font-bold text-gray-900">Order Status</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-2 gap-4 sm:grid-cols-2">
+                            <Link href="/admin/orders?status=processing" className='group block'>
+                                <div className="rounded-lg border border-gray-100 p-4 transition-all hover:bg-gray-50 hover:border-gray-200">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="h-2 w-2 rounded-full bg-blue-500" />
+                                        <span className="text-sm font-medium text-gray-500 group-hover:text-gray-900">Processing</span>
                                     </div>
-                                </Link>
-                            )
-                        })}
-                    </div>
+                                    <div className="text-2xl font-bold text-gray-900">{statsLoading ? '-' : stats.processingOrders}</div>
+                                </div>
+                            </Link>
 
-                    {/* Quick Actions */}
-                    <div className="bg-white dark:bg-gray-900 rounded-lg shadow border border-gray-200 dark:border-gray-800 p-6 mb-8">
-                        <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
-                            Quick Actions
-                        </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <Link
-                                href="/admin/orders"
-                                className="block p-4 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-center"
-                            >
-                                <ShoppingCart className="w-6 h-6 text-black dark:text-white mb-2 mx-auto" />
-                                <p className="font-medium text-gray-900 dark:text-white">
-                                    View All Orders
-                                </p>
+                            <Link href="/admin/orders?status=shipped" className='group block'>
+                                <div className="rounded-lg border border-gray-100 p-4 transition-all hover:bg-gray-50 hover:border-gray-200">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="h-2 w-2 rounded-full bg-purple-500" />
+                                        <span className="text-sm font-medium text-gray-500 group-hover:text-gray-900">Shipped</span>
+                                    </div>
+                                    <div className="text-2xl font-bold text-gray-900">{statsLoading ? '-' : stats.shippedOrders}</div>
+                                </div>
                             </Link>
-                            <Link
-                                href="/admin/orders?status=processing"
-                                className="block p-4 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-center"
-                            >
-                                <Truck className="w-6 h-6 text-black dark:text-white mb-2 mx-auto" />
-                                <p className="font-medium text-gray-900 dark:text-white">
-                                    Process Orders
-                                </p>
+
+                            <Link href="/admin/orders?status=delivered" className='group block'>
+                                <div className="rounded-lg border border-gray-100 p-4 transition-all hover:bg-gray-50 hover:border-gray-200">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="h-2 w-2 rounded-full bg-green-500" />
+                                        <span className="text-sm font-medium text-gray-500 group-hover:text-gray-900">Delivered</span>
+                                    </div>
+                                    <div className="text-2xl font-bold text-gray-900">{statsLoading ? '-' : stats.deliveredOrders}</div>
+                                </div>
                             </Link>
-                            <Link
-                                href="/studio"
-                                className="block p-4 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-center"
-                            >
-                                <Package className="w-6 h-6 text-black dark:text-white mb-2 mx-auto" />
-                                <p className="font-medium text-gray-900 dark:text-white">
-                                    Manage Products
-                                </p>
+
+                            <Link href="/admin/orders?status=cancelled" className='group block'>
+                                <div className="rounded-lg border border-gray-100 p-4 transition-all hover:bg-gray-50 hover:border-gray-200">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="h-2 w-2 rounded-full bg-red-500" />
+                                        <span className="text-sm font-medium text-gray-500 group-hover:text-gray-900">Cancelled</span>
+                                    </div>
+                                    <div className="text-2xl font-bold text-gray-900">{statsLoading ? '-' : stats.cancelledOrders}</div>
+                                </div>
                             </Link>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Quick Actions - Span 3 columns */}
+                <Card className="col-span-full lg:col-span-3 border-gray-100 shadow-sm h-full">
+                    <CardHeader>
+                        <CardTitle className="text-lg font-bold text-gray-900">Quick Actions</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-3">
+                            <Link
+                                href="/admin/products"
+                                className="flex items-center justify-between rounded-lg border border-gray-100 p-3 hover:bg-gray-50 transition-colors group"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-50 group-hover:bg-white border border-transparent group-hover:border-gray-100 transition-all">
+                                        <Package className="h-5 w-5 text-gray-600" />
+                                    </div>
+                                    <span className="text-sm font-medium text-gray-900">Manage Products</span>
+                                </div>
+                                <ArrowUpRight className="h-4 w-4 text-gray-400 group-hover:text-gray-900" />
+                            </Link>
+
                             <Link
                                 href="/admin/customers"
-                                className="block p-4 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-center"
+                                className="flex items-center justify-between rounded-lg border border-gray-100 p-3 hover:bg-gray-50 transition-colors group"
                             >
-                                <Users className="w-6 h-6 text-black dark:text-white mb-2 mx-auto" />
-                                <p className="font-medium text-gray-900 dark:text-white">
-                                    View Customers
-                                </p>
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-50 group-hover:bg-white border border-transparent group-hover:border-gray-100 transition-all">
+                                        <Users className="h-5 w-5 text-gray-600" />
+                                    </div>
+                                    <span className="text-sm font-medium text-gray-900">View Customers</span>
+                                </div>
+                                <ArrowUpRight className="h-4 w-4 text-gray-400 group-hover:text-gray-900" />
+                            </Link>
+
+                            <Link
+                                href="/admin/sms"
+                                className="flex items-center justify-between rounded-lg border border-gray-100 p-3 hover:bg-gray-50 transition-colors group"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-50 group-hover:bg-white border border-transparent group-hover:border-gray-100 transition-all">
+                                        <MessageSquare className="h-5 w-5 text-gray-600" />
+                                    </div>
+                                    <span className="text-sm font-medium text-gray-900">Send SMS Blast</span>
+                                </div>
+                                <ArrowUpRight className="h-4 w-4 text-gray-400 group-hover:text-gray-900" />
                             </Link>
                         </div>
-                    </div>
-
-                    {/* Order Status Overview */}
-                    <div className="bg-white dark:bg-gray-900 rounded-lg shadow border border-gray-200 dark:border-gray-800 p-6">
-                        <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
-                            Order Status Overview
-                        </h2>
-                        <div className="space-y-3">
-                            <div className="flex items-center justify-between p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                                    <span className="text-gray-900 dark:text-white font-medium">
-                                        Pending Orders
-                                    </span>
-                                </div>
-                                <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                                    {statsLoading ? '...' : stats.pendingOrders}
-                                </span>
-                            </div>
-
-                            <div className="flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                                    <span className="text-gray-900 dark:text-white font-medium">
-                                        Processing
-                                    </span>
-                                </div>
-                                <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                                    {statsLoading ? '...' : stats.processingOrders}
-                                </span>
-                            </div>
-
-                            <div className="flex items-center justify-between p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                                    <span className="text-gray-900 dark:text-white font-medium">
-                                        Shipped
-                                    </span>
-                                </div>
-                                <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                                    {statsLoading ? '...' : stats.shippedOrders}
-                                </span>
-                            </div>
-
-                            <div className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                                    <span className="text-gray-900 dark:text-white font-medium">
-                                        Delivered
-                                    </span>
-                                </div>
-                                <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                                    {statsLoading ? '...' : stats.deliveredOrders}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                    </CardContent>
+                </Card>
             </div>
         </div>
     )

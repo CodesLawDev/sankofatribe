@@ -1,20 +1,4 @@
 -- CreateTable
-CREATE TABLE "PageView" (
-    "id" TEXT NOT NULL,
-    "path" VARCHAR(500) NOT NULL,
-    "userId" TEXT,
-    "sessionId" TEXT NOT NULL,
-    "ipAddress" VARCHAR(50),
-    "userAgent" TEXT,
-    "referrer" VARCHAR(500),
-    "country" VARCHAR(100),
-    "device" VARCHAR(50),
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "PageView_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "MonthlyReport" (
     "id" TEXT NOT NULL,
     "month" INTEGER NOT NULL,
@@ -27,8 +11,8 @@ CREATE TABLE "MonthlyReport" (
     "successfulPayments" INTEGER NOT NULL DEFAULT 0,
     "failedPayments" INTEGER NOT NULL DEFAULT 0,
     "paymentRevenue" DOUBLE PRECISION NOT NULL DEFAULT 0,
-    "smsSent" BOOLEAN NOT NULL DEFAULT false,
-    "smsRecipients" TEXT[] DEFAULT ARRAY[]::TEXT[],
+    "smsSent" BOOLEAN NOT NULL DEFAULT FALSE,
+    "smsRecipients" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
     "smsSentAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -45,8 +29,8 @@ CREATE TABLE "NewsletterSubscriber" (
     "status" TEXT NOT NULL DEFAULT 'active',
     "mailchimpId" VARCHAR(255),
     "mailchimpListId" VARCHAR(255),
-    "tags" TEXT[] DEFAULT ARRAY[]::TEXT[],
-    "preferences" JSONB NOT NULL DEFAULT '{"productUpdates": true, "offers": true, "smsOptIn": false}',
+    "tags" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+    "preferences" JSONB NOT NULL DEFAULT '{"offers": true, "smsOptIn": false, "productUpdates": true}',
     "subscribedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "confirmedAt" TIMESTAMP(3),
     "unsubscribedAt" TIMESTAMP(3),
@@ -58,35 +42,33 @@ CREATE TABLE "NewsletterSubscriber" (
     CONSTRAINT "NewsletterSubscriber_pkey" PRIMARY KEY ("id")
 );
 
--- CreateIndex
-CREATE INDEX "PageView_createdAt_idx" ON "PageView"("createdAt");
+-- CreateTable
+CREATE TABLE "PageView" (
+    "id" TEXT NOT NULL,
+    "path" VARCHAR(500) NOT NULL,
+    "userId" TEXT,
+    "sessionId" TEXT NOT NULL,
+    "ipAddress" VARCHAR(50),
+    "userAgent" TEXT,
+    "referrer" VARCHAR(500),
+    "country" VARCHAR(100),
+    "device" VARCHAR(50),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
--- CreateIndex
-CREATE INDEX "PageView_userId_idx" ON "PageView"("userId");
-
--- CreateIndex
-CREATE INDEX "PageView_sessionId_idx" ON "PageView"("sessionId");
-
--- CreateIndex
-CREATE INDEX "PageView_path_idx" ON "PageView"("path");
-
--- CreateIndex
-CREATE INDEX "MonthlyReport_createdAt_idx" ON "MonthlyReport"("createdAt");
+    CONSTRAINT "PageView_pkey" PRIMARY KEY ("id")
+);
 
 -- CreateIndex
 CREATE UNIQUE INDEX "MonthlyReport_month_year_key" ON "MonthlyReport"("month", "year");
+CREATE INDEX "MonthlyReport_createdAt_idx" ON "MonthlyReport"("createdAt");
 
--- CreateIndex
 CREATE UNIQUE INDEX "NewsletterSubscriber_email_key" ON "NewsletterSubscriber"("email");
-
--- CreateIndex
 CREATE INDEX "NewsletterSubscriber_email_idx" ON "NewsletterSubscriber"("email");
-
--- CreateIndex
+CREATE INDEX "NewsletterSubscriber_mailchimpId_idx" ON "NewsletterSubscriber"("mailchimpId");
 CREATE INDEX "NewsletterSubscriber_status_idx" ON "NewsletterSubscriber"("status");
-
--- CreateIndex
 CREATE INDEX "NewsletterSubscriber_subscribedAt_idx" ON "NewsletterSubscriber"("subscribedAt");
 
--- CreateIndex
-CREATE INDEX "NewsletterSubscriber_mailchimpId_idx" ON "NewsletterSubscriber"("mailchimpId");
+CREATE INDEX "PageView_createdAt_idx" ON "PageView"("createdAt");
+CREATE INDEX "PageView_userId_idx" ON "PageView"("userId");
+CREATE INDEX "PageView_sessionId_idx" ON "PageView"("sessionId");
+CREATE INDEX "PageView_path_idx" ON "PageView"("path");

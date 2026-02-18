@@ -3,11 +3,11 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { MapPin, Phone, Mail, Clock } from 'lucide-react'
-import { getContentPage, ContentPageData } from '@/lib/content'
+import { getTextPage, TextPageData } from '@/lib/content'
 import { PortableText } from '@portabletext/react'
 
 export default function ContactPage() {
-    const [pageData, setPageData] = useState<ContentPageData | null>(null)
+    const [pageData, setPageData] = useState<TextPageData | null>(null)
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -18,7 +18,7 @@ export default function ContactPage() {
 
     useEffect(() => {
         async function loadData() {
-            const data = await getContentPage('contact')
+            const data = await getTextPage('contact')
             setPageData(data)
         }
         loadData()
@@ -43,18 +43,13 @@ export default function ContactPage() {
     return (
         <div className="bg-white text-black">
             {/* Hero Section */}
-            {pageData?.hero?.showHero && (
-                <section className="bg-brand-cream py-20 md:py-32 text-center">
-                    <div className="max-w-3xl mx-auto px-4">
-                        <h1 className="text-3xl md:text-5xl font-light tracking-[0.2em] uppercase mb-6">
-                            {pageData.hero.title || pageData.title}
-                        </h1>
-                        {pageData.hero.subtitle && (
-                            <p className="text-sm text-gray-600 tracking-wide">{pageData.hero.subtitle}</p>
-                        )}
-                    </div>
-                </section>
-            )}
+            <section className="bg-brand-cream py-20 md:py-32 text-center">
+                <div className="max-w-3xl mx-auto px-4">
+                    <h1 className="text-3xl md:text-5xl font-light tracking-[0.2em] uppercase mb-6">
+                        {pageData?.title || 'Contact Us'}
+                    </h1>
+                </div>
+            </section>
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-16">
                 <div className="grid md:grid-cols-2 gap-16">
@@ -69,49 +64,31 @@ export default function ContactPage() {
                         )}
 
                         <div className="space-y-6">
-                            {pageData?.contactInfo?.address && (
                                 <div className="flex gap-4">
                                     <MapPin className="h-5 w-5 text-gray-400 flex-shrink-0 mt-1" />
                                     <div>
                                         <h3 className="text-sm font-medium mb-1">Address</h3>
-                                        <p className="text-sm text-gray-600 whitespace-pre-line">{pageData.contactInfo.address}</p>
+                                        <p className="text-sm text-gray-600 whitespace-pre-line">Accra, Ghana</p>
                                     </div>
                                 </div>
-                            )}
 
-                            {pageData?.contactInfo?.phone && (
-                                <div className="flex gap-4">
-                                    <Phone className="h-5 w-5 text-gray-400 flex-shrink-0 mt-1" />
-                                    <div>
-                                        <h3 className="text-sm font-medium mb-1">Phone</h3>
-                                        <a href={`tel:${pageData.contactInfo.phone}`} className="text-sm text-gray-600 hover:text-black">
-                                            {pageData.contactInfo.phone}
-                                        </a>
-                                    </div>
-                                </div>
-                            )}
-
-                            {pageData?.contactInfo?.email && (
                                 <div className="flex gap-4">
                                     <Mail className="h-5 w-5 text-gray-400 flex-shrink-0 mt-1" />
                                     <div>
                                         <h3 className="text-sm font-medium mb-1">Email</h3>
-                                        <a href={`mailto:${pageData.contactInfo.email}`} className="text-sm text-gray-600 hover:text-black">
-                                            {pageData.contactInfo.email}
+                                        <a href="mailto:sankofatribe007@gmail.com" className="text-sm text-gray-600 hover:text-black">
+                                            sankofatribe007@gmail.com
                                         </a>
                                     </div>
                                 </div>
-                            )}
 
-                            {pageData?.contactInfo?.hours && (
                                 <div className="flex gap-4">
                                     <Clock className="h-5 w-5 text-gray-400 flex-shrink-0 mt-1" />
                                     <div>
                                         <h3 className="text-sm font-medium mb-1">Business Hours</h3>
-                                        <p className="text-sm text-gray-600 whitespace-pre-line">{pageData.contactInfo.hours}</p>
+                                        <p className="text-sm text-gray-600 whitespace-pre-line">Mon - Fri: 9am - 5pm</p>
                                     </div>
                                 </div>
-                            )}
                         </div>
                     </div>
 

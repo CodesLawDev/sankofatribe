@@ -4,6 +4,7 @@ import Header from '@/components/header-new'
 import Footer from '@/components/footer'
 import { Providers } from './providers'
 import AnalyticsTracker from '@/components/analytics-tracker'
+import PullToRefresh from '@/components/pull-to-refresh'
 
 export const viewport: Viewport = {
     width: 'device-width',
@@ -24,8 +25,8 @@ export const metadata: Metadata = {
         title: 'SANKOFA TRIBE',
     },
     icons: {
-        icon: '/icon-192x192.png',
-        apple: '/icon-192x192.png',
+        icon: '/logo.svg',
+        apple: '/logo.svg',
     },
     openGraph: {
         type: 'website',
@@ -34,7 +35,7 @@ export const metadata: Metadata = {
         description: 'Discover timeless style and premium quality. Shop the latest collections from SANKOFA TRIBE.',
         images: [
             {
-                url: '/og-image.jpg',
+                url: '/logo.svg',
                 width: 1200,
                 height: 630,
             },
@@ -52,6 +53,7 @@ export default function RootLayout({
             <body className="bg-white text-black">
                 <Providers>
                     <AnalyticsTracker />
+                    <PullToRefresh />
                     <Header />
                     <main className="min-h-screen">{children}</main>
                     <Footer />

@@ -118,14 +118,75 @@ async function run() {
       _type: 'siteSettings',
       siteName: 'Sankofa Tribe',
       description: 'Sankofa Tribe apparel & lifestyle.',
-      footerText: '© ' + new Date().getFullYear() + ' Sankofa Tribe',
       mainNavigation: [
         { title: 'Mens', link: '/category/mens' },
         { title: 'Womens', link: '/category/womens' },
         { title: 'Accessories', link: '/category/accessories' },
         { title: 'Home', link: '/category/home' }
+      ]
+    })
+
+    // Footer Settings
+    await ensure({
+      _id: 'footerSettings-singleton',
+      _type: 'footerSettings',
+      title: 'Footer Settings',
+      showSections: true,
+      showSocialLinks: true,
+      showNewsletter: true,
+      showBottomSection: true,
+      showLegalLinks: true,
+      sections: [
+        {
+          heading: 'Featured',
+          links: [
+            { text: 'New Releases', url: '/products?filter=new' },
+            { text: 'Bestsellers', url: '/products?filter=bestsellers' },
+            { text: 'On Sale', url: '/products?filter=sale' },
+            { text: 'All Products', url: '/products' }
+          ]
+        },
+        {
+          heading: 'Shop',
+          links: [
+            { text: 'Women', url: '/category/women' },
+            { text: 'Men', url: '/category/men' },
+            { text: 'Kids', url: '/products?category=kids' },
+            { text: 'Accessories', url: '/products?category=accessories' }
+          ]
+        },
+        {
+          heading: 'Help',
+          links: [
+            { text: 'FAQ', url: '/faq' },
+            { text: 'Shipping', url: '/shipping' },
+            { text: 'Returns', url: '/returns' },
+            { text: 'Contact', url: '/contact' }
+          ]
+        }
       ],
-      socialLinks: { instagram: 'https://instagram.com/placeholder' }
+      socialLinks: {
+        instagram: 'https://instagram.com/sankofatribe',
+        facebook: 'https://facebook.com/sankofatribe',
+        twitter: 'https://twitter.com/sankofatribe',
+        youtube: 'https://youtube.com/@sankofatribe'
+      },
+      newsletter: {
+        heading: 'Subscribe to Our Newsletter',
+        description: 'Get exclusive updates, offers, and early access to new releases.',
+        buttonText: 'Subscribe'
+      },
+      bottomSection: [
+        { title: 'Fast Shipping', description: 'Worldwide shipping on all orders' },
+        { title: 'Secure Payment', description: 'Protected by SSL encryption' },
+        { title: 'Easy Returns', description: '30-day money-back guarantee' },
+        { title: 'Customer Support', description: '24/7 support available' }
+      ],
+      copyrightText: '© {year} SANKOFA TRIBE. All rights reserved.',
+      legalLinks: [
+        { text: 'Privacy Policy', url: '/privacy' },
+        { text: 'Terms of Service', url: '/terms' }
+      ]
     })
 
     console.log('\n[seed] Completed successfully.')

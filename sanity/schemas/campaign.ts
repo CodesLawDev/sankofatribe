@@ -87,6 +87,13 @@ export const campaign = defineType({
             initialValue: true,
         }),
         defineField({
+            name: 'showAsPopup',
+            title: 'Show as Modal Popup',
+            type: 'boolean',
+            description: 'Display this campaign as a popup modal on the homepage when users visit',
+            initialValue: false,
+        }),
+        defineField({
             name: 'discountType',
             title: 'Campaign Discount Type',
             type: 'string',

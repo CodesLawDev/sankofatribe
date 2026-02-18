@@ -5,8 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { AlertCircle, ArrowLeft, CheckCircle, Eye, EyeOff, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { getAdminSession } from '@/lib/adminAuth'
-import { hasPermission } from '@/lib/adminTypes'
+import { useAdminAuth } from '@/lib/useAdminAuth'
 
 interface AdminUser {
   _id: string
@@ -51,8 +50,9 @@ const INITIAL_FORM: CreateUserForm = {
 
 export default function AdminUsersPage() {
   const router = useRouter()
+  const { user, isLoading: authLoading, isMounted } = useAdminAuth()
   const [users, setUsers] = useState<AdminUser[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -60,20 +60,17 @@ export default function AdminUsersPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [form, setForm] = useState<CreateUserForm>({ ...INITIAL_FORM })
 
+  // Fetch users when authenticated
   useEffect(() => {
-    const session = getAdminSession()
-    if (!session || !hasPermission(session.user, 'manage_users')) {
-      router.push('/admin')
-      return
+    if (isMounted && user && !authLoading) {
+      fetchUsers()
     }
-
-    fetchUsers()
-  }, [router])
+  }, [isMounted, user, authLoading])
 
   const fetchUsers = async () => {
     try {
       setIsLoading(true)
-      const response = await fetch('/api/admin/users')
+      const response = await fetch('/api/admin/users', { credentials: 'include' })
       if (!response.ok) throw new Error('Failed to fetch users')
       const data = await response.json()
       setUsers(data)
@@ -169,7 +166,7 @@ export default function AdminUsersPage() {
     }
   }
 
-  if (isLoading) {
+  if (authLoading || !isMounted || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -181,10 +178,10 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-brand-cream dark:bg-darkbg p-8">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <Link href="/admin" className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-black mb-4">
+          <Link href="/admin" className="inline-flex items-center gap-2 text-sm text-neutral-600 hover:text-brand-dark mb-4">
             <ArrowLeft className="h-4 w-4" />
             Back to Admin
           </Link>
@@ -230,7 +227,7 @@ export default function AdminUsersPage() {
         )}
 
         {showForm && (
-          <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
+          <div className="bg-brand-cream rounded-lg border border-brand-primary/10 p-6 mb-8 shadow-sm">
             <h2 className="text-lg font-medium uppercase tracking-wider mb-6">Create New User</h2>
 
             <form onSubmit={handleCreateUser} className="space-y-6">
@@ -243,7 +240,7 @@ export default function AdminUsersPage() {
                     value={form.email}
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
                     disabled={isCreating}
-                    className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-black disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-2 border border-brand-primary/20 rounded focus:outline-none focus:border-brand-primary disabled:bg-neutral-100 disabled:cursor-not-allowed"
                     required
                     autoComplete="email"
                   />
@@ -257,7 +254,7 @@ export default function AdminUsersPage() {
                     value={form.firstName}
                     onChange={(e) => setForm({ ...form, firstName: e.target.value })}
                     disabled={isCreating}
-                    className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-black disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-2 border border-brand-primary/20 rounded focus:outline-none focus:border-brand-primary disabled:bg-neutral-100 disabled:cursor-not-allowed"
                     required
                     autoComplete="given-name"
                   />
@@ -271,7 +268,7 @@ export default function AdminUsersPage() {
                     value={form.lastName}
                     onChange={(e) => setForm({ ...form, lastName: e.target.value })}
                     disabled={isCreating}
-                    className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-black disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-2 border border-brand-primary/20 rounded focus:outline-none focus:border-brand-primary disabled:bg-neutral-100 disabled:cursor-not-allowed"
                     required
                     autoComplete="family-name"
                   />
@@ -289,7 +286,7 @@ export default function AdminUsersPage() {
                       })
                     }
                     disabled={isCreating}
-                    className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-black disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-2 border border-brand-primary/20 rounded focus:outline-none focus:border-brand-primary disabled:bg-neutral-100 disabled:cursor-not-allowed"
                   >
                     <option value="user">User</option>
                     <option value="admin">Admin (Owner)</option>
@@ -341,26 +338,26 @@ export default function AdminUsersPage() {
           </div>
         )}
 
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="bg-brand-cream rounded-lg border border-brand-primary/10 overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-brand-primary/5 border-b border-brand-primary/10">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Email</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Role</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Last Login</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-600 uppercase tracking-wider">Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-600 uppercase tracking-wider">Email</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-600 uppercase tracking-wider">Role</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-600 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-600 uppercase tracking-wider">Last Login</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-600 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-brand-primary/10">
                 {users.map((user) => (
-                  <tr key={user._id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={user._id} className="hover:bg-brand-primary/5 transition-colors">
                     <td className="px-6 py-4 text-sm">
                       {user.firstName} {user.lastName}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{user.email}</td>
+                    <td className="px-6 py-4 text-sm text-neutral-600">{user.email}</td>
                     <td className="px-6 py-4 text-sm">
                       <span
                         className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
@@ -379,14 +376,14 @@ export default function AdminUsersPage() {
                         {user.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
+                    <td className="px-6 py-4 text-sm text-neutral-600">
                       {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never'}
                     </td>
                     <td className="px-6 py-4 text-sm">
                       <div className="flex items-center gap-3">
                         <button
                           onClick={() => resetUserPassword(user._id, true)}
-                          className="text-blue-600 hover:text-blue-800 transition-colors text-sm"
+                          className="text-brand-primary hover:text-brand-primary/80 transition-colors text-sm"
                         >
                           Reset Password
                         </button>
@@ -402,7 +399,7 @@ export default function AdminUsersPage() {
           </div>
 
           {users.length === 0 && (
-            <div className="px-6 py-12 text-center text-gray-600">
+            <div className="px-6 py-12 text-center text-neutral-600">
               <p>No users yet. Create your first admin user.</p>
             </div>
           )}
