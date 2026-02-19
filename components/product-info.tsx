@@ -13,6 +13,7 @@ import { Ruler, Truck, RotateCcw } from 'lucide-react'
 import { useEffect } from 'react'
 import { useCurrency } from '@/lib/currency-context'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 interface ProductInfoProps {
     product: Product
@@ -262,10 +263,10 @@ export default function ProductInfo({ product }: ProductInfoProps) {
                         <RotateCcw className="h-4 w-4" />
                         <span>30-day easy returns</span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <Link href="/size-guide" className="flex items-center gap-2 hover:text-brand-primary transition-colors">
                         <Ruler className="h-4 w-4" />
                         <span>Size & fit help</span>
-                    </div>
+                    </Link>
                 </div>
 
                 <SizeGuideModal isOpen={sizeGuideOpen} onClose={() => setSizeGuideOpen(false)} />
