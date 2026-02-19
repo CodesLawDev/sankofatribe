@@ -32,7 +32,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
             setQuantity(1)
             setCurrentImageIndex(0)
         }
-    }, [isOpen, product?._id]) // Reset when product changes or modal opens
+    }, [isOpen, product]) // Reset when product changes or modal opens
 
     if (!isOpen || !product) return null
 
