@@ -1,0 +1,14 @@
+User-Agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /studio/
+Disallow: /api/
+Disallow: /account/
+Disallow: /cart/
+Disallow: /checkout/
+Disallow: /login/
+Disallow: /register/
+Disallow: /verify/
+Disallow: /wishlist/
+
+Sitemap: https://sankofatribe.com/sitemap.xml
