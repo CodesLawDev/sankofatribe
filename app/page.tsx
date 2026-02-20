@@ -232,6 +232,7 @@ export default async function HomePage() {
                         
                         while (i < banners.length) {
                             const banner = banners[i]
+                            const isFirstBanner = result.length === 0
                             
                             // Full-width banner
                             if (banner.displayMode === 'full' || !banner.displayMode) {
@@ -254,6 +255,7 @@ export default async function HomePage() {
                                         ctaProductSecondary={banner.ctaProductSecondary}
                                         textPosition="center"
                                         textColor={banner.textColor || "white"}
+                                        useH1={isFirstBanner}
                                     />
                                 )
                                 i++
@@ -272,7 +274,12 @@ export default async function HomePage() {
                                 result.push(
                                     <div key={`cards-${i}`} className="w-full">
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0">
-                                            {cardBanners.map((cardBanner, idx) => (
+                                            {cardBanners.map((cardBanner, idx) => {
+                                                // First card in the first set gets h1
+                                                const isFirstCard = isFirstBanner && idx === 0
+                                                const HeadingTag = isFirstCard ? 'h1' : 'h3'
+                                                
+                                                return (
                                                 <div key={cardBanner._id || idx} className="relative h-[50vh] md:h-[60vh] overflow-hidden group">
                                                     {cardBanner.image && (
                                                         <Image
@@ -286,9 +293,9 @@ export default async function HomePage() {
                                                     <div className="absolute inset-0 flex flex-col items-center justify-end text-center px-6 pb-8">
                                                         <div className={`${cardBanner.textColor === 'black' ? 'text-black' : 'text-white'}`}>
                                                             {cardBanner.title && (
-                                                                <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-3">
+                                                                <HeadingTag className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight mb-3">
                                                                     {cardBanner.title}
-                                                                </h3>
+                                                                </HeadingTag>
                                                             )}
                                                             {cardBanner.subtitle && (
                                                                 <p className="text-sm md:text-base mb-6 opacity-90">
@@ -308,7 +315,7 @@ export default async function HomePage() {
                                                         </div>
                                                     </div>
                                                 </div>
-                                            ))}
+                                            )})}
                                         </div>
                                     </div>
                                 )
@@ -328,6 +335,7 @@ export default async function HomePage() {
                     ctaLink="/products"
                     textPosition="center"
                     textColor="white"
+                    useH1={true}
                 />
             )}
 

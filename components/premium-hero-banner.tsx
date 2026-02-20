@@ -21,6 +21,7 @@ interface HeroBannerProps {
     ctaProductSecondary?: { slug?: { current: string } }
     textPosition?: 'left' | 'center' | 'right'
     textColor?: 'white' | 'black'
+    useH1?: boolean // Use H1 tag for SEO (first hero on page)
 }
 
 export default function PremiumHeroBanner({
@@ -40,6 +41,7 @@ export default function PremiumHeroBanner({
     ctaProductSecondary,
     textPosition = 'left',
     textColor = 'white',
+    useH1 = false,
 }: HeroBannerProps) {
     const positionClasses = {
         left: 'items-start',
@@ -139,9 +141,15 @@ export default function PremiumHeroBanner({
             {/* Content */}
             <div className={`absolute inset-0 flex flex-col ${positionClasses[textPosition]} justify-center px-4 sm:px-6 lg:px-12 max-w-7xl mx-auto w-full`}>
                 <div className={`max-w-2xl ${textColorClasses[textColor]}`}>
-                    <h2 className="text-4xl md:text-5xl lg:text-7xl font-bold tracking-tight mb-4 leading-tight">
-                        {title}
-                    </h2>
+                    {useH1 ? (
+                        <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold tracking-tight mb-4 leading-tight">
+                            {title}
+                        </h1>
+                    ) : (
+                        <h2 className="text-4xl md:text-5xl lg:text-7xl font-bold tracking-tight mb-4 leading-tight">
+                            {title}
+                        </h2>
+                    )}
                     {subtitle && (
                         <p className="text-base md:text-lg lg:text-xl mb-8 font-light opacity-90">
                             {subtitle}
