@@ -1,5 +1,11 @@
+import { Metadata } from 'next'
 import { getTextPage } from '@/lib/content'
 import { PortableText } from '@portabletext/react'
+
+export const metadata: Metadata = {
+    title: 'Privacy Policy | SANKOFA TRIBE',
+    description: 'Read the SANKOFA TRIBE privacy policy to understand how we collect, use, and protect your personal information.',
+}
 
 export default async function PrivacyPage() {
     const pageData = await getTextPage('privacy')

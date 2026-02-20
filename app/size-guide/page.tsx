@@ -1,6 +1,12 @@
 
+import { Metadata } from 'next'
 import React from 'react';
 import Link from 'next/link';
+
+export const metadata: Metadata = {
+    title: 'Size Guide | SANKOFA TRIBE',
+    description: 'Find your perfect fit with the SANKOFA TRIBE size guide. Detailed measurements and sizing charts for all our clothing.',
+}
 
 export default function SizeGuidePage() {
   return (
