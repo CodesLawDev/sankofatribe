@@ -1,5 +1,11 @@
+import { Metadata } from 'next'
 import { getFAQPage } from '@/lib/content'
 import { FAQAccordion } from '@/components/faq-accordion'
+
+export const metadata: Metadata = {
+    title: 'FAQ | SANKOFA TRIBE',
+    description: 'Find answers to frequently asked questions about SANKOFA TRIBE products, orders, shipping, and returns.',
+}
 
 export default async function FAQPage() {
     const pageData = await getFAQPage()

@@ -1,5 +1,11 @@
+import { Metadata } from 'next'
 import { getTextPage } from '@/lib/content'
 import { PortableText } from '@portabletext/react'
+
+export const metadata: Metadata = {
+    title: 'Terms & Conditions | SANKOFA TRIBE',
+    description: 'Review the terms and conditions governing your use of the SANKOFA TRIBE website and services.',
+}
 
 export default async function TermsPage() {
     const pageData = await getTextPage('terms')

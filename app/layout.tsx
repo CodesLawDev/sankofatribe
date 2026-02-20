@@ -16,6 +16,7 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
+    metadataBase: new URL('https://sankofatribe.com'),
     title: 'SANKOFA TRIBE - Premium Fashion',
     description: 'Discover timeless style and premium quality. Shop the latest collections from SANKOFA TRIBE.',
     keywords: 'fashion, clothing, premium, luxury, sankofa tribe, designer, lifestyle',
@@ -36,11 +37,17 @@ export const metadata: Metadata = {
         description: 'Discover timeless style and premium quality. Shop the latest collections from SANKOFA TRIBE.',
         images: [
             {
-                url: '/logo.svg',
+                url: '/og-image.png',
                 width: 1200,
                 height: 630,
             },
         ],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'SANKOFA TRIBE - Premium Fashion',
+        description: 'Discover timeless style and premium quality. Shop the latest collections from SANKOFA TRIBE.',
+        images: ['/og-image.png'],
     },
 }
 
@@ -54,6 +61,19 @@ export default async function RootLayout({
     return (
         <html lang="en" suppressHydrationWarning>
             <body className="bg-white text-black">
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{
+                        __html: JSON.stringify({
+                            '@context': 'https://schema.org',
+                            '@type': 'Organization',
+                            name: 'SANKOFA TRIBE',
+                            url: 'https://sankofatribe.com',
+                            logo: 'https://sankofatribe.com/og-image.png',
+                            description: 'Discover timeless style and premium quality. Shop the latest collections from SANKOFA TRIBE.',
+                        }),
+                    }}
+                />
                 <Providers>
                     <AnalyticsTracker />
                     <PullToRefresh />
