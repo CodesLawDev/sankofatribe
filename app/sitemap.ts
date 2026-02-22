@@ -5,15 +5,17 @@ const BASE_URL = 'https://sankofatribe.com'
 
 interface Product {
     slug: { current: string }
+    _updatedAt: string
 }
 
 interface Category {
     slug: { current: string }
+    _updatedAt: string
 }
 
 async function getProducts(): Promise<Product[]> {
     try {
-        const query = `*[_type == "product"] { slug }`
+        const query = `*[_type == "product"] { slug, _updatedAt }`
         const products = await client.fetch<Product[]>(query, {}, { next: { revalidate: 3600 } })
         return products
     } catch (error) {
@@ -24,7 +26,7 @@ async function getProducts(): Promise<Product[]> {
 
 async function getCategories(): Promise<Category[]> {
     try {
-        const query = `*[_type == "category"] { slug }`
+        const query = `*[_type == "category"] { slug, _updatedAt }`
         const categories = await client.fetch<Category[]>(query, {}, { next: { revalidate: 3600 } })
         return categories
     } catch (error) {
@@ -56,15 +58,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ])
 
     // Add product URLs
-    const productUrls = products.map((product) => ({
-        url: `${BASE_URL}/products/${product.slug.current}`,
-        lastModified: new Date(),
+    const productUrls = productproduct._updatedAt),
         changeFrequency: 'weekly' as const,
         priority: 0.7,
     }))
 
     // Add category URLs
     const categoryUrls = categories.map((category) => ({
+        url: `${BASE_URL}/category/${category.slug.current}`,
+        lastModified: new Date(category._updatedAtries.map((category) => ({
         url: `${BASE_URL}/category/${category.slug.current}`,
         lastModified: new Date(),
         changeFrequency: 'weekly' as const,
