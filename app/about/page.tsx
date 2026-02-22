@@ -1,7 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-'use client'
-
-import { useEffect, useState } from 'react'
+import type { Metadata } from 'next'
 import Image from 'next/image'
 import { client, urlFor } from '@/lib/sanity'
 
@@ -72,49 +70,46 @@ interface AboutPageData {
     ctaSection?: CTASection
 }
 
-export default function AboutPage() {
-    const [data, setData] = useState<AboutPageData | null>(null)
-    const [loading, setLoading] = useState(true)
-
-    useEffect(() => {
-        const fetchAboutPage = async () => {
-            try {
-                const query = `*[_type == "aboutPage"][0]{
-                    title,
-                    subtitle,
-                    heroImage,
-                    heroTitle,
-                    heroDescription,
-                    founderStory,
-                    heritageSection,
-                    missionSection,
-                    visionSection,
-                    values,
-                    teamMembers,
-                    ctaSection
-                }`
-                const result = await client.fetch(query)
-                setData(result)
-            } catch (error) {
-                console.error('Failed to fetch about page data:', error)
-            } finally {
-                setLoading(false)
-            }
-        }
-
-        fetchAboutPage()
-    }, [])
-
-    if (loading) {
-        return (
-            <div className="bg-white text-black min-h-screen flex items-center justify-center">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4"></div>
-                    <p>Loading...</p>
-                </div>
-            </div>
-        )
+async function getAboutPageData(): Promise<AboutPageData | null> {
+    try {
+        const query = `*[_type == "aboutPage"][0]{
+            title,
+            subtitle,
+            heroImage,
+            heroTitle,
+            heroDescription,
+            founderStory,
+            heritageSection,
+            missionSection,
+            visionSection,
+            values,
+            teamMembers,
+            ctaSection
+        }`
+        const result = await client.fetch<AboutPageData>(query, {}, { next: { revalidate: 3600 } })
+        return result || null
+    } catch (error) {
+        console.error('Failed to fetch about page data:', error)
+        return null
     }
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+    const data = await getAboutPageData()
+    
+    return {
+        title: data?.title ? `${data.title} | SANKOFA TRIBE` : 'About Us | SANKOFA TRIBE',
+        description: data?.subtitle || 'Learn about SANKOFA TRIBE\'s story, mission, vision, and the team behind premium African heritage fashion.',
+        openGraph: {
+            title: data?.title || 'About SANKOFA TRIBE',
+            description: data?.subtitle || 'Learn about SANKOFA TRIBE\'s story, mission, vision, and values.',
+            type: 'website',
+        },
+    }
+}
+
+export default async function AboutPage() {
+    const data = await getAboutPageData()
 
     if (!data) {
         return (
