@@ -12,8 +12,6 @@ import {
   MessageSquare,
   Loader,
 } from 'lucide-react'
-import { getAdminSession } from '@/lib/adminAuth'
-import { hasPermission } from '@/lib/adminTypes'
 
 interface Customer {
   id: string
@@ -47,14 +45,8 @@ export default function SMSPage() {
 
   // Fetch customers
   useEffect(() => {
-    const session = getAdminSession()
-    if (!session || !hasPermission(session.user, 'send_sms')) {
-      router.push('/admin')
-      return
-    }
-
     fetchCustomers()
-  }, [router])
+  }, [])
 
   const fetchCustomers = async () => {
     try {

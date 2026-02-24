@@ -103,7 +103,7 @@ export default function ProductCard({ product, onQuickView }: ProductCardProps) 
     return (
         <div className="group block">
             <Link href={`/products/${product.slug.current}`}>
-                <div className="relative aspect-[3/4] overflow-hidden bg-gray-50 mb-6">
+                <div className="relative aspect-[3/4] overflow-hidden bg-gradient-to-br from-slate-100 to-slate-50 mb-6 rounded-xl glass-sm">
                     {product.images?.[0] ? (
                         <Image
                             src={imageUrl}
@@ -156,35 +156,35 @@ export default function ProductCard({ product, onQuickView }: ProductCardProps) 
                 </div>
             </Link>
 
-            <div className="space-y-1">
+            <div className="space-y-1 glass-sm p-3 rounded-lg mt-2">
                 <Link href={`/products/${product.slug.current}`}>
-                    <h3 className="text-sm font-medium text-black group-hover:text-gray-600 transition-colors line-clamp-2">
+                    <h3 className="text-sm font-medium text-slate-900 dark:text-white group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors line-clamp-2">
                         {product.name}
                     </h3>
                 </Link>
                 
                 {/* Categories */}
                 {product.categories && product.categories.length > 0 && (
-                    <p className="text-xs text-gray-600">
+                    <p className="text-xs text-slate-600 dark:text-slate-400">
                         {product.categories.map((cat: any) => cat.name).join(', ')}
                     </p>
                 )}
                 
                 {/* Price */}
                 <div className="pt-1">
-                    <p className="text-sm font-semibold text-black">{displayPrice}</p>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">{displayPrice}</p>
                 </div>
 
                 {/* Stock Indicator */}
                 <div className="pt-1">
                     {product.inStock ? (
-                        <div className="text-xs text-green-600 font-medium flex items-center gap-1">
-                            <span className="inline-block w-2 h-2 bg-green-600 rounded-full"></span>
+                        <div className="text-xs text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
+                            <span className="inline-block w-2 h-2 bg-emerald-600 dark:bg-emerald-400 rounded-full"></span>
                             In Stock
                         </div>
                     ) : (
-                        <div className="text-xs text-red-600 font-medium flex items-center gap-1">
-                            <span className="inline-block w-2 h-2 bg-red-600 rounded-full"></span>
+                        <div className="text-xs text-red-600 dark:text-red-400 font-medium flex items-center gap-1">
+                            <span className="inline-block w-2 h-2 bg-red-600 dark:bg-red-400 rounded-full"></span>
                             Out of stock
                         </div>
                     )}
@@ -192,23 +192,23 @@ export default function ProductCard({ product, onQuickView }: ProductCardProps) 
 
                 {/* Size/Color/Quantity Options */}
                 {showOptions && (
-                    <div className="mt-4 pt-4 border-t border-gray-100 space-y-3 animate-in fade-in-50 duration-200">
+                    <div className="mt-4 pt-4 glass-md p-3 rounded-lg space-y-3 animate-in fade-in-50 duration-200 border-transparent">
                         {/* Size Selection */}
                         {product.sizes && product.sizes.length > 0 && (
                             <div>
-                                <label className="text-xs font-medium uppercase block mb-2">Size</label>
+                                <label className="text-xs font-medium uppercase block mb-2 text-slate-900 dark:text-white">Size</label>
                                 <div className="flex flex-wrap gap-2">
                                     {product.sizes.map((sizeObj: any) => (
                                         <button
                                             key={sizeObj.size}
                                             onClick={() => setSelectedSize(sizeObj.size)}
                                             disabled={sizeObj.stock === 0}
-                                            className={`px-3 py-2 border text-xs uppercase transition-all ${
+                                            className={`px-3 py-2 border text-xs uppercase transition-all rounded-lg ${
                                                 selectedSize === sizeObj.size
-                                                    ? 'bg-black text-white border-black'
+                                                    ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white'
                                                     : sizeObj.stock === 0
-                                                    ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
-                                                    : 'bg-white text-black border-gray-300 hover:border-black'
+                                                    ? 'glass-sm text-slate-400 dark:text-slate-500 border-transparent cursor-not-allowed'
+                                                    : 'glass-sm text-slate-900 dark:text-white border-transparent hover:border-slate-200 dark:hover:border-slate-700'
                                             }`}
                                         >
                                             {sizeObj.size}
@@ -221,16 +221,16 @@ export default function ProductCard({ product, onQuickView }: ProductCardProps) 
                         {/* Color Selection */}
                         {product.colors && product.colors.length > 0 && (
                             <div>
-                                <label className="text-xs font-medium uppercase block mb-2">Color</label>
+                                <label className="text-xs font-medium uppercase block mb-2 text-slate-900 dark:text-white">Color</label>
                                 <div className="flex flex-wrap gap-2">
                                     {product.colors.map((color) => (
                                         <button
                                             key={color.name}
                                             onClick={() => setSelectedColor(color.name)}
-                                            className={`px-3 py-2 border text-xs transition-all ${
+                                            className={`px-3 py-2 border text-xs transition-all rounded-lg ${
                                                 selectedColor === color.name
-                                                    ? 'bg-black text-white border-black'
-                                                    : 'bg-white text-black border-gray-300 hover:border-black'
+                                                    ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white'
+                                                    : 'glass-sm text-slate-900 dark:text-white border-transparent hover:border-slate-200 dark:hover:border-slate-700'
                                             }`}
                                             style={{
                                                 borderLeftWidth: '3px',
@@ -246,7 +246,7 @@ export default function ProductCard({ product, onQuickView }: ProductCardProps) 
 
                         {/* Quantity Selection */}
                         <div>
-                            <label className="text-xs font-medium uppercase block mb-2">Quantity</label>
+                            <label className="text-xs font-medium uppercase block mb-2 text-slate-900 dark:text-white">Quantity</label>
                             <div className="flex items-center gap-2">
                                 <button
                                     onClick={(e) => {
@@ -254,11 +254,11 @@ export default function ProductCard({ product, onQuickView }: ProductCardProps) 
                                         e.stopPropagation()
                                         setQuantity(Math.max(1, quantity - 1))
                                     }}
-                                    className="w-8 h-8 border border-gray-300 hover:border-black flex items-center justify-center transition-colors"
+                                    className="w-8 h-8 glass-sm border-transparent hover:border-slate-200 dark:hover:border-slate-700 flex items-center justify-center transition-all rounded-lg text-slate-900 dark:text-white"
                                 >
                                     <Minus className="h-3 w-3" />
                                 </button>
-                                <span className="w-8 text-center text-sm">{quantity}</span>
+                                <span className="w-8 text-center text-sm text-slate-900 dark:text-white">{quantity}</span>
                                 <button
                                     onClick={(e) => {
                                         e.preventDefault()
@@ -268,7 +268,7 @@ export default function ProductCard({ product, onQuickView }: ProductCardProps) 
                                         }
                                     }}
                                     disabled={quantity >= selectedSizeStock}
-                                    className="w-8 h-8 border border-gray-300 hover:border-black flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-8 h-8 glass-sm border-transparent hover:border-slate-200 dark:hover:border-slate-700 flex items-center justify-center transition-all rounded-lg text-slate-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <Plus className="h-3 w-3" />
                                 </button>
@@ -279,7 +279,7 @@ export default function ProductCard({ product, onQuickView }: ProductCardProps) 
                         <button
                             onClick={handleAddToCart}
                             disabled={!product.inStock || isSizeOutOfStock || !selectedSize}
-                            className="w-full mt-3 py-2 bg-black text-white text-xs uppercase font-medium hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                            className="w-full mt-3 py-2 btn-glass-primary rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
                         >
                             <ShoppingBag className="h-4 w-4" />
                             Add to Bag
@@ -295,7 +295,7 @@ export default function ProductCard({ product, onQuickView }: ProductCardProps) 
                             e.stopPropagation()
                             setShowOptions(!showOptions)
                         }}
-                        className="w-full mt-3 py-2 bg-gray-100 text-black text-xs uppercase font-medium hover:bg-gray-200 transition-colors flex items-center justify-center gap-2 md:opacity-0 group-hover:opacity-100"
+                        className="w-full mt-3 py-2 btn-glass-secondary rounded-lg text-xs uppercase font-medium flex items-center justify-center gap-2 md:opacity-0 group-hover:opacity-100"
                     >
                         <ShoppingBag className="h-4 w-4" />
                         Quick Add

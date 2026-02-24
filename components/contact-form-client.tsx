@@ -38,49 +38,49 @@ export default function ContactFormClient({ pageData }: ContactFormClientProps) 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-16">
             <div className="grid md:grid-cols-2 gap-16">
                 <div>
-                    <h2 className="text-2xl font-light tracking-wider uppercase mb-8">Get in Touch</h2>
+                    <h2 className="text-2xl font-light tracking-wider uppercase mb-8 text-slate-900 dark:text-white">Get in Touch</h2>
                     
                     {pageData?.content && (
-                        <div className="prose mb-8">
+                        <div className="prose dark:prose-invert mb-8">
                             <PortableText value={pageData.content} />
                         </div>
                     )}
 
                     <div className="space-y-6">
-                        <div className="flex gap-4">
-                            <MapPin className="h-5 w-5 text-gray-400 flex-shrink-0 mt-1" />
+                        <div className="flex gap-4 glass-sm p-4 rounded-lg">
+                            <MapPin className="h-5 w-5 text-slate-400 dark:text-slate-500 flex-shrink-0 mt-1" />
                             <div>
-                                <h3 className="text-sm font-medium mb-1">Address</h3>
-                                <p className="text-sm text-gray-600 whitespace-pre-line">Accra, Ghana</p>
+                                <h3 className="text-sm font-medium mb-1 text-slate-900 dark:text-white">Address</h3>
+                                <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-line">Accra, Ghana</p>
                             </div>
                         </div>
 
-                        <div className="flex gap-4">
-                            <Mail className="h-5 w-5 text-gray-400 flex-shrink-0 mt-1" />
+                        <div className="flex gap-4 glass-sm p-4 rounded-lg">
+                            <Mail className="h-5 w-5 text-slate-400 dark:text-slate-500 flex-shrink-0 mt-1" />
                             <div>
-                                <h3 className="text-sm font-medium mb-1">Email</h3>
-                                <a href="mailto:sankofatribe007@gmail.com" className="text-sm text-gray-600 hover:text-black">
+                                <h3 className="text-sm font-medium mb-1 text-slate-900 dark:text-white">Email</h3>
+                                <a href="mailto:sankofatribe007@gmail.com" className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
                                     sankofatribe007@gmail.com
                                 </a>
                             </div>
                         </div>
 
-                        <div className="flex gap-4">
-                            <Clock className="h-5 w-5 text-gray-400 flex-shrink-0 mt-1" />
+                        <div className="flex gap-4 glass-sm p-4 rounded-lg">
+                            <Clock className="h-5 w-5 text-slate-400 dark:text-slate-500 flex-shrink-0 mt-1" />
                             <div>
-                                <h3 className="text-sm font-medium mb-1">Business Hours</h3>
-                                <p className="text-sm text-gray-600 whitespace-pre-line">Mon - Fri: 9am - 5pm</p>
+                                <h3 className="text-sm font-medium mb-1 text-slate-900 dark:text-white">Business Hours</h3>
+                                <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-line">Mon - Fri: 9am - 5pm</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div>
-                    <h2 className="text-2xl font-light tracking-wider uppercase mb-8">Send a Message</h2>
+                    <h2 className="text-2xl font-light tracking-wider uppercase mb-8 text-slate-900 dark:text-white">Send a Message</h2>
                     
-                    <form onSubmit={handleSubmit} className="space-y-6">
+                    <form onSubmit={handleSubmit} className="glass-container space-y-6">
                         <div>
-                            <label htmlFor="name" className="block text-sm font-medium mb-2">
+                            <label htmlFor="name" className="block text-sm font-medium mb-2 text-slate-900 dark:text-white">
                                 Name *
                             </label>
                             <input
@@ -90,12 +90,12 @@ export default function ContactFormClient({ pageData }: ContactFormClientProps) 
                                 required
                                 value={formData.name}
                                 onChange={handleChange}
-                                className="w-full px-4 py-3 border border-gray-300 text-sm focus:outline-none focus:border-brand-primary transition-colors bg-white text-black"
+                                className="w-full px-4 py-3 glass-sm rounded-lg border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition-all text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
                             />
                         </div>
 
                         <div>
-                            <label htmlFor="email" className="block text-sm font-medium mb-2">
+                            <label htmlFor="email" className="block text-sm font-medium mb-2 text-slate-900 dark:text-white">
                                 Email *
                             </label>
                             <input
@@ -105,12 +105,12 @@ export default function ContactFormClient({ pageData }: ContactFormClientProps) 
                                 required
                                 value={formData.email}
                                 onChange={handleChange}
-                                className="w-full px-4 py-3 border border-gray-300 text-sm focus:outline-none focus:border-brand-primary transition-colors bg-white text-black"
+                                className="w-full px-4 py-3 glass-sm rounded-lg border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition-all text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
                             />
                         </div>
 
                         <div>
-                            <label htmlFor="subject" className="block text-sm font-medium mb-2">
+                            <label htmlFor="subject" className="block text-sm font-medium mb-2 text-slate-900 dark:text-white">
                                 Subject *
                             </label>
                             <select
@@ -119,7 +119,7 @@ export default function ContactFormClient({ pageData }: ContactFormClientProps) 
                                 required
                                 value={formData.subject}
                                 onChange={handleChange}
-                                className="w-full px-4 py-3 border border-gray-300 text-sm focus:outline-none focus:border-brand-primary transition-colors bg-white text-black"
+                                className="w-full px-4 py-3 glass-sm rounded-lg border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition-all text-slate-900 dark:text-white"
                             >
                                 <option value="">Select a subject</option>
                                 <option value="general">General Inquiry</option>
@@ -132,7 +132,7 @@ export default function ContactFormClient({ pageData }: ContactFormClientProps) 
                         </div>
 
                         <div>
-                            <label htmlFor="message" className="block text-sm font-medium mb-2">
+                            <label htmlFor="message" className="block text-sm font-medium mb-2 text-slate-900 dark:text-white">
                                 Message *
                             </label>
                             <textarea
@@ -142,26 +142,26 @@ export default function ContactFormClient({ pageData }: ContactFormClientProps) 
                                 rows={6}
                                 value={formData.message}
                                 onChange={handleChange}
-                                className="w-full px-4 py-3 border border-gray-300 text-sm focus:outline-none focus:border-brand-primary transition-colors resize-none bg-white text-black"
+                                className="w-full px-4 py-3 glass-sm rounded-lg border-transparent focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition-all resize-none text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
                             />
                         </div>
 
                         <Button
                             type="submit"
                             disabled={status === 'loading'}
-                            className="w-full md:w-auto"
+                            className="w-full md:w-auto btn-glass-primary rounded-lg"
                         >
                             {status === 'loading' ? 'Sending...' : 'Send Message'}
                         </Button>
 
                         {status === 'success' && (
-                            <p className="text-sm text-green-600">
+                            <p className="text-sm text-emerald-600 dark:text-emerald-400">
                                 Thank you! Your message has been sent successfully.
                             </p>
                         )}
 
                         {status === 'error' && (
-                            <p className="text-sm text-red-600">
+                            <p className="text-sm text-red-600 dark:text-red-400">
                                 Sorry, there was an error sending your message. Please try again.
                             </p>
                         )}

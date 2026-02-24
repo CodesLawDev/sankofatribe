@@ -58,15 +58,15 @@ export default function ProductFilters({ categories, onFilterChange, totalProduc
     return (
         <>
             {/* Desktop Filters */}
-            <div className="hidden lg:flex items-center justify-between mb-8 pb-6 border-b border-gray-100">
+            <div className="hidden lg:flex items-center justify-between mb-8 pb-6 glass-sm px-6 py-4 rounded-xl backdrop-blur-md">
                 <div className="flex items-center gap-8">
                     {/* Audience Filter */}
                     <div className="relative group">
-                        <button className="flex items-center gap-2 text-xs uppercase tracking-[0.15em] hover:opacity-60 transition-opacity">
+                        <button className="flex items-center gap-2 text-xs uppercase tracking-[0.15em] text-slate-900 dark:text-white hover:opacity-70 transition-opacity">
                             Audience
                             <ChevronDown className="h-3 w-3" />
                         </button>
-                        <div className="absolute top-full left-0 mt-2 bg-white border border-gray-100 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-20 min-w-[200px]">
+                        <div className="absolute top-full left-0 mt-2 glass-md border-transparent shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-20 min-w-[200px] rounded-lg overflow-hidden">
                             {[
                                 { label: 'All', value: '' },
                                 { label: 'Men', value: 'men' },
@@ -77,8 +77,8 @@ export default function ProductFilters({ categories, onFilterChange, totalProduc
                                 <button
                                     key={opt.value}
                                     onClick={() => updateFilter('audience', opt.value)}
-                                    className={`block w-full text-left px-4 py-3 text-xs hover:bg-gray-50 transition-colors ${
-                                        filters.audience === opt.value ? 'font-medium' : ''
+                                    className={`block w-full text-left px-4 py-3 text-xs hover:bg-white/20 dark:hover:bg-slate-700/30 transition-all ${
+                                        filters.audience === opt.value ? 'font-medium text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-300'
                                     }`}
                                 >
                                     {opt.label}
@@ -89,15 +89,15 @@ export default function ProductFilters({ categories, onFilterChange, totalProduc
 
                     {/* Category Filter */}
                     <div className="relative group">
-                        <button className="flex items-center gap-2 text-xs uppercase tracking-[0.15em] hover:opacity-60 transition-opacity">
+                        <button className="flex items-center gap-2 text-xs uppercase tracking-[0.15em] text-slate-900 dark:text-white hover:opacity-70 transition-opacity">
                             Category
                             <ChevronDown className="h-3 w-3" />
                         </button>
-                        <div className="absolute top-full left-0 mt-2 bg-white border border-gray-100 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-20 min-w-[180px]">
+                        <div className="absolute top-full left-0 mt-2 glass-md border-transparent shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-20 min-w-[180px] rounded-lg overflow-hidden">
                             <button
                                 onClick={() => updateFilter('category', '')}
-                                className={`block w-full text-left px-4 py-3 text-xs hover:bg-gray-50 transition-colors ${
-                                    !filters.category ? 'font-medium' : ''
+                                className={`block w-full text-left px-4 py-3 text-xs hover:bg-white/20 dark:hover:bg-slate-700/30 transition-all ${
+                                    !filters.category ? 'font-medium text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-300'
                                 }`}
                             >
                                 All Categories
@@ -106,8 +106,8 @@ export default function ProductFilters({ categories, onFilterChange, totalProduc
                                 <button
                                     key={cat.slug}
                                     onClick={() => updateFilter('category', cat.slug)}
-                                    className={`block w-full text-left px-4 py-3 text-xs hover:bg-gray-50 transition-colors ${
-                                        filters.category === cat.slug ? 'font-medium' : ''
+                                    className={`block w-full text-left px-4 py-3 text-xs hover:bg-white/20 dark:hover:bg-slate-700/30 transition-all ${
+                                        filters.category === cat.slug ? 'font-medium text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-300'
                                     }`}
                                 >
                                     {cat.name}
@@ -118,17 +118,17 @@ export default function ProductFilters({ categories, onFilterChange, totalProduc
 
                     {/* Price Filter */}
                     <div className="relative group">
-                        <button className="flex items-center gap-2 text-xs uppercase tracking-[0.15em] hover:opacity-60 transition-opacity">
+                        <button className="flex items-center gap-2 text-xs uppercase tracking-[0.15em] text-slate-900 dark:text-white hover:opacity-70 transition-opacity">
                             Price
                             <ChevronDown className="h-3 w-3" />
                         </button>
-                        <div className="absolute top-full left-0 mt-2 bg-white border border-gray-100 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-20 min-w-[180px]">
+                        <div className="absolute top-full left-0 mt-2 glass-md border-transparent shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-20 min-w-[180px] rounded-lg overflow-hidden">
                             {priceRanges.map((range) => (
                                 <button
                                     key={range.value}
                                     onClick={() => updateFilter('priceRange', range.value)}
-                                    className={`block w-full text-left px-4 py-3 text-xs hover:bg-gray-50 transition-colors ${
-                                        filters.priceRange === range.value ? 'font-medium' : ''
+                                    className={`block w-full text-left px-4 py-3 text-xs hover:bg-white/20 dark:hover:bg-slate-700/30 transition-all ${
+                                        filters.priceRange === range.value ? 'font-medium text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-300'
                                     }`}
                                 >
                                     {range.label}
@@ -141,7 +141,7 @@ export default function ProductFilters({ categories, onFilterChange, totalProduc
                     {hasActiveFilters && (
                         <button
                             onClick={clearFilters}
-                            className="flex items-center gap-1 text-xs text-gray-500 hover:text-black transition-colors"
+                            className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                         >
                             <X className="h-3 w-3" />
                             Clear Filters
@@ -150,21 +150,21 @@ export default function ProductFilters({ categories, onFilterChange, totalProduc
                 </div>
 
                 <div className="flex items-center gap-6">
-                    <span className="text-xs text-gray-500">{totalProducts} Products</span>
+                    <span className="text-xs text-slate-600 dark:text-slate-400">{totalProducts} Products</span>
 
                     {/* Sort */}
                     <div className="relative group">
-                        <button className="flex items-center gap-2 text-xs uppercase tracking-[0.15em] hover:opacity-60 transition-opacity">
+                        <button className="flex items-center gap-2 text-xs uppercase tracking-[0.15em] text-slate-900 dark:text-white hover:opacity-70 transition-opacity">
                             Sort By: {sortOptions.find(o => o.value === filters.sortBy)?.label}
                             <ChevronDown className="h-3 w-3" />
                         </button>
-                        <div className="absolute top-full right-0 mt-2 bg-white border border-gray-100 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-20 min-w-[180px]">
+                        <div className="absolute top-full right-0 mt-2 glass-md border-transparent shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-20 min-w-[180px] rounded-lg overflow-hidden">
                             {sortOptions.map((option) => (
                                 <button
                                     key={option.value}
                                     onClick={() => updateFilter('sortBy', option.value)}
-                                    className={`block w-full text-left px-4 py-3 text-xs hover:bg-gray-50 transition-colors ${
-                                        filters.sortBy === option.value ? 'font-medium' : ''
+                                    className={`block w-full text-left px-4 py-3 text-xs hover:bg-white/20 dark:hover:bg-slate-700/30 transition-all ${
+                                        filters.sortBy === option.value ? 'font-medium text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-300'
                                     }`}
                                 >
                                     {option.label}
@@ -177,24 +177,24 @@ export default function ProductFilters({ categories, onFilterChange, totalProduc
 
             {/* Mobile Filters */}
             <div className="lg:hidden mb-6">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between glass-sm px-4 py-3 rounded-lg backdrop-blur-md">
                     <button
                         onClick={() => setMobileFiltersOpen(true)}
-                        className="flex items-center gap-2 text-xs uppercase tracking-[0.15em]"
+                        className="flex items-center gap-2 text-xs uppercase tracking-[0.15em] text-slate-900 dark:text-white"
                     >
                         <SlidersHorizontal className="h-4 w-4" />
                         Filter & Sort
                     </button>
-                    <span className="text-xs text-gray-500">{totalProducts} Products</span>
+                    <span className="text-xs text-slate-600 dark:text-slate-400">{totalProducts} Products</span>
                 </div>
 
                 {/* Mobile Filter Overlay */}
                 {mobileFiltersOpen && (
-                    <div className="fixed inset-0 z-50 bg-white overflow-y-auto">
+                    <div className="fixed inset-0 z-50 bg-white dark:bg-slate-950 overflow-y-auto">
                         <div className="p-6">
                             <div className="flex items-center justify-between mb-8">
-                                <h2 className="text-lg font-light uppercase tracking-wider">Filter & Sort</h2>
-                                <button onClick={() => setMobileFiltersOpen(false)}>
+                                <h2 className="text-lg font-light uppercase tracking-wider text-slate-900 dark:text-white">Filter & Sort</h2>
+                                <button onClick={() => setMobileFiltersOpen(false)} className="text-slate-900 dark:text-white">
                                     <X className="h-6 w-6" />
                                 </button>
                             </div>
