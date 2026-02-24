@@ -249,25 +249,25 @@ export default function AdminUsersPage() {
 
   if (authLoading || !isMounted || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-brand-cream dark:bg-darkbg">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
-          <p className="mt-4 text-gray-600">Loading users...</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-brand-dark dark:border-white"></div>
+          <p className="mt-4 text-neutral-600 dark:text-gray-400">Loading users...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-brand-cream dark:bg-darkbg p-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-brand-cream dark:bg-darkbg">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <Link href="/admin" className="inline-flex items-center gap-2 text-sm text-neutral-600 hover:text-brand-dark mb-4">
+          <Link href="/admin" className="inline-flex items-center gap-2 text-sm text-neutral-600 hover:text-brand-dark dark:text-gray-400 dark:hover:text-white mb-4">
             <ArrowLeft className="h-4 w-4" />
-            Back to Admin
+            Back to Dashboard
           </Link>
           <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-light tracking-wider uppercase">User Management</h1>
+            <h1 className="text-3xl font-bold text-brand-dark dark:text-white">User Management</h1>
             <Button
               onClick={() => setShowForm(!showForm)}
               className="flex items-center gap-2"
@@ -312,7 +312,7 @@ export default function AdminUsersPage() {
         )}
 
         {showForm && (
-          <div className="bg-brand-cream rounded-lg border border-brand-primary/10 p-6 mb-8 shadow-sm">
+          <div className="bg-brand-cream dark:bg-gray-900 rounded-lg border border-brand-primary/10 dark:border-gray-800 p-6 mb-8 shadow-sm">
             <h2 className="text-lg font-medium uppercase tracking-wider mb-6">Create New User</h2>
 
             <form onSubmit={handleCreateUser} className="space-y-6">
@@ -438,7 +438,7 @@ export default function AdminUsersPage() {
         )}
 
         {editingUser && editForm && (
-          <div className="bg-brand-cream rounded-lg border border-brand-primary/10 p-6 mb-8 shadow-sm">
+          <div className="bg-brand-cream dark:bg-gray-900 rounded-lg border border-brand-primary/10 dark:border-gray-800 p-6 mb-8 shadow-sm">
             <h2 className="text-lg font-medium uppercase tracking-wider mb-6">Edit User</h2>
 
             <form onSubmit={handleUpdateUser} className="space-y-6">
@@ -583,7 +583,7 @@ export default function AdminUsersPage() {
           </div>
         )}
 
-        <div className="bg-brand-cream rounded-lg border border-brand-primary/10 overflow-hidden shadow-sm">
+        <div className="bg-brand-cream dark:bg-gray-900 rounded-lg border border-brand-primary/10 dark:border-gray-800 overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-brand-primary/5 border-b border-brand-primary/10">

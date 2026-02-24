@@ -66,7 +66,7 @@ export default function AdminProducts() {
                 {/* Header */}
                 <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center gap-4">
-                        <Link href="/admin/dashboard" className="p-2 hover:bg-brand-cream/80 dark:hover:bg-gray-800 rounded-lg">
+                        <Link href="/admin" className="p-2 hover:bg-brand-primary/5 dark:hover:bg-gray-800 rounded-lg">
                             <ArrowLeft className="w-5 h-5 text-brand-dark dark:text-gray-400" />
                         </Link>
                         <h1 className="text-3xl font-bold text-brand-dark dark:text-white">Products</h1>
@@ -153,10 +153,10 @@ export default function AdminProducts() {
                                         <td className="px-6 py-4 text-sm text-neutral-600 dark:text-gray-300">
                                             {product.category || '-'}
                                         </td>
-                                        <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
+                                        <td className="px-6 py-4 text-sm font-medium text-brand-dark dark:text-white">
                                             GH₵{product.price.toFixed(2)}
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                                        <td className="px-6 py-4 text-sm text-brand-dark dark:text-white">
                                             <div className="flex flex-col gap-1">
                                                 <span className="font-medium">{product.stock} total</span>
                                                 {product.sizes && product.sizes.length > 0 && (

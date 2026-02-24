@@ -6,6 +6,19 @@ import { jwtVerify } from 'jose';
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'your-secret-key-change-in-production'
 );
+const SESSION_MAX_AGE = 5 * 60; // 5 minutes of inactivity
+
+function refreshSessionCookie(token: string) {
+  const response = NextResponse.next();
+  response.cookies.set('auth-token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: SESSION_MAX_AGE,
+    path: '/',
+  });
+  return response;
+}
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -41,8 +54,19 @@ export async function middleware(request: NextRequest) {
     }
 
     try {
-      await jwtVerify(token.value, JWT_SECRET);
-      return NextResponse.next();
+      const { payload } = await jwtVerify(token.value, JWT_SECRET);
+
+      if (payload.role !== 'CUSTOMER') {
+        if (pathname.startsWith('/api/customer')) {
+          return NextResponse.json(
+            { error: 'Customer access required' },
+            { status: 403 }
+          );
+        }
+        return NextResponse.redirect(new URL('/admin', request.url));
+      }
+
+      return refreshSessionCookie(token.value);
     } catch (error) {
       if (pathname.startsWith('/api/customer')) {
         return NextResponse.json(
@@ -69,8 +93,19 @@ export async function middleware(request: NextRequest) {
     }
 
     try {
-      await jwtVerify(token.value, JWT_SECRET);
-      return NextResponse.next();
+      const { payload } = await jwtVerify(token.value, JWT_SECRET);
+
+      if (payload.role !== 'ADMIN' && payload.role !== 'SUPERADMIN') {
+        if (pathname.startsWith('/api/admin')) {
+          return NextResponse.json(
+            { error: 'Admin access required' },
+            { status: 403 }
+          );
+        }
+        return NextResponse.redirect(new URL('/account', request.url));
+      }
+
+      return refreshSessionCookie(token.value);
     } catch (error) {
       if (pathname.startsWith('/api/admin')) {
         return NextResponse.json(

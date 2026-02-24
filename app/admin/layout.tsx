@@ -36,7 +36,7 @@ interface SidebarLink {
 
 const sidebarLinks: SidebarLink[] = [
     {
-        href: '/admin/dashboard',
+        href: '/admin',
         label: 'Dashboard',
         icon: <LayoutDashboard className="w-5 h-5" />,
     },
@@ -88,14 +88,9 @@ function AdminShell({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null)
     const [isSidebarOpen, setIsSidebarOpen] = useState(true)
     const [isLoading, setIsLoading] = useState(true)
-    const [isMounted, setIsMounted] = useState(false)
 
     // Check if current route should show sidebar
     const isLoginPage = pathname === '/admin/login' || pathname === '/admin/reset-password'
-
-    useEffect(() => {
-        setIsMounted(true)
-    }, [])
 
     useEffect(() => {
         if (isLoginPage) {
@@ -143,43 +138,38 @@ function AdminShell({ children }: { children: ReactNode }) {
         }
     }
 
-    // Don't render anything dynamic until client-side hydration is complete
-    if (!isMounted) {
-        return null
-    }
-
     if (isLoginPage) {
         return <>{children}</>
     }
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className="min-h-screen bg-brand-cream dark:bg-darkbg flex items-center justify-center">
                 <div className="text-center">
-                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
-                    <p className="mt-4 text-gray-500">Loading...</p>
+                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-brand-dark dark:border-white"></div>
+                    <p className="mt-4 text-neutral-600 dark:text-gray-400">Loading...</p>
                 </div>
             </div>
         )
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 flex" suppressHydrationWarning>
+        <div className="min-h-screen bg-brand-cream dark:bg-darkbg flex" suppressHydrationWarning>
             {/* Sidebar Desktop */}
             <div
-                className={`hidden lg:flex flex-col fixed h-screen left-0 top-0 z-40 bg-white border-r border-gray-200 text-gray-900 transition-all duration-300 ${
+                className={`hidden lg:flex flex-col fixed h-screen left-0 top-0 z-40 bg-brand-cream dark:bg-gray-900 border-r border-brand-primary/10 dark:border-gray-800 text-brand-dark dark:text-white transition-all duration-300 ${
                     isSidebarOpen ? 'w-64' : 'w-20'
                 }`}
                 suppressHydrationWarning
             >
                 {/* Logo */}
-                <div className="h-16 flex items-center justify-between px-4 border-b border-gray-100">
+                <div className="h-16 flex items-center justify-between px-4 border-b border-brand-primary/10 dark:border-gray-800">
                     {isSidebarOpen && (
                         <h2 className="font-bold text-xl tracking-tight">SANKOFA</h2>
                     )}
                     <button
                         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                        className="p-1.5 hover:bg-gray-100 rounded-md transition-colors text-gray-500"
+                        className="p-1.5 hover:bg-brand-primary/5 dark:hover:bg-gray-800 rounded-md transition-colors text-neutral-600 dark:text-gray-400"
                     >
                         {isSidebarOpen ? (
                             <X className="w-5 h-5" />
@@ -199,11 +189,11 @@ function AdminShell({ children }: { children: ReactNode }) {
                                 href={link.href}
                                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group ${
                                     isActive 
-                                        ? 'bg-black text-white shadow-sm' 
-                                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                                        ? 'bg-brand-primary text-white shadow-sm' 
+                                        : 'text-neutral-600 dark:text-gray-300 hover:bg-brand-primary/5 dark:hover:bg-gray-800 hover:text-brand-dark dark:hover:text-white'
                                 }`}
                             >
-                                <span className={isActive ? 'text-white' : 'text-gray-500 group-hover:text-gray-900'}>
+                                <span className={isActive ? 'text-white' : 'text-neutral-500 dark:text-gray-400 group-hover:text-brand-dark dark:group-hover:text-white'}>
                                     {link.icon}
                                 </span>
                                 {isSidebarOpen && (
@@ -217,16 +207,16 @@ function AdminShell({ children }: { children: ReactNode }) {
                 </nav>
 
                 {/* User Section */}
-                <div className="p-4 border-t border-gray-100">
+                <div className="p-4 border-t border-brand-primary/10 dark:border-gray-800">
                     {isSidebarOpen && user && (
                         <div className="mb-4 px-2">
-                            <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Signed in as</p>
-                            <p className="font-medium text-sm text-gray-900 truncate">{user.username}</p>
+                            <p className="text-xs text-neutral-500 dark:text-gray-400 font-medium uppercase tracking-wider">Signed in as</p>
+                            <p className="font-medium text-sm text-brand-dark dark:text-white truncate">{user.username}</p>
                         </div>
                     )}
                     <button
                         onClick={handleLogout}
-                        className={`w-full flex items-center ${isSidebarOpen ? 'justify-start px-3' : 'justify-center'} gap-3 py-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors text-sm font-medium`}
+                        className={`w-full flex items-center ${isSidebarOpen ? 'justify-start px-3' : 'justify-center'} gap-3 py-2 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-sm font-medium`}
                     >
                         <LogOut className="w-5 h-5" />
                         {isSidebarOpen && <span>Sign Out</span>}
@@ -235,28 +225,29 @@ function AdminShell({ children }: { children: ReactNode }) {
             </div>
 
             {/* Mobile Header */}
-             <div className="lg:hidden fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-30 px-4 h-16 flex items-center justify-between" suppressHydrationWarning>
+             <div className="lg:hidden fixed top-0 left-0 right-0 bg-brand-cream dark:bg-gray-900 border-b border-brand-primary/10 dark:border-gray-800 z-30 px-4 h-16 flex items-center justify-between" suppressHydrationWarning>
                  <h2 className="font-bold text-xl tracking-tight">SANKOFA</h2>
                  <button
                     onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                    className="p-2 hover:bg-gray-100 rounded-md"
+                    className="p-2 hover:bg-brand-primary/5 dark:hover:bg-gray-800 rounded-md"
                  >
                      <Menu className="w-6 h-6" />
                  </button>
              </div>
 
              {/* Mobile Sidebar Overlay */}
-             {isMounted && isSidebarOpen && (
-                 <div className="lg:hidden fixed inset-0 bg-black/50 z-40" onClick={() => setIsSidebarOpen(false)} />
-             )}
+             <div 
+                className={`lg:hidden fixed inset-0 bg-black/50 z-40 transition-opacity ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} 
+                onClick={() => setIsSidebarOpen(false)} 
+             />
 
             {/* Mobile Sidebar */}
             <div
-                className={`lg:hidden fixed inset-y-0 left-0 z-50 w-64 bg-white transform transition-transform duration-300 ease-in-out ${
+                className={`lg:hidden fixed inset-y-0 left-0 z-50 w-64 bg-brand-cream dark:bg-gray-900 transform transition-transform duration-300 ease-in-out ${
                     isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
                 }`}
             >
-                 <div className="h-16 flex items-center justify-between px-4 border-b border-gray-100">
+                 <div className="h-16 flex items-center justify-between px-4 border-b border-brand-primary/10 dark:border-gray-800">
                     <h2 className="font-bold text-xl tracking-tight">SANKOFA</h2>
                     <button onClick={() => setIsSidebarOpen(false)}>
                         <X className="w-6 h-6" />
@@ -272,11 +263,13 @@ function AdminShell({ children }: { children: ReactNode }) {
                                 onClick={() => setIsSidebarOpen(false)}
                                 className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-all ${
                                     isActive 
-                                        ? 'bg-black text-white' 
-                                        : 'text-gray-600 hover:bg-gray-50'
+                                        ? 'bg-brand-primary text-white' 
+                                        : 'text-neutral-600 dark:text-gray-300 hover:bg-brand-primary/5 dark:hover:bg-gray-800 hover:text-brand-dark dark:hover:text-white'
                                 }`}
                             >
-                                {link.icon}
+                                <span className={isActive ? 'text-white' : 'text-neutral-500 dark:text-gray-400'}>
+                                    {link.icon}
+                                </span>
                                 <span className="font-medium">{link.label}</span>
                             </Link>
                         )
@@ -303,7 +296,7 @@ export default function AdminLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="bg-gray-50 text-gray-900 antialiased">
+      <body className="bg-brand-cream text-brand-dark dark:bg-darkbg dark:text-white antialiased">
         <Providers>
           <AdminShell>{children}</AdminShell>
         </Providers>

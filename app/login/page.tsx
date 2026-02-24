@@ -51,7 +51,7 @@ export default function CustomerLoginPage() {
                 if (response.ok) {
                     const data = await response.json()
                     if (data.user.role === 'ADMIN' || data.user.role === 'SUPERADMIN') {
-                        router.push('/admin/dashboard')
+                        router.push('/admin')
                     } else {
                         router.push('/account')
                     }
@@ -124,7 +124,7 @@ export default function CustomerLoginPage() {
             const role = data.user?.role
             setTimeout(() => {
                 if (role === 'ADMIN' || role === 'SUPERADMIN') {
-                    router.push('/admin/dashboard')
+                    router.push('/admin')
                 } else {
                     router.push(redirectTo)
                 }
@@ -243,9 +243,6 @@ export default function CustomerLoginPage() {
                             <Link href="/register" className="text-black font-medium hover:underline">
                                 Sign up
                             </Link>
-                        </p>
-                        <p className="text-sm text-gray-600">
-                            Admin and customer accounts use the same login.
                         </p>
                     </div>
                 </div>

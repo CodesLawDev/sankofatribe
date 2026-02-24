@@ -64,7 +64,7 @@ export default function AdminCustomers() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
                 <div className="mb-8 flex items-center gap-4">
-                    <Link href="/admin/dashboard" className="p-2 hover:bg-neutral-200 dark:hover:bg-gray-800 rounded-lg">
+                    <Link href="/admin" className="p-2 hover:bg-brand-primary/5 dark:hover:bg-gray-800 rounded-lg">
                         <ArrowLeft className="w-5 h-5 text-brand-dark dark:text-gray-400" />
                     </Link>
                     <h1 className="text-3xl font-bold text-brand-dark dark:text-white">Customers</h1>

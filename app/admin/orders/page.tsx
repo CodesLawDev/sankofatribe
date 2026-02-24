@@ -82,7 +82,7 @@ export default function AdminOrders() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
                 <div className="mb-8 flex items-center gap-4">
-                    <Link href="/admin/dashboard" className="p-2 hover:bg-brand-primary/5 dark:hover:bg-gray-800 rounded-lg">
+                    <Link href="/admin" className="p-2 hover:bg-brand-primary/5 dark:hover:bg-gray-800 rounded-lg">
                         <ArrowLeft className="w-5 h-5 text-brand-dark dark:text-gray-400" />
                     </Link>
                     <h1 className="text-3xl font-bold text-brand-dark dark:text-white">Orders</h1>
@@ -148,16 +148,16 @@ export default function AdminOrders() {
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                            <tbody className="divide-y divide-brand-primary/10 dark:divide-gray-800">
                                 {filteredOrders.map((order) => (
-                                    <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                                        <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
+                                    <tr key={order.id} className="hover:bg-brand-primary/5 dark:hover:bg-gray-800 transition-colors">
+                                        <td className="px-6 py-4 text-sm font-medium text-brand-dark dark:text-white">
                                             {order.orderNumber}
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
+                                        <td className="px-6 py-4 text-sm text-neutral-600 dark:text-gray-300">
                                             {order.user ? `${order.user.firstName} ${order.user.lastName}` : 'Unknown'}
                                         </td>
-                                        <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
+                                        <td className="px-6 py-4 text-sm font-medium text-brand-dark dark:text-white">
                                             GH₵{Number(order.total).toFixed(2)}
                                         </td>
                                         <td className="px-6 py-4 text-sm">
@@ -165,15 +165,15 @@ export default function AdminOrders() {
                                                 {order.status}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
+                                        <td className="px-6 py-4 text-sm text-neutral-600 dark:text-gray-300">
                                             {new Date(order.createdAt).toLocaleDateString()}
                                         </td>
                                         <td className="px-6 py-4 text-sm flex gap-2">
-                                            <button className="p-1 hover:bg-gray-200 dark:hover:bg-gray-800 rounded">
-                                                <Eye className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                                            <button className="p-1 hover:bg-brand-primary/10 dark:hover:bg-gray-800 rounded">
+                                                <Eye className="w-4 h-4 text-neutral-600 dark:text-gray-400" />
                                             </button>
-                                            <button className="p-1 hover:bg-gray-200 dark:hover:bg-gray-800 rounded">
-                                                <Edit className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                                            <button className="p-1 hover:bg-brand-primary/10 dark:hover:bg-gray-800 rounded">
+                                                <Edit className="w-4 h-4 text-neutral-600 dark:text-gray-400" />
                                             </button>
                                         </td>
                                     </tr>

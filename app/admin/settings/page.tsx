@@ -99,10 +99,10 @@ export default function SettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-brand-cream dark:bg-darkbg flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-brand-dark dark:border-white"></div>
+          <p className="mt-4 text-neutral-600 dark:text-gray-400">Loading...</p>
         </div>
       </div>
     )
@@ -111,20 +111,20 @@ export default function SettingsPage() {
   const session = getAdminSession()
 
   return (
-    <div className="min-h-screen bg-brand-cream">
+    <div className="min-h-screen bg-brand-cream dark:bg-darkbg">
       {/* Header */}
-      <div className="bg-brand-cream border-b border-brand-primary/10 sticky top-0 z-50">
+      <div className="bg-brand-cream dark:bg-gray-900 border-b border-brand-primary/10 dark:border-gray-800 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href="/admin" className="inline-flex items-center gap-2 text-sm text-neutral-600 hover:text-brand-dark">
+            <Link href="/admin" className="inline-flex items-center gap-2 text-sm text-neutral-600 dark:text-gray-400 hover:text-brand-dark dark:hover:text-white">
               <ArrowLeft className="h-4 w-4" />
-              Back to Admin
+              Back to Dashboard
             </Link>
-            <h1 className="text-2xl font-light tracking-wider uppercase">Settings</h1>
+            <h1 className="text-2xl font-bold text-brand-dark dark:text-white">Settings</h1>
           </div>
           <div className="flex items-center gap-4">
             {session && (
-              <span className="text-sm text-gray-600">
+              <span className="text-sm text-neutral-600 dark:text-gray-400">
                 {session.user.firstName} {session.user.lastName}
               </span>
             )}
@@ -153,8 +153,8 @@ export default function SettingsPage() {
         {settings && (
           <div className="space-y-6">
             {/* General Settings */}
-            <div className="bg-brand-cream rounded-lg border border-brand-primary/10 p-6 shadow-sm">
-              <h2 className="text-lg font-medium uppercase tracking-wider mb-6 text-brand-dark">General Settings</h2>
+            <div className="bg-brand-cream dark:bg-gray-900 rounded-lg border border-brand-primary/10 dark:border-gray-800 p-6 shadow-sm">
+              <h2 className="text-lg font-medium uppercase tracking-wider mb-6 text-brand-dark dark:text-white">General Settings</h2>
               
               <div className="space-y-4">
                 <div>
@@ -163,7 +163,7 @@ export default function SettingsPage() {
                     type="text"
                     value={settings.siteName}
                     onChange={(e) => setSettings({ ...settings, siteName: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-black"
+                    className="w-full px-4 py-2 border border-brand-primary/20 rounded bg-white dark:bg-gray-800 text-brand-dark dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
                   />
                 </div>
 
@@ -173,7 +173,7 @@ export default function SettingsPage() {
                     value={settings.description || ''}
                     onChange={(e) => setSettings({ ...settings, description: e.target.value })}
                     rows={3}
-                    className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-black"
+                    className="w-full px-4 py-2 border border-brand-primary/20 rounded bg-white dark:bg-gray-800 text-brand-dark dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
                   />
                 </div>
 
@@ -184,7 +184,7 @@ export default function SettingsPage() {
                     value={settings.adminPhone}
                     onChange={(e) => setSettings({ ...settings, adminPhone: e.target.value })}
                     placeholder="+233XXXXXXXXX"
-                    className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-black"
+                    className="w-full px-4 py-2 border border-brand-primary/20 rounded bg-white dark:bg-gray-800 text-brand-dark dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
                   />
                   <p className="text-xs text-gray-500 mt-1">Used for SMS alerts</p>
                 </div>
@@ -196,7 +196,7 @@ export default function SettingsPage() {
                     value={settings.senderId}
                     onChange={(e) => setSettings({ ...settings, senderId: e.target.value })}
                     placeholder="SANKOFA"
-                    className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-black"
+                    className="w-full px-4 py-2 border border-brand-primary/20 rounded bg-white dark:bg-gray-800 text-brand-dark dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
                     maxLength={11}
                   />
                   <p className="text-xs text-gray-500 mt-1">Max 11 characters</p>
@@ -205,8 +205,8 @@ export default function SettingsPage() {
             </div>
 
             {/* Currency & Exchange Rate */}
-            <div className="bg-brand-cream rounded-lg border border-brand-primary/10 p-6 shadow-sm">
-              <h2 className="text-lg font-medium uppercase tracking-wider mb-6 text-brand-dark">Currency & Exchange Rate</h2>
+            <div className="bg-brand-cream dark:bg-gray-900 rounded-lg border border-brand-primary/10 dark:border-gray-800 p-6 shadow-sm">
+              <h2 className="text-lg font-medium uppercase tracking-wider mb-6 text-brand-dark dark:text-white">Currency & Exchange Rate</h2>
               
               <div className="space-y-4">
                 <div>
@@ -229,7 +229,7 @@ export default function SettingsPage() {
                           },
                         })
                       }}
-                      className="w-32 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-black"
+                      className="w-32 px-4 py-2 border border-brand-primary/20 rounded bg-white dark:bg-gray-800 text-brand-dark dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
                     />
                     <span className="text-sm text-gray-600">GHS</span>
                   </div>
@@ -248,8 +248,8 @@ export default function SettingsPage() {
             </div>
 
             {/* Geo Location Settings */}
-            <div className="bg-brand-cream rounded-lg border border-brand-primary/10 p-6 shadow-sm">
-              <h2 className="text-lg font-medium uppercase tracking-wider mb-6 text-brand-dark">Geo Location Settings</h2>
+            <div className="bg-brand-cream dark:bg-gray-900 rounded-lg border border-brand-primary/10 dark:border-gray-800 p-6 shadow-sm">
+              <h2 className="text-lg font-medium uppercase tracking-wider mb-6 text-brand-dark dark:text-white">Geo Location Settings</h2>
               
               <div className="space-y-4">
                 <div>
@@ -266,7 +266,7 @@ export default function SettingsPage() {
                     })}
                     placeholder="GH"
                     maxLength={2}
-                    className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-black"
+                    className="w-full px-4 py-2 border border-brand-primary/20 rounded bg-white dark:bg-gray-800 text-brand-dark dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
                   />
                   <p className="text-xs text-gray-500 mt-1">ISO country code (e.g., GH for Ghana)</p>
                 </div>
@@ -284,7 +284,7 @@ export default function SettingsPage() {
                     })}
                     rows={3}
                     placeholder="GH, BJ, TG"
-                    className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-black"
+                    className="w-full px-4 py-2 border border-brand-primary/20 rounded bg-white dark:bg-gray-800 text-brand-dark dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
                   />
                   <p className="text-xs text-gray-500 mt-1">Comma-separated ISO country codes</p>
                 </div>
