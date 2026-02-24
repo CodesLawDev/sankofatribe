@@ -73,7 +73,7 @@ export default function Footer({ initialData }: FooterProps = {}) {
             }
         }
         fetchFooterData()
-    }, [])
+    }, [initialData])
 
     // Default fallback data
     const defaultData: FooterData = {

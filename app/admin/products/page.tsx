@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Plus, Edit, Trash2, Search, ArrowLeft } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useAdminAuth } from '@/lib/useAdminAuth'
@@ -133,9 +134,11 @@ export default function AdminProducts() {
                                         <td className="px-6 py-4 text-sm font-medium text-brand-dark dark:text-white">
                                             <div className="flex items-center gap-3">
                                                 {product.imageUrl && (
-                                                    <img
+                                                    <Image
                                                         src={product.imageUrl}
                                                         alt={product.name}
+                                                        width={40}
+                                                        height={40}
                                                         className="w-10 h-10 rounded object-cover"
                                                     />
                                                 )}

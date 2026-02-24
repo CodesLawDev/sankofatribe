@@ -2,7 +2,7 @@
 'use client'
 
 import { useState, FormEvent, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { AlertCircle, CheckCircle } from 'lucide-react'
 
@@ -14,6 +14,9 @@ interface LoginFormData {
 
 export default function CustomerLoginPage() {
     const router = useRouter()
+    const searchParams = useSearchParams()
+    const redirectTo = searchParams?.get('redirect_to') || '/account'
+    
     const [isHydrated, setIsHydrated] = useState(false)
     const [formData, setFormData] = useState<LoginFormData>({
         email: '',

@@ -1,18 +1,44 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import Image from "next/image"
 import Link from "next/link"
 import { useCart } from "@/lib/cart-context"
 import CheckoutProgress from "@/components/checkout-progress"
+import { MapPin, User, ChevronDown } from "lucide-react"
 
-// =============================================================================
-// Checkout Page — collects customer info, creates order, redirects to Paystack
-// =============================================================================
+// Checkout Page - collects customer info, creates order, redirects to Paystack
+// Checkout Page - collects customer info, creates order, redirects to Paystack
+// Checkout Page - collects customer info, creates order, redirects to Paystack
+
+interface SavedAddress {
+  id: string
+  label: string
+  street: string
+  city: string
+  region: string | null
+  postalCode: string | null
+  country: string
+  isDefault: boolean
+}
+
+interface UserProfile {
+  id: string
+  email: string
+  firstName: string
+  lastName: string
+  phone?: string
+}
 
 export default function CheckoutPage() {
   const { cart, cartTotal, clearCart, validateCartStock } = useCart()
+
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([])
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null)
+  const [showAddressDropdown, setShowAddressDropdown] = useState(false)
+  const [isLoadingAddresses, setIsLoadingAddresses] = useState(false)
 
   const [form, setForm] = useState({
     email: "",
@@ -21,12 +47,80 @@ export default function CheckoutPage() {
     phone: "",
     city: "",
     landmark: "",
+    street: "",
+    region: "",
+    postalCode: "",
+    country: "",
   })
 
   const [isProcessing, setIsProcessing] = useState(false)
   const [stockErrors, setStockErrors] = useState<string[]>([])
   const [generalError, setGeneralError] = useState("")
   const [paymentProvider, setPaymentProvider] = useState<"paystack" | "hubtel">("paystack")
+
+  // Load user profile and addresses if authenticated
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        const authRes = await fetch('/api/auth/me')
+        if (authRes.ok) {
+          const authData = await authRes.json()
+          const profile = authData.user
+          setUserProfile(profile)
+
+          // Pre-fill form with user data
+          setForm((prev) => ({
+            ...prev,
+            email: profile.email,
+            firstName: profile.firstName || "",
+            lastName: profile.lastName || "",
+            phone: profile.phone || "",
+          }))
+
+          // Load saved addresses
+          try {
+            setIsLoadingAddresses(true)
+            const addressRes = await fetch('/api/customer/addresses')
+            if (addressRes.ok) {
+              const addresses = await addressRes.json()
+              setSavedAddresses(addresses)
+
+              // Auto-select default address
+              const defaultAddr = addresses.find((a: SavedAddress) => a.isDefault)
+              if (defaultAddr) {
+                setSelectedAddressId(defaultAddr.id)
+                populateFormFromAddress(defaultAddr)
+              }
+            }
+          } finally {
+            setIsLoadingAddresses(false)
+          }
+        }
+      } catch (error) {
+        console.error('Error loading user data:', error)
+      }
+    }
+
+    loadUserData()
+  }, [])
+
+  const populateFormFromAddress = (address: SavedAddress) => {
+    setForm((prev) => ({
+      ...prev,
+      street: address.street,
+      city: address.city,
+      region: address.region || "",
+      postalCode: address.postalCode || "",
+      country: address.country,
+      landmark: "",
+    }))
+  }
+
+  const handleSelectAddress = (address: SavedAddress) => {
+    setSelectedAddressId(address.id)
+    populateFormFromAddress(address)
+    setShowAddressDropdown(false)
+  }
 
   // Promo
   const [promoCode, setPromoCode] = useState("")
@@ -118,7 +212,15 @@ export default function CheckoutPage() {
             email: form.email,
             phone: form.phone,
           },
-          shippingAddress: { city: form.city, landmark: form.landmark },
+          shippingAddress: { 
+            street: form.street,
+            city: form.city, 
+            region: form.region,
+            postalCode: form.postalCode,
+            country: form.country,
+            landmark: form.landmark 
+          },
+          addressId: selectedAddressId || undefined, // Link to saved address if selected
           items: cart.map((item) => ({
             productId: item.id,
             name: item.name,
@@ -198,7 +300,7 @@ export default function CheckoutPage() {
     )
   }
 
-  // ---------- Render ---------------------------------------------------------
+  // Render
 
   return (
     <main className="min-h-screen pt-24 pb-24">
@@ -254,20 +356,88 @@ export default function CheckoutPage() {
               </h2>
               <div className="space-y-4">
                 <Field label="Email *" name="email" type="email" value={form.email} onChange={onChange} required />
+                <div className="grid grid-cols-2 gap-4">
+                  <Field label="First Name *" name="firstName" value={form.firstName} onChange={onChange} required />
+                  <Field label="Last Name *" name="lastName" value={form.lastName} onChange={onChange} required />
+                </div>
                 <Field label="Phone *" name="phone" type="tel" value={form.phone} onChange={onChange} required />
               </div>
             </section>
 
-            {/* Shipping */}
+            {/* Saved Addresses (for authenticated users) */}
+            {userProfile && savedAddresses.length > 0 && (
+              <section>
+                <h2 className="text-xl font-light mb-6 pb-3 border-b border-gray-200 dark:border-gray-800 flex items-center gap-2">
+                  <MapPin className="w-5 h-5" />
+                  Saved Addresses
+                </h2>
+                <div className="space-y-3">
+                  {isLoadingAddresses ? (
+                    <p className="text-sm text-gray-500">Loading addresses...</p>
+                  ) : (
+                    <div className="relative">
+                      <motion.button
+                        type="button"
+                        onClick={() => setShowAddressDropdown(!showAddressDropdown)}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-black text-left flex items-center justify-between hover:border-gray-400 dark:hover:border-gray-600 transition-colors"
+                      >
+                        <span className="text-sm">
+                          {selectedAddressId
+                            ? savedAddresses.find((a) => a.id === selectedAddressId)?.label ||
+                              "Select Address"
+                            : "Select Address"}
+                        </span>
+                        <ChevronDown
+                          className={`w-4 h-4 transition-transform ${showAddressDropdown ? "rotate-180" : ""}`}
+                        />
+                      </motion.button>
+
+                      {showAddressDropdown && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-black border border-gray-300 dark:border-gray-700 rounded-lg shadow-lg z-10"
+                        >
+                          {savedAddresses.map((address) => (
+                            <button
+                              key={address.id}
+                              type="button"
+                              onClick={() => handleSelectAddress(address)}
+                              className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-900 border-b border-gray-200 dark:border-gray-800 last:border-b-0 transition-colors"
+                            >
+                              <div className="text-sm font-medium">{address.label}</div>
+                              <div className="text-xs text-gray-500">
+                                {address.street}, {address.city}
+                                {address.isDefault && (
+                                  <span className="ml-2 inline-block px-2 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded text-[10px] font-medium">
+                                    Default
+                                  </span>
+                                )}
+                              </div>
+                            </button>
+                          ))}
+                        </motion.div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </section>
+            )}
+
+            {/* Shipping Address */}
             <section>
               <h2 className="text-xl font-light mb-6 pb-3 border-b border-gray-200 dark:border-gray-800">
                 Shipping Address
               </h2>
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <Field label="First Name *" name="firstName" value={form.firstName} onChange={onChange} required />
-                  <Field label="Last Name *" name="lastName" value={form.lastName} onChange={onChange} required />
-                </div>
+                <Field
+                  label="Street Address *"
+                  name="street"
+                  value={form.street}
+                  onChange={onChange}
+                  placeholder="e.g., 123 Main Street"
+                  required
+                />
                 <Field
                   label="City / Town (Specific Area) *"
                   name="city"
@@ -276,13 +446,36 @@ export default function CheckoutPage() {
                   placeholder="e.g., Accra - East Legon"
                   required
                 />
+                <div className="grid grid-cols-2 gap-4">
+                  <Field
+                    label="Region / State"
+                    name="region"
+                    value={form.region}
+                    onChange={onChange}
+                    placeholder="e.g., Greater Accra"
+                  />
+                  <Field
+                    label="Postal Code"
+                    name="postalCode"
+                    value={form.postalCode}
+                    onChange={onChange}
+                    placeholder="e.g., GA-XXX"
+                  />
+                </div>
                 <Field
-                  label="Nearest Landmark *"
+                  label="Country *"
+                  name="country"
+                  value={form.country}
+                  onChange={onChange}
+                  placeholder="e.g., Ghana"
+                  required
+                />
+                <Field
+                  label="Nearest Landmark"
                   name="landmark"
                   value={form.landmark}
                   onChange={onChange}
                   placeholder="e.g., Near A&C Mall"
-                  required
                 />
               </div>
             </section>
@@ -474,9 +667,9 @@ export default function CheckoutPage() {
   )
 }
 
-// =============================================================================
+// Checkout Page - collects customer info, creates order, redirects to Paystack
 // Reusable input field
-// =============================================================================
+// Checkout Page - collects customer info, creates order, redirects to Paystack
 
 function Field({
   label,

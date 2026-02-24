@@ -14,6 +14,8 @@ export async function middleware(request: NextRequest) {
   if (
     pathname === '/admin/login' ||
     pathname === '/admin/reset-password' ||
+    pathname === '/login' ||
+    pathname === '/register' ||
     pathname.startsWith('/api/auth/') ||
     pathname === '/api/admin/auth/login' ||
     pathname === '/api/admin/auth/forgot-password' ||
@@ -22,6 +24,34 @@ export async function middleware(request: NextRequest) {
     pathname === '/api/admin/users/init'
   ) {
     return NextResponse.next();
+  }
+
+  // Protect customer routes
+  if (pathname.startsWith('/account') || pathname.startsWith('/api/customer')) {
+    const token = request.cookies.get('auth-token');
+
+    if (!token) {
+      if (pathname.startsWith('/api/customer')) {
+        return NextResponse.json(
+          { error: 'Unauthorized' },
+          { status: 401 }
+        );
+      }
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
+
+    try {
+      await jwtVerify(token.value, JWT_SECRET);
+      return NextResponse.next();
+    } catch (error) {
+      if (pathname.startsWith('/api/customer')) {
+        return NextResponse.json(
+          { error: 'Invalid or expired token' },
+          { status: 401 }
+        );
+      }
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
   }
 
   // Protect admin routes
@@ -56,5 +86,6 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/api/admin/:path*'],
+  matcher: ['/admin/:path*', '/api/admin/:path*', '/account/:path*', '/api/customer/:path*'],
 };
+

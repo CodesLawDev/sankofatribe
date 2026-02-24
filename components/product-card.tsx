@@ -6,7 +6,7 @@ import { urlFor, Product } from '@/lib/sanity'
 import { Heart, ShoppingBag, Plus, Minus, Eye } from 'lucide-react'
 import { useWishlist } from '@/lib/wishlist-context'
 import { useCart } from '@/lib/cart-context'
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useToast } from '@/components/toast-container'
 import { useCurrency } from '@/lib/currency-context'
 
@@ -16,7 +16,7 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, onQuickView }: ProductCardProps) {
-    const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist()
+    const { addToWishlist, removeFromWishlist, isInWishlist, isAuthenticated, isLoading: wishlistLoading } = useWishlist()
     const { addToCart } = useCart()
     const { showToast } = useToast()
     const { formatPrice, convertPrice, isLoading: currencyLoading } = useCurrency()
@@ -38,15 +38,31 @@ export default function ProductCard({ product, onQuickView }: ProductCardProps) 
     const isSizeOutOfStock = selectedSizeStock === 0
     const displayPrice = !currencyLoading ? formatPrice(convertPrice(product.price)) : '₵--'
 
-    const handleWishlistClick = (e: React.MouseEvent) => {
+    const handleWishlistClick = useCallback(async (e: React.MouseEvent) => {
         e.preventDefault()
         e.stopPropagation()
-        if (inWishlist) {
-            removeFromWishlist(product._id)
-        } else {
-            addToWishlist(product)
+        
+        try {
+            if (inWishlist) {
+                await removeFromWishlist(product._id)
+                showToast(
+                    `Removed from ${isAuthenticated ? 'your account ' : ''}wishlist`,
+                    'success'
+                )
+            } else {
+                await addToWishlist(product)
+                showToast(
+                    isAuthenticated 
+                        ? `Saved to your account wishlist ❤️`
+                        : `Added to wishlist (saved locally)`,
+                    'success'
+                )
+            }
+        } catch (error) {
+            showToast('Error updating wishlist', 'error')
+            console.error('Wishlist error:', error)
         }
-    }
+    }, [inWishlist, product, addToWishlist, removeFromWishlist, isAuthenticated, showToast])
 
     const handleAddToCart = async (e: React.MouseEvent) => {
         e.preventDefault()

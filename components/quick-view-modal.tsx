@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { X, ShoppingBag, Heart, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Product, urlFor } from '@/lib/sanity'
 import { useCart } from '@/lib/cart-context'
 import { useWishlist } from '@/lib/wishlist-context'
+import { useToast } from '@/components/toast-container'
 import { Button } from './ui/button'
 import { useCurrency } from '@/lib/currency-context'
 
@@ -18,7 +19,8 @@ interface QuickViewModalProps {
 
 export default function QuickViewModal({ product, isOpen, onClose }: QuickViewModalProps) {
     const { addToCart } = useCart()
-    const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist()
+    const { addToWishlist, removeFromWishlist, isInWishlist, isAuthenticated } = useWishlist()
+    const { showToast } = useToast()
     const { formatPrice, convertPrice, isLoading: currencyLoading } = useCurrency()
     const [selectedSize, setSelectedSize] = useState('')
     const [selectedColor, setSelectedColor] = useState('')
@@ -34,12 +36,13 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
         }
     }, [isOpen, product]) // Reset when product changes or modal opens
 
-    if (!isOpen || !product) return null
-
-    const inWishlist = isInWishlist(product._id)
-    const displayPrice = !currencyLoading ? formatPrice(convertPrice(product.price)) : '₵--'
+    const inWishlist = product ? isInWishlist(product._id) : false
+    const displayPrice = product && !currencyLoading
+        ? formatPrice(convertPrice(product.price))
+        : '₵--'
 
     const handleAddToCart = async () => {
+        if (!product) return
         if (!selectedSize && product.sizes && product.sizes.length > 0) {
             return
         }
@@ -66,13 +69,31 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
         }
     }
 
-    const handleWishlistToggle = () => {
-        if (inWishlist) {
-            removeFromWishlist(product._id)
-        } else {
-            addToWishlist(product)
+    const handleWishlistToggle = useCallback(async () => {
+        if (!product) return
+        try {
+            if (inWishlist) {
+                await removeFromWishlist(product._id)
+                showToast(
+                    `Removed from ${isAuthenticated ? 'your account ' : ''}wishlist`,
+                    'success'
+                )
+            } else {
+                await addToWishlist(product)
+                showToast(
+                    isAuthenticated 
+                        ? `Saved to your account wishlist ❤️`
+                        : `Added to wishlist (saved locally)`,
+                    'success'
+                )
+            }
+        } catch (error) {
+            showToast('Error updating wishlist', 'error')
+            console.error('Wishlist error:', error)
         }
-    }
+    }, [inWishlist, product, addToWishlist, removeFromWishlist, isAuthenticated, showToast])
+
+    if (!isOpen || !product) return null
 
     const nextImage = () => {
         if (product.images && product.images.length > 1) {
@@ -245,6 +266,18 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
                             className="px-6 py-3 border border-gray-300 text-xs uppercase font-bold tracking-widest hover:border-black hover:text-black transition-colors rounded-sm text-gray-600"
                         >
                             Close
+                        </button>
+
+                        <button
+                            onClick={handleWishlistToggle}
+                            className="p-3 border border-gray-300 text-xs uppercase font-bold tracking-widest hover:border-black hover:text-black hover:bg-gray-50 transition-colors rounded-sm text-gray-600"
+                            aria-label={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+                        >
+                            <Heart
+                                className={`h-5 w-5 transition-colors ${
+                                    inWishlist ? 'fill-red-500 text-red-500' : 'text-gray-600'
+                                }`}
+                            />
                         </button>
                         
                         {product.inStock ? (

@@ -51,24 +51,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         { url: `${BASE_URL}/size-guide`, priority: 0.7, changeFreq: 'weekly' as const },
     ]
 
-    // Fetch dynamic content
     const [products, categories] = await Promise.all([
         getProducts(),
         getCategories(),
     ])
 
-    // Add product URLs
-    const productUrls = productproduct._updatedAt),
+    const productUrls = products.map((product) => ({
+        url: `${BASE_URL}/products/${product.slug.current}`,
+        lastModified: new Date(product._updatedAt),
         changeFrequency: 'weekly' as const,
         priority: 0.7,
     }))
 
-    // Add category URLs
     const categoryUrls = categories.map((category) => ({
         url: `${BASE_URL}/category/${category.slug.current}`,
-        lastModified: new Date(category._updatedAtries.map((category) => ({
-        url: `${BASE_URL}/category/${category.slug.current}`,
-        lastModified: new Date(),
+        lastModified: new Date(category._updatedAt),
         changeFrequency: 'weekly' as const,
         priority: 0.8,
     }))

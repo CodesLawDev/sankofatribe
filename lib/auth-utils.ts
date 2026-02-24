@@ -89,6 +89,7 @@ export async function registerUser(
   phone?: string
 ) {
   const prisma = getPrisma();
+  const normalizedPhone = typeof phone === 'string' ? phone.trim() : ''
   // Check if user already exists
   const existingUser = await prisma.user.findUnique({
     where: { email: email.toLowerCase() },
@@ -96,6 +97,16 @@ export async function registerUser(
 
   if (existingUser) {
     throw new Error('Email already registered');
+  }
+
+  if (normalizedPhone) {
+    const existingPhone = await prisma.user.findFirst({
+      where: { phone: normalizedPhone },
+    })
+
+    if (existingPhone) {
+      throw new Error('Phone number already registered')
+    }
   }
 
   // Hash password
@@ -108,7 +119,7 @@ export async function registerUser(
       firstName,
       lastName,
       passwordHash,
-      phone: phone || null,
+      phone: normalizedPhone || null,
       role: 'CUSTOMER',
       status: 'ACTIVE',
     },

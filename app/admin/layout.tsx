@@ -143,6 +143,11 @@ function AdminShell({ children }: { children: ReactNode }) {
         }
     }
 
+    // Don't render anything dynamic until client-side hydration is complete
+    if (!isMounted) {
+        return null
+    }
+
     if (isLoginPage) {
         return <>{children}</>
     }
@@ -158,25 +163,14 @@ function AdminShell({ children }: { children: ReactNode }) {
         )
     }
 
-    // Don't render sidebar content until client-side hydration is complete
-    if (!isMounted) {
-        return (
-            <div className="min-h-screen bg-gray-50 flex">
-                <div className="w-64 bg-white border-r border-gray-200 transition-all duration-300 flex flex-col fixed h-screen left-0 top-0 z-40 hidden lg:flex" />
-                <div className="lg:ml-64 flex-1">
-                    <div className="p-6">{children}</div>
-                </div>
-            </div>
-        )
-    }
-
     return (
-        <div className="min-h-screen bg-gray-50 flex">
+        <div className="min-h-screen bg-gray-50 flex" suppressHydrationWarning>
             {/* Sidebar Desktop */}
             <div
                 className={`hidden lg:flex flex-col fixed h-screen left-0 top-0 z-40 bg-white border-r border-gray-200 text-gray-900 transition-all duration-300 ${
                     isSidebarOpen ? 'w-64' : 'w-20'
                 }`}
+                suppressHydrationWarning
             >
                 {/* Logo */}
                 <div className="h-16 flex items-center justify-between px-4 border-b border-gray-100">
@@ -241,7 +235,7 @@ function AdminShell({ children }: { children: ReactNode }) {
             </div>
 
             {/* Mobile Header */}
-             <div className="lg:hidden fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-30 px-4 h-16 flex items-center justify-between">
+             <div className="lg:hidden fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-30 px-4 h-16 flex items-center justify-between" suppressHydrationWarning>
                  <h2 className="font-bold text-xl tracking-tight">SANKOFA</h2>
                  <button
                     onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -252,7 +246,7 @@ function AdminShell({ children }: { children: ReactNode }) {
              </div>
 
              {/* Mobile Sidebar Overlay */}
-             {isSidebarOpen && (
+             {isMounted && isSidebarOpen && (
                  <div className="lg:hidden fixed inset-0 bg-black/50 z-40" onClick={() => setIsSidebarOpen(false)} />
              )}
 

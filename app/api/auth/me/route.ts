@@ -45,6 +45,7 @@ export async function GET(request: NextRequest) {
         profileImage: true,
         role: true,
         status: true,
+        permissions: true,
         loyaltyPoints: true,
         totalOrders: true,
         totalSpent: true,

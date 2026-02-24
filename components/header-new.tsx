@@ -2,8 +2,9 @@
 
 import Link from 'next/link'
 import { useCart } from '@/lib/cart-context'
-import { ShoppingBag, Search, Menu, X, Heart, User } from 'lucide-react'
+import { ShoppingBag, Search, Menu, X, Heart, User, LogOut, Settings } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import SearchModal from './search-modal'
 import { client } from '@/lib/sanity'
 import type { NavItem as NavItemType, AnnouncementData as AnnouncementType } from '@/lib/layout-data'
@@ -15,12 +16,6 @@ interface HeaderProps {
     initialAnnouncement?: AnnouncementType | null
 }
 
-interface NavItem {
-    name: string
-    href: string
-    external?: boolean
-}
-
 interface AnnouncementData {
     text: string
     link?: string
@@ -29,7 +24,14 @@ interface AnnouncementData {
     isActive: boolean
 }
 
-const DEFAULT_NAV: NavItem[] = [
+interface UserProfile {
+    id: string
+    email: string
+    firstName: string
+    lastName: string
+}
+
+const DEFAULT_NAV: NavItemType[] = [
     { name: 'New & Featured', href: '/products' },
     { name: 'Men', href: '/category/men' },
     { name: 'Women', href: '/category/women' },
@@ -40,10 +42,14 @@ const DEFAULT_NAV: NavItem[] = [
 
 export default function Header({ initialNavItems, initialAnnouncement }: HeaderProps = {}) {
     const { cartCount } = useCart()
+    const router = useRouter()
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
     const [searchOpen, setSearchOpen] = useState(false)
-    const [mainNav, setMainNav] = useState<NavItem[]>(initialNavItems ?? DEFAULT_NAV)
+    const [mainNav, setMainNav] = useState<NavItemType[]>(initialNavItems ?? DEFAULT_NAV)
     const [announcement, setAnnouncement] = useState<AnnouncementData | null>(initialAnnouncement ?? null)
+    const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
+    const [showUserMenu, setShowUserMenu] = useState(false)
+    const [isLoggingOut, setIsLoggingOut] = useState(false)
 
     useEffect(() => {
         // Only fetch client-side if server data was not provided
@@ -75,7 +81,37 @@ export default function Header({ initialNavItems, initialAnnouncement }: HeaderP
 
         fetchNavigation()
         fetchAnnouncement()
+    }, [initialNavItems, initialAnnouncement])
+
+    useEffect(() => {
+        async function checkUserAuth() {
+            try {
+                const response = await fetch('/api/auth/me')
+                if (response.ok) {
+                    const data = await response.json()
+                    setUserProfile(data.user)
+                }
+            } catch (error) {
+                // Not authenticated - silent fail
+            }
+        }
+
+        checkUserAuth()
     }, [])
+
+    const handleLogout = async () => {
+        try {
+            setIsLoggingOut(true)
+            await fetch('/api/auth/logout', { method: 'POST' })
+            setUserProfile(null)
+            setShowUserMenu(false)
+            router.push('/login')
+        } catch (error) {
+            console.error('Logout failed:', error)
+        } finally {
+            setIsLoggingOut(false)
+        }
+    }
 
     const bgColorMap: Record<string, string> = {
         black: 'bg-black',
@@ -161,15 +197,90 @@ export default function Header({ initialNavItems, initialAnnouncement }: HeaderP
                                     <Heart className="h-5 w-5" strokeWidth={1.5} />
                                 </Link>
 
-                                {/* Account - Desktop only */}
-                                <Link
-                                    href="/account"
-                                    className="hidden sm:flex p-2 hover:bg-gray-50 rounded-lg transition-colors text-gray-700 hover:text-black"
-                                    aria-label="Account"
-                                    title="Account"
-                                >
-                                    <User className="h-5 w-5" strokeWidth={1.5} />
-                                </Link>
+                                {/* User Menu - Desktop only */}
+                                <div className="hidden sm:block relative">
+                                    {userProfile ? (
+                                        <div className="relative">
+                                            <button
+                                                onClick={() => setShowUserMenu(!showUserMenu)}
+                                                className="p-2 hover:bg-gray-50 rounded-lg transition-colors text-gray-700 hover:text-black flex items-center gap-2"
+                                                aria-label="User menu"
+                                            >
+                                                <User className="h-5 w-5" strokeWidth={1.5} />
+                                                <span className="text-xs font-medium hidden md:inline max-w-[80px] truncate">
+                                                    {userProfile.firstName}
+                                                </span>
+                                            </button>
+
+                                            {showUserMenu && (
+                                                <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                                                    <div className="px-4 py-3 border-b border-gray-100">
+                                                        <p className="text-sm font-medium text-gray-900 truncate">
+                                                            {userProfile.firstName} {userProfile.lastName}
+                                                        </p>
+                                                        <p className="text-xs text-gray-500 truncate">{userProfile.email}</p>
+                                                    </div>
+
+                                                    <div className="py-2">
+                                                        <Link
+                                                            href="/account"
+                                                            onClick={() => setShowUserMenu(false)}
+                                                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                                        >
+                                                            <User className="h-4 w-4" />
+                                                            My Account
+                                                        </Link>
+                                                        <Link
+                                                            href="/account?tab=orders"
+                                                            onClick={() => setShowUserMenu(false)}
+                                                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                                        >
+                                                            <ShoppingBag className="h-4 w-4" />
+                                                            Orders
+                                                        </Link>
+                                                        <Link
+                                                            href="/account?tab=wishlist"
+                                                            onClick={() => setShowUserMenu(false)}
+                                                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                                        >
+                                                            <Heart className="h-4 w-4" />
+                                                            Wishlist
+                                                        </Link>
+                                                        <Link
+                                                            href="/account?tab=security"
+                                                            onClick={() => setShowUserMenu(false)}
+                                                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                                        >
+                                                            <Settings className="h-4 w-4" />
+                                                            Settings
+                                                        </Link>
+                                                    </div>
+
+                                                    <div className="border-t border-gray-100 py-2">
+                                                        <button
+                                                            onClick={handleLogout}
+                                                            disabled={isLoggingOut}
+                                                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                                                        >
+                                                            <LogOut className="h-4 w-4" />
+                                                            {isLoggingOut ? 'Logging out...' : 'Logout'}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <Link
+                                            href="/login"
+                                            className="p-2 hover:bg-gray-50 rounded-lg transition-colors text-gray-700 hover:text-black flex items-center gap-2"
+                                            aria-label="Login"
+                                            title="Login"
+                                        >
+                                            <User className="h-5 w-5" strokeWidth={1.5} />
+                                            <span className="text-xs font-medium hidden md:inline">Login</span>
+                                        </Link>
+                                    )}
+                                </div>
 
                                 {/* Cart */}
                                 <Link
@@ -246,16 +357,79 @@ export default function Header({ initialNavItems, initialAnnouncement }: HeaderP
                                         Wishlist
                                     </div>
                                 </Link>
-                                <Link
-                                    href="/account"
-                                    className="block px-3 py-3 text-sm font-medium text-gray-700 hover:text-black hover:bg-gray-50 rounded-lg transition-colors"
-                                    onClick={closeMobileMenu}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <User className="h-5 w-5" strokeWidth={1.5} />
-                                        Account
-                                    </div>
-                                </Link>
+
+                                {/* Auth Section */}
+                                {userProfile ? (
+                                    <>
+                                        <div className="px-3 py-3 bg-gray-50 rounded-lg border border-gray-200">
+                                            <p className="text-sm font-medium text-gray-900 truncate">
+                                                {userProfile.firstName} {userProfile.lastName}
+                                            </p>
+                                            <p className="text-xs text-gray-500 truncate">{userProfile.email}</p>
+                                        </div>
+                                        <Link
+                                            href="/account"
+                                            className="block px-3 py-3 text-sm font-medium text-gray-700 hover:text-black hover:bg-gray-50 rounded-lg transition-colors"
+                                            onClick={closeMobileMenu}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <User className="h-5 w-5" strokeWidth={1.5} />
+                                                My Account
+                                            </div>
+                                        </Link>
+                                        <Link
+                                            href="/account?tab=orders"
+                                            className="block px-3 py-3 text-sm font-medium text-gray-700 hover:text-black hover:bg-gray-50 rounded-lg transition-colors"
+                                            onClick={closeMobileMenu}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <ShoppingBag className="h-5 w-5" strokeWidth={1.5} />
+                                                Orders
+                                            </div>
+                                        </Link>
+                                        <Link
+                                            href="/account?tab=security"
+                                            className="block px-3 py-3 text-sm font-medium text-gray-700 hover:text-black hover:bg-gray-50 rounded-lg transition-colors"
+                                            onClick={closeMobileMenu}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <Settings className="h-5 w-5" strokeWidth={1.5} />
+                                                Settings
+                                            </div>
+                                        </Link>
+                                        <button
+                                            onClick={() => {
+                                                handleLogout()
+                                                closeMobileMenu()
+                                            }}
+                                            disabled={isLoggingOut}
+                                            className="w-full text-left px-3 py-3 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-3"
+                                        >
+                                            <LogOut className="h-5 w-5" strokeWidth={1.5} />
+                                            {isLoggingOut ? 'Logging out...' : 'Logout'}
+                                        </button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Link
+                                            href="/login"
+                                            className="block px-3 py-3 text-sm font-medium text-gray-700 hover:text-black hover:bg-gray-50 rounded-lg transition-colors"
+                                            onClick={closeMobileMenu}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <User className="h-5 w-5" strokeWidth={1.5} />
+                                                Login
+                                            </div>
+                                        </Link>
+                                        <Link
+                                            href="/register"
+                                            className="block px-3 py-3 text-sm font-medium bg-black text-white text-center rounded-lg hover:bg-gray-800 transition-colors"
+                                            onClick={closeMobileMenu}
+                                        >
+                                            Sign Up
+                                        </Link>
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>

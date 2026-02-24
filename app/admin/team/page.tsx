@@ -8,13 +8,14 @@ import { Button } from '@/components/ui/button'
 import { useAdminAuth } from '@/lib/useAdminAuth'
 
 interface AdminUser {
-  _id: string
+  id: string
   email: string
   firstName: string
   lastName: string
-  role: 'admin' | 'user'
-  permissions?: string[]
-  isActive: boolean
+  phone?: string | null
+  role: 'ADMIN' | 'SUPERADMIN'
+  permissions: string[]
+  status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED' | 'DELETED'
   lastLogin?: string
 }
 
@@ -22,8 +23,19 @@ interface CreateUserForm {
   email: string
   firstName: string
   lastName: string
+  phone: string
   role: 'admin' | 'user'
   permissions: string[]
+}
+
+interface EditUserForm {
+  email: string
+  firstName: string
+  lastName: string
+  phone: string
+  role: 'ADMIN' | 'SUPERADMIN'
+  permissions: string[]
+  status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED' | 'DELETED'
 }
 
 const AVAILABLE_PERMISSIONS = [
@@ -44,6 +56,7 @@ const INITIAL_FORM: CreateUserForm = {
   email: '',
   firstName: '',
   lastName: '',
+  phone: '',
   role: 'user',
   permissions: [],
 }
@@ -55,10 +68,16 @@ export default function AdminUsersPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
+  const [isUpdating, setIsUpdating] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [generatedPassword, setGeneratedPassword] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [form, setForm] = useState<CreateUserForm>({ ...INITIAL_FORM })
+  const [editingUser, setEditingUser] = useState<AdminUser | null>(null)
+  const [editForm, setEditForm] = useState<EditUserForm | null>(null)
+
+  const canManageUsers =
+    user?.role === 'SUPERADMIN' || (user?.permissions || []).includes('manage_users')
 
   // Fetch users when authenticated
   useEffect(() => {
@@ -72,8 +91,8 @@ export default function AdminUsersPage() {
       setIsLoading(true)
       const response = await fetch('/api/admin/users', { credentials: 'include' })
       if (!response.ok) throw new Error('Failed to fetch users')
-      const data = await response.json()
-      setUsers(data)
+      const result = await response.json()
+      setUsers(result.data?.users || [])
     } catch (error) {
       setMessage({ type: 'error', text: 'Failed to load users' })
       console.error(error)
@@ -85,7 +104,7 @@ export default function AdminUsersPage() {
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!form.email || !form.firstName || !form.lastName) {
+    if (!form.email || !form.firstName || !form.lastName || !form.phone) {
       setMessage({ type: 'error', text: 'Please fill in all required fields' })
       return
     }
@@ -133,6 +152,68 @@ export default function AdminUsersPage() {
         ? prev.permissions.filter((p) => p !== permission)
         : [...prev.permissions, permission],
     }))
+  }
+
+  const startEdit = (target: AdminUser) => {
+    if (!canManageUsers) return
+    if (target.role === 'SUPERADMIN' && user?.role !== 'SUPERADMIN') return
+    setShowForm(false)
+    setEditingUser(target)
+    setEditForm({
+      email: target.email,
+      firstName: target.firstName,
+      lastName: target.lastName,
+      phone: target.phone || '',
+      role: target.role,
+      permissions: target.permissions || [],
+      status: target.status,
+    })
+  }
+
+  const toggleEditPermission = (permission: string) => {
+    if (!editForm) return
+    setEditForm({
+      ...editForm,
+      permissions: editForm.permissions.includes(permission)
+        ? editForm.permissions.filter((p) => p !== permission)
+        : [...editForm.permissions, permission],
+    })
+  }
+
+  const handleUpdateUser = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingUser || !editForm) return
+
+    if (!editForm.email || !editForm.firstName || !editForm.lastName || !editForm.phone) {
+      setMessage({ type: 'error', text: 'Please fill in all required fields' })
+      return
+    }
+
+    try {
+      setIsUpdating(true)
+      const response = await fetch(`/api/admin/users/${editingUser.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editForm),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setMessage({ type: 'error', text: data.error || 'Failed to update user' })
+        return
+      }
+
+      setMessage({ type: 'success', text: 'User updated successfully!' })
+      setEditingUser(null)
+      setEditForm(null)
+      fetchUsers()
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Failed to update user' })
+      console.error(error)
+    } finally {
+      setIsUpdating(false)
+    }
   }
 
   const resetUserPassword = async (userId: string, useTemp: boolean = true) => {
@@ -187,7 +268,11 @@ export default function AdminUsersPage() {
           </Link>
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-light tracking-wider uppercase">User Management</h1>
-            <Button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2">
+            <Button
+              onClick={() => setShowForm(!showForm)}
+              className="flex items-center gap-2"
+              disabled={!canManageUsers}
+            >
               <Plus className="h-4 w-4" />
               Add User
             </Button>
@@ -275,6 +360,20 @@ export default function AdminUsersPage() {
                 </div>
 
                 <div>
+                  <label className="block text-sm font-medium mb-2">Phone Number *</label>
+                  <input
+                    type="tel"
+                    placeholder="+233 XX XXX XXXX"
+                    value={form.phone}
+                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    disabled={isCreating}
+                    className="w-full px-4 py-2 border border-brand-primary/20 rounded focus:outline-none focus:border-brand-primary disabled:bg-neutral-100 disabled:cursor-not-allowed"
+                    required
+                    autoComplete="tel"
+                  />
+                </div>
+
+                <div>
                   <label className="block text-sm font-medium mb-2">Role</label>
                   <select
                     value={form.role}
@@ -338,6 +437,152 @@ export default function AdminUsersPage() {
           </div>
         )}
 
+        {editingUser && editForm && (
+          <div className="bg-brand-cream rounded-lg border border-brand-primary/10 p-6 mb-8 shadow-sm">
+            <h2 className="text-lg font-medium uppercase tracking-wider mb-6">Edit User</h2>
+
+            <form onSubmit={handleUpdateUser} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Email *</label>
+                  <input
+                    type="email"
+                    placeholder="user@example.com"
+                    value={editForm.email}
+                    onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                    disabled={isUpdating}
+                    className="w-full px-4 py-2 border border-brand-primary/20 rounded focus:outline-none focus:border-brand-primary disabled:bg-neutral-100 disabled:cursor-not-allowed"
+                    required
+                    autoComplete="email"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">First Name *</label>
+                  <input
+                    type="text"
+                    placeholder="John"
+                    value={editForm.firstName}
+                    onChange={(e) => setEditForm({ ...editForm, firstName: e.target.value })}
+                    disabled={isUpdating}
+                    className="w-full px-4 py-2 border border-brand-primary/20 rounded focus:outline-none focus:border-brand-primary disabled:bg-neutral-100 disabled:cursor-not-allowed"
+                    required
+                    autoComplete="given-name"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Last Name *</label>
+                  <input
+                    type="text"
+                    placeholder="Doe"
+                    value={editForm.lastName}
+                    onChange={(e) => setEditForm({ ...editForm, lastName: e.target.value })}
+                    disabled={isUpdating}
+                    className="w-full px-4 py-2 border border-brand-primary/20 rounded focus:outline-none focus:border-brand-primary disabled:bg-neutral-100 disabled:cursor-not-allowed"
+                    required
+                    autoComplete="family-name"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Phone Number *</label>
+                  <input
+                    type="tel"
+                    placeholder="+233 XX XXX XXXX"
+                    value={editForm.phone}
+                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                    disabled={isUpdating}
+                    className="w-full px-4 py-2 border border-brand-primary/20 rounded focus:outline-none focus:border-brand-primary disabled:bg-neutral-100 disabled:cursor-not-allowed"
+                    required
+                    autoComplete="tel"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Role</label>
+                  <select
+                    value={editForm.role}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        role: e.target.value as 'ADMIN' | 'SUPERADMIN',
+                        permissions: e.target.value === 'SUPERADMIN' ? [] : editForm.permissions,
+                      })
+                    }
+                    disabled={isUpdating || editingUser.role === 'SUPERADMIN'}
+                    className="w-full px-4 py-2 border border-brand-primary/20 rounded focus:outline-none focus:border-brand-primary disabled:bg-neutral-100 disabled:cursor-not-allowed"
+                  >
+                    <option value="ADMIN">Admin</option>
+                    <option value="SUPERADMIN">Super Admin</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Status</label>
+                  <select
+                    value={editForm.status}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        status: e.target.value as EditUserForm['status'],
+                      })
+                    }
+                    disabled={isUpdating}
+                    className="w-full px-4 py-2 border border-brand-primary/20 rounded focus:outline-none focus:border-brand-primary disabled:bg-neutral-100 disabled:cursor-not-allowed"
+                  >
+                    <option value="ACTIVE">Active</option>
+                    <option value="INACTIVE">Inactive</option>
+                    <option value="SUSPENDED">Suspended</option>
+                    <option value="DELETED">Deleted</option>
+                  </select>
+                </div>
+              </div>
+
+              {editForm.role === 'ADMIN' && (
+                <div>
+                  <label className="block text-sm font-medium mb-3">Permissions</label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {AVAILABLE_PERMISSIONS.map((perm) => (
+                      <label key={perm.value} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={editForm.permissions.includes(perm.value)}
+                          onChange={() => toggleEditPermission(perm.value)}
+                          className="w-4 h-4"
+                        />
+                        <span className="text-sm">{perm.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {editForm.role === 'SUPERADMIN' && (
+                <div className="bg-blue-50 border border-blue-200 rounded p-4 text-sm text-blue-700">
+                  Super Admin users automatically have access to all features and settings.
+                </div>
+              )}
+
+              <div className="flex gap-4">
+                <Button type="submit" disabled={isUpdating}>
+                  {isUpdating ? 'Saving...' : 'Save Changes'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => {
+                    setEditingUser(null)
+                    setEditForm(null)
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </div>
+        )}
+
         <div className="bg-brand-cream rounded-lg border border-brand-primary/10 overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -353,7 +598,7 @@ export default function AdminUsersPage() {
               </thead>
               <tbody className="divide-y divide-brand-primary/10">
                 {users.map((user) => (
-                  <tr key={user._id} className="hover:bg-brand-primary/5 transition-colors">
+                  <tr key={user.id} className="hover:bg-brand-primary/5 transition-colors">
                     <td className="px-6 py-4 text-sm">
                       {user.firstName} {user.lastName}
                     </td>
@@ -361,19 +606,31 @@ export default function AdminUsersPage() {
                     <td className="px-6 py-4 text-sm">
                       <span
                         className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                          user.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
+                          user.role === 'SUPERADMIN' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
                         }`}
                       >
-                        {user.role === 'admin' ? 'Admin' : 'User'}
+                        {user.role === 'SUPERADMIN' ? 'Super Admin' : 'Admin'}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm">
                       <span
                         className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                          user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          user.status === 'ACTIVE'
+                            ? 'bg-green-100 text-green-800'
+                            : user.status === 'INACTIVE'
+                            ? 'bg-neutral-100 text-neutral-800'
+                            : user.status === 'SUSPENDED'
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-red-100 text-red-800'
                         }`}
                       >
-                        {user.isActive ? 'Active' : 'Inactive'}
+                        {user.status === 'ACTIVE'
+                          ? 'Active'
+                          : user.status === 'INACTIVE'
+                          ? 'Inactive'
+                          : user.status === 'SUSPENDED'
+                          ? 'Suspended'
+                          : 'Deleted'}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-neutral-600">
@@ -381,15 +638,25 @@ export default function AdminUsersPage() {
                     </td>
                     <td className="px-6 py-4 text-sm">
                       <div className="flex items-center gap-3">
-                        <button
-                          onClick={() => resetUserPassword(user._id, true)}
-                          className="text-brand-primary hover:text-brand-primary/80 transition-colors text-sm"
-                        >
-                          Reset Password
-                        </button>
-                        <button className="text-red-600 hover:text-red-800 transition-colors">
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        {canManageUsers && (
+                          <>
+                            <button
+                              onClick={() => startEdit(user)}
+                              className="text-brand-primary hover:text-brand-primary/80 transition-colors text-sm"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => resetUserPassword(user.id, true)}
+                              className="text-brand-primary hover:text-brand-primary/80 transition-colors text-sm"
+                            >
+                              Reset Password
+                            </button>
+                            <button className="text-red-600 hover:text-red-800 transition-colors">
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
