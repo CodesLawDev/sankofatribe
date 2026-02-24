@@ -3,12 +3,6 @@ import { resetPasswordWithToken } from '@/lib/password-reset'
 
 export const dynamic = 'force-dynamic'
 
-/**
- * POST /api/admin/auth/reset-password
- * Body: { token: string, password: string }
- * 
- * Resets the user's password using a valid reset token.
- */
 export async function POST(request: NextRequest) {
   try {
     const { token, password } = await request.json()
@@ -26,6 +20,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+
     const result = await resetPasswordWithToken({ token, password })
     if (!result.success) {
       return NextResponse.json(

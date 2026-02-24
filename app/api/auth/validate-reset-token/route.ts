@@ -3,12 +3,6 @@ import { validateResetToken } from '@/lib/password-reset'
 
 export const dynamic = 'force-dynamic'
 
-/**
- * POST /api/admin/auth/validate-reset-token
- * Body: { token: string }
- * 
- * Validates if a reset token exists and hasn't expired.
- */
 export async function POST(request: NextRequest) {
   try {
     const { token } = await request.json()

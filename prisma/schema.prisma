@@ -63,6 +63,10 @@ model User {
   registeredAt          DateTime    @default(now())
   lastLogin             DateTime?
   updatedAt             DateTime    @updatedAt
+
+  // Password reset
+  resetToken            String?
+  resetTokenExpiry      DateTime?
   
   // Relations
   addresses             Address[]     @relation("UserAddresses")

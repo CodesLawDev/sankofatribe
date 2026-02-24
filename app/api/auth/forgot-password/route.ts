@@ -3,13 +3,6 @@ import { requestPasswordReset } from '@/lib/password-reset'
 
 export const dynamic = 'force-dynamic'
 
-/**
- * POST /api/admin/auth/forgot-password
- * Body: { email?: string, phone?: string }
- * 
- * Generates a secure reset token, stores it with expiry in the user document,
- * and sends an SMS with the reset link to the user's phone.
- */
 export async function POST(request: NextRequest) {
   try {
     const { email, phone } = await request.json()

@@ -50,8 +50,9 @@ export default function CustomerLoginPage() {
                 const response = await fetch('/api/auth/me')
                 if (response.ok) {
                     const data = await response.json()
-                    // If customer/non-admin, redirect to account
-                    if (data.user.role !== 'ADMIN') {
+                    if (data.user.role === 'ADMIN' || data.user.role === 'SUPERADMIN') {
+                        router.push('/admin/dashboard')
+                    } else {
                         router.push('/account')
                     }
                 }
@@ -91,7 +92,7 @@ export default function CustomerLoginPage() {
         }
 
         try {
-            const response = await fetch('/api/customer/auth/login', {
+            const response = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -120,9 +121,13 @@ export default function CustomerLoginPage() {
             }
 
             setSuccess(true)
-            // Redirect to account/dashboard
+            const role = data.user?.role
             setTimeout(() => {
-                router.push('/account')
+                if (role === 'ADMIN' || role === 'SUPERADMIN') {
+                    router.push('/admin/dashboard')
+                } else {
+                    router.push(redirectTo)
+                }
             }, 500)
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An error occurred')
@@ -146,7 +151,7 @@ export default function CustomerLoginPage() {
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">
                         SANKOFA TRIBE
                     </h1>
-                    <p className="text-gray-600">Customer Account</p>
+                    <p className="text-gray-600">Account Login</p>
                 </div>
 
                 {/* Login Card */}
@@ -240,10 +245,7 @@ export default function CustomerLoginPage() {
                             </Link>
                         </p>
                         <p className="text-sm text-gray-600">
-                            Admin?{' '}
-                            <Link href="/admin/login" className="text-black font-medium hover:underline">
-                                Admin login
-                            </Link>
+                            Admin and customer accounts use the same login.
                         </p>
                     </div>
                 </div>
