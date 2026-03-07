@@ -192,7 +192,3 @@ For issues or questions:
 ## 📄 License
 
 This project is licensed under the MIT License.
-
----
-
-Built with ❤️ using Next.js, Sanity, and Stripe
