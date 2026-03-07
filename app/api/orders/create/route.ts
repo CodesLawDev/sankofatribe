@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { serverClient, assertSanityToken, validateOrderStock } from '@/lib/sanity-server'
 import { nanoid } from 'nanoid'
 import { syncOrderToDb } from '@/lib/sync-to-db'
+import { findOrCreateCustomer } from '@/lib/customer-service'
 
 export async function POST(req: NextRequest) {
   try {
@@ -86,6 +87,30 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       )
     }
+
+    // ---- Find or create customer record ------------------------------------
+
+    const { user: customerUser } = await findOrCreateCustomer({
+      email: customer.email,
+      firstName: customer.firstName,
+      lastName: customer.lastName,
+      phone: customer.phone,
+      address: shippingAddress?.city || shippingAddress?.street
+        ? {
+            street: shippingAddress?.street,
+            city: shippingAddress?.city,
+            region: shippingAddress?.region,
+            country: shippingAddress?.country,
+          }
+        : undefined,
+    }).catch((err) => {
+      // Customer creation is non-critical: the order stores guest customer
+      // fields (customerEmail, customerFirstName, etc.) independently and
+      // syncOrderToDb will still attempt to link by email if the user is
+      // eventually created later.  We log the failure and continue.
+      console.error('[orders/create] findOrCreateCustomer failed:', err)
+      return { user: null, created: false }
+    })
 
     // ---- Create order doc ---------------------------------------------------
 
