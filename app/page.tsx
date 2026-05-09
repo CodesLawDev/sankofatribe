@@ -6,6 +6,7 @@ import FeaturedCategories from '@/components/featured-categories'
 import Spotlight from '@/components/spotlight'
 import ProductGrid from '@/components/product-grid'
 import PopupModalWrapper from '@/components/popup-modal-wrapper'
+import FeaturedReviews from '@/components/featured-reviews'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
@@ -182,16 +183,31 @@ async function getFeaturedProducts() {
     return products
 }
 
+async function getFeaturedReviews() {
+    const query = `*[_type == "review" && (featured == true || rating >= 4)] | order(publishedAt desc)[0...3] {
+        _id,
+        author,
+        rating,
+        title,
+        comment,
+        verified,
+        publishedAt
+    }`
+    const reviews = await client.fetch(query, {}, { next: { revalidate: 3600 } })
+    return reviews
+}
+
 export default async function HomePage() {
     const homePageData = await getHomePageData()
 
-    const [categories, featuredProducts, popupEvent, popupCampaign] = await Promise.all([
+    const [categories, featuredProducts, popupEvent, popupCampaign, featuredReviews] = await Promise.all([
         getCategories(),
         homePageData?.latestCollectionProducts ? Promise.resolve(homePageData.latestCollectionProducts) : 
         homePageData?.featuredProducts ? Promise.resolve(homePageData.featuredProducts) : 
         getFeaturedProducts(),
         getPopupEvents(),
         getPopupCampaigns(),
+        getFeaturedReviews(),
     ])
 
     const cmsFeaturedCategories = (homePageData?.featuredCategories || []).map((cat) => ({
@@ -339,6 +355,8 @@ export default async function HomePage() {
                 />
             )}
 
+
+            <FeaturedReviews reviews={featuredReviews} />
 
             {/* Final Callout Section (last part of page) */}
             <RewardsCallout />

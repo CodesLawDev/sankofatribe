@@ -253,6 +253,17 @@ export default function ProductInfo({ product }: ProductInfoProps) {
                     </Button>
                 </div>
 
+                {/* Safe Checkout & Payments */}
+                <div className="pt-2 flex flex-col items-center justify-center gap-2">
+                    <p className="text-[10px] uppercase tracking-widest text-slate-500">Secure Checkout With</p>
+                    <div className="flex flex-wrap items-center justify-center gap-2 opacity-70">
+                        <span className="text-[10px] font-semibold px-2 py-1 border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800">MTN MoMo</span>
+                        <span className="text-[10px] font-semibold px-2 py-1 border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800">Telecel Cash</span>
+                        <span className="text-[10px] font-semibold px-2 py-1 border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800">VISA</span>
+                        <span className="text-[10px] font-semibold px-2 py-1 border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800">Mastercard</span>
+                    </div>
+                </div>
+
                 {/* Benefits */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
                     <div className="glass-sm p-3 rounded-lg flex items-center gap-2 text-slate-700 dark:text-slate-300">
@@ -261,7 +272,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
                     </div>
                     <div className="glass-sm p-3 rounded-lg flex items-center gap-2 text-slate-700 dark:text-slate-300">
                         <RotateCcw className="h-4 w-4 flex-shrink-0" />
-                        <span>30-day easy returns</span>
+                        <span>7-day easy returns</span>
                     </div>
                     <Link href="/size-guide" className="glass-sm p-3 rounded-lg flex items-center gap-2 text-slate-700 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors">
                         <Ruler className="h-4 w-4 flex-shrink-0" />
@@ -279,7 +290,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
                             <span className="group-open:rotate-180 transition-transform">▼</span>
                         </summary>
                         <p className="text-slate-700 dark:text-slate-300 leading-relaxed pb-4 px-4">
-                            Free standard shipping on orders over $100. Returns accepted within 30 days of purchase.
+                            Free standard shipping on orders over $100. Returns accepted within 7 days of purchase for ready-to-wear items. Custom orders are final sale.
                         </p>
                     </details>
                     <details className="group glass-sm">
