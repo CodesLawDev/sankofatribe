@@ -46,7 +46,7 @@ export default function FeaturedReviews({ reviews }: { reviews: FeaturedReview[]
                             </div>
                             
                             <h4 className="text-lg font-medium mb-4 text-black relative z-10">
-                                "{review.title}"
+                                &quot;{review.title}&quot;
                             </h4>
                             
                             <p className="text-sm text-gray-600 leading-relaxed mb-8 relative z-10 line-clamp-4">
