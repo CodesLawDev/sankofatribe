@@ -5,7 +5,12 @@ import { Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useSearchParams } from 'next/navigation'
 
-export default function LeaveReviewClient({ products }: { products: any[] }) {
+type Product = {
+    _id: string
+    name: string
+}
+
+export default function LeaveReviewClient({ products }: { products: Product[] }) {
     const searchParams = useSearchParams()
     const defaultProductId = searchParams?.get('product') || ''
 
