@@ -23,6 +23,7 @@ interface FooterData {
         facebook?: string
         twitter?: string
         youtube?: string
+        tiktok?: string
     }
     bottomSection: Array<{
         title: string
@@ -111,6 +112,7 @@ export default function Footer({ initialData }: FooterProps = {}) {
             facebook: 'https://facebook.com',
             twitter: 'https://twitter.com',
             youtube: 'https://youtube.com',
+            tiktok: 'https://tiktok.com',
         },
         bottomSection: [
             { title: 'Find a Store', description: 'Locate our retail locations near you' },
@@ -182,6 +184,13 @@ export default function Footer({ initialData }: FooterProps = {}) {
                                             <Youtube className="h-5 w-5" />
                                         </a>
                                     )}
+                                    {socialLinks.tiktok && (
+                                        <a href={socialLinks.tiktok} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors" aria-label="TikTok">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+                                                <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5v3a3 3 0 0 1-3-3v11a7 7 0 1 1-7-7z" />
+                                            </svg>
+                                        </a>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -220,6 +229,14 @@ export default function Footer({ initialData }: FooterProps = {}) {
                             ))}
                         </div>
                     )}
+                </div>
+                {/* Payment Methods */}
+                <div className="mt-8 flex flex-wrap items-center justify-center sm:justify-start gap-3 opacity-60">
+                    <span className="text-[10px] uppercase font-semibold text-gray-500 mr-2">Secure Checkout</span>
+                    <span className="text-xs font-semibold px-2 py-1 border border-gray-800 rounded bg-black">MTN MoMo</span>
+                    <span className="text-xs font-semibold px-2 py-1 border border-gray-800 rounded bg-black">Telecel Cash</span>
+                    <span className="text-xs font-semibold px-2 py-1 border border-gray-800 rounded bg-black">VISA</span>
+                    <span className="text-xs font-semibold px-2 py-1 border border-gray-800 rounded bg-black">Mastercard</span>
                 </div>
             </div>
         </footer>

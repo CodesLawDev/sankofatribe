@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { client, Product } from '@/lib/sanity'
+import { client, Product, urlFor } from '@/lib/sanity'
 import ProductGrid from '@/components/product-grid'
 import ProductInfo from '@/components/product-info'
 import Breadcrumbs from '@/components/breadcrumbs'
@@ -78,9 +78,34 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     const product = await getProduct(params.slug)
     if (!product) return { title: 'Product Not Found' }
     
+    const title = `${product.name} - SANKOFA`
+    const description = product.description || `Shop ${product.name} from SANKOFA`
+    const imageUrl = product.images?.[0] ? urlFor(product.images[0]).width(1200).height(630).url() : '/og-image.png'
+    const url = `https://sankofatribe.com/products/${product.slug.current}`
+    
     return {
-        title: `${product.name} - SANKOFA`,
-        description: product.description || `Shop ${product.name} from SANKOFA`,
+        title,
+        description,
+        openGraph: {
+            title,
+            description,
+            url,
+            images: [
+                {
+                    url: imageUrl,
+                    width: 1200,
+                    height: 630,
+                    alt: product.name,
+                }
+            ],
+            type: 'website',
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title,
+            description,
+            images: [imageUrl],
+        },
     }
 }
 
@@ -108,8 +133,27 @@ export default async function ProductPage({ params }: { params: { slug: string }
         { label: product.name },
     ]
 
+    const jsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        name: product.name,
+        image: product.images?.[0] ? urlFor(product.images[0]).url() : '',
+        description: product.description || `Buy ${product.name} at SANKOFA.`,
+        offers: {
+            '@type': 'Offer',
+            url: `https://sankofatribe.com/products/${product.slug.current}`,
+            priceCurrency: 'GHS',
+            price: product.price,
+            availability: product.inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+        }
+    }
+
     return (
         <div className="bg-white text-black">
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+            />
             <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12 py-8 md:py-16">
                 <Breadcrumbs items={breadcrumbItems} />
                 
