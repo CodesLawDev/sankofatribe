@@ -2,7 +2,7 @@
 'use client'
 
 import { useState, FormEvent, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { AlertCircle, CheckCircle } from 'lucide-react'
 
@@ -14,6 +14,9 @@ interface LoginFormData {
 
 export default function CustomerLoginPage() {
     const router = useRouter()
+    const searchParams = useSearchParams()
+    const redirectTo = searchParams?.get('redirect_to') || '/account'
+    
     const [isHydrated, setIsHydrated] = useState(false)
     const [formData, setFormData] = useState<LoginFormData>({
         email: '',
@@ -47,8 +50,9 @@ export default function CustomerLoginPage() {
                 const response = await fetch('/api/auth/me')
                 if (response.ok) {
                     const data = await response.json()
-                    // If customer/non-admin, redirect to account
-                    if (data.user.role !== 'ADMIN') {
+                    if (data.user.role === 'ADMIN' || data.user.role === 'SUPERADMIN') {
+                        router.push('/admin')
+                    } else {
                         router.push('/account')
                     }
                 }
@@ -88,7 +92,7 @@ export default function CustomerLoginPage() {
         }
 
         try {
-            const response = await fetch('/api/customer/auth/login', {
+            const response = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -117,9 +121,13 @@ export default function CustomerLoginPage() {
             }
 
             setSuccess(true)
-            // Redirect to account/dashboard
+            const role = data.user?.role
             setTimeout(() => {
-                router.push('/account')
+                if (role === 'ADMIN' || role === 'SUPERADMIN') {
+                    router.push('/admin')
+                } else {
+                    router.push(redirectTo)
+                }
             }, 500)
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An error occurred')
@@ -143,7 +151,7 @@ export default function CustomerLoginPage() {
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">
                         SANKOFA TRIBE
                     </h1>
-                    <p className="text-gray-600">Customer Account</p>
+                    <p className="text-gray-600">Account Login</p>
                 </div>
 
                 {/* Login Card */}
@@ -234,12 +242,6 @@ export default function CustomerLoginPage() {
                             Don't have an account?{' '}
                             <Link href="/register" className="text-black font-medium hover:underline">
                                 Sign up
-                            </Link>
-                        </p>
-                        <p className="text-sm text-gray-600">
-                            Admin?{' '}
-                            <Link href="/admin/login" className="text-black font-medium hover:underline">
-                                Admin login
                             </Link>
                         </p>
                     </div>

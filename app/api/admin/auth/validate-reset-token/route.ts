@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { serverClient } from '@/lib/sanity-server'
+import { validateResetToken } from '@/lib/password-reset'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,23 +13,9 @@ export async function POST(request: NextRequest) {
   try {
     const { token } = await request.json()
 
-    if (!token) {
-      return NextResponse.json({ valid: false, error: 'Token is required' }, { status: 400 })
-    }
-
-    // Find user with this token
-    const user = await serverClient.fetch<any>(
-      `*[_type == "user" && resetToken == $token][0]`,
-      { token }
-    )
-
-    if (!user) {
-      return NextResponse.json({ valid: false, error: 'Invalid token' }, { status: 404 })
-    }
-
-    // Check if token has expired
-    if (!user.resetTokenExpiry || new Date(user.resetTokenExpiry) < new Date()) {
-      return NextResponse.json({ valid: false, error: 'Token has expired' }, { status: 400 })
+    const result = await validateResetToken(token)
+    if (!result.valid) {
+      return NextResponse.json(result, { status: 400 })
     }
 
     return NextResponse.json({ valid: true })

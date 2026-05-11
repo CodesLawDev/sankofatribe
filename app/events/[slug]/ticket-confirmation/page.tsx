@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Image from 'next/image';
 import Link from 'next/link';
 import { CheckCircle, Download, Mail, Ticket, QrCode } from 'lucide-react';
 import TicketDownload from '@/components/ticket-download';
@@ -85,7 +86,7 @@ export default function TicketConfirmationPage() {
     };
 
     verifyPayment();
-  }, [reference, retryCount]);
+  }, [reference, retryCount, provider]);
 
   if (loading) {
     return (
@@ -200,13 +201,12 @@ export default function TicketConfirmationPage() {
                 {/* QR Code - Enlarged */}
                 <div className="bg-brand-cream rounded-lg p-6 text-center mb-4 border border-brand-primary/10">
                   {ticketData.ticket.qrCode && (
-                    <img
+                    <Image
                       src={ticketData.ticket.qrCode}
                       alt="Ticket QR Code"
                       width={280}
                       height={280}
                       className="mx-auto border-4 border-white rounded-lg shadow-md"
-                      crossOrigin="anonymous"
                     />
                   )}
                   <p className="text-xs text-neutral-500 mt-3 font-medium">

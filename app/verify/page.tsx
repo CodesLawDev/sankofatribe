@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Calendar, MapPin, Users, QrCode } from 'lucide-react'
 
 interface Event {
@@ -21,6 +22,20 @@ export default function VerifyEventsPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
   const [events, setEvents] = useState<Event[]>([])
+
+  const fetchEvents = useCallback(async () => {
+    try {
+      const response = await fetch('/api/admin/events', { credentials: 'include' })
+      if (response.ok) {
+        const data = await response.json()
+        setEvents(data.events || [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch events:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -42,21 +57,7 @@ export default function VerifyEventsPage() {
       }
     }
     checkAuth()
-  }, [router])
-
-  const fetchEvents = async () => {
-    try {
-      const response = await fetch('/api/admin/events', { credentials: 'include' })
-      if (response.ok) {
-        const data = await response.json()
-        setEvents(data.events || [])
-      }
-    } catch (error) {
-      console.error('Failed to fetch events:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  }, [router, fetchEvents])
 
   if (isLoading) {
     return (
@@ -91,11 +92,13 @@ export default function VerifyEventsPage() {
                 className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden group"
               >
                 {event.imageUrl && (
-                  <div className="h-48 overflow-hidden">
-                    <img
+                  <div className="relative h-48 overflow-hidden">
+                    <Image
                       src={event.imageUrl}
                       alt={event.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      fill
+                      sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   </div>
                 )}

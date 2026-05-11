@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Only admins can access
-    if (payload.role !== 'ADMIN') {
+    if (payload.role !== 'ADMIN' && payload.role !== 'SUPERADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 

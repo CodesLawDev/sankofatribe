@@ -6,6 +6,7 @@ interface AdminUser {
   email: string
   role: string
   username?: string
+  permissions?: string[]
 }
 
 export function useAdminAuth() {
@@ -43,6 +44,7 @@ export function useAdminAuth() {
           email: userData.email,
           role: userData.role,
           username: userData.firstName || userData.email,
+          permissions: userData.permissions || [],
         })
       } catch (error) {
         console.error('Auth check failed:', error)

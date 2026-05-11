@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import TicketVerifier from '@/components/admin/ticket-verifier'
 import AttendeeList from '@/components/admin/attendee-list'
 import Link from 'next/link'
+import Image from 'next/image'
 import { ArrowLeft, Calendar, MapPin } from 'lucide-react'
 
 interface VerifyEventPageProps {
@@ -51,6 +52,25 @@ export default function VerifyEventPage({ params }: VerifyEventPageProps) {
   const [tickets, setTickets] = useState<TicketData[]>([])
   const [stats, setStats] = useState<StatsData>({ totalTickets: 0, usedTickets: 0, pendingTickets: 0 })
 
+  const fetchEventData = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/admin/events/${params.slug}`, { credentials: 'include' })
+      if (!response.ok) {
+        router.push('/verify')
+        return
+      }
+      const data = await response.json()
+      setEvent(data.event)
+      setTickets(data.tickets || [])
+      setStats(data.stats || { totalTickets: 0, usedTickets: 0, pendingTickets: 0 })
+    } catch (error) {
+      console.error('Failed to fetch event data:', error)
+      router.push('/verify')
+    } finally {
+      setIsLoading(false)
+    }
+  }, [params.slug, router])
+
   useEffect(() => {
     const checkAuthAndFetch = async () => {
       try {
@@ -71,26 +91,7 @@ export default function VerifyEventPage({ params }: VerifyEventPageProps) {
       }
     }
     checkAuthAndFetch()
-  }, [router, params.slug])
-
-  const fetchEventData = async () => {
-    try {
-      const response = await fetch(`/api/admin/events/${params.slug}`, { credentials: 'include' })
-      if (!response.ok) {
-        router.push('/verify')
-        return
-      }
-      const data = await response.json()
-      setEvent(data.event)
-      setTickets(data.tickets || [])
-      setStats(data.stats || { totalTickets: 0, usedTickets: 0, pendingTickets: 0 })
-    } catch (error) {
-      console.error('Failed to fetch event data:', error)
-      router.push('/verify')
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  }, [router, fetchEventData])
 
   if (isLoading) {
     return (
@@ -128,11 +129,13 @@ export default function VerifyEventPage({ params }: VerifyEventPageProps) {
         {/* Event Header */}
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           {event.imageUrl && (
-            <div className="h-48 overflow-hidden">
-              <img
+            <div className="relative h-48 overflow-hidden">
+              <Image
                 src={event.imageUrl}
                 alt={event.title}
-                className="w-full h-full object-cover"
+                fill
+                sizes="(min-width: 768px) 50vw, 100vw"
+                className="object-cover"
               />
             </div>
           )}

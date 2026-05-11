@@ -124,14 +124,14 @@ export default function AnalyticsPage() {
         <div className="mb-8">
           <Link href="/admin" className="inline-flex items-center gap-2 text-sm text-neutral-600 dark:text-gray-400 hover:text-brand-dark dark:hover:text-white mb-4">
             <ArrowLeft className="h-4 w-4" />
-            Back to Admin
+            Back to Dashboard
           </Link>
-          <h1 className="text-3xl font-light tracking-wider uppercase text-brand-dark dark:text-white">Analytics & Insights</h1>
+          <h1 className="text-3xl font-bold text-brand-dark dark:text-white">Analytics & Insights</h1>
           <p className="text-sm text-neutral-600 dark:text-gray-400 mt-2">Overview of your business performance</p>
         </div>
 
         {/* Monthly Report Generator */}
-        <div className="bg-white dark:bg-gray-900 rounded-lg border border-brand-primary/10 dark:border-gray-800 p-6 mb-8">
+        <div className="bg-brand-cream dark:bg-gray-900 rounded-lg border border-brand-primary/10 dark:border-gray-800 p-6 mb-8">
           <div className="flex items-center gap-2 mb-4">
             <FileText className="h-5 w-5 text-brand-primary" />
             <h3 className="text-lg font-medium text-brand-dark dark:text-white uppercase tracking-wider">Monthly Report</h3>
@@ -221,7 +221,7 @@ export default function AnalyticsPage() {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8 w-full">
               {/* Total Revenue */}
-              <div className="bg-white dark:bg-gray-900 rounded-lg border border-brand-primary/10 dark:border-gray-800 p-6">
+              <div className="bg-brand-cream dark:bg-gray-900 rounded-lg border border-brand-primary/10 dark:border-gray-800 p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-sm font-medium text-neutral-600 dark:text-gray-400 uppercase tracking-wider">Total Revenue</h3>
                   <DollarSign className="h-5 w-5 text-green-600" />
@@ -231,7 +231,7 @@ export default function AnalyticsPage() {
               </div>
 
               {/* Total Orders */}
-              <div className="bg-white dark:bg-gray-900 rounded-lg border border-brand-primary/10 dark:border-gray-800 p-6">
+              <div className="bg-brand-cream dark:bg-gray-900 rounded-lg border border-brand-primary/10 dark:border-gray-800 p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-sm font-medium text-neutral-600 dark:text-gray-400 uppercase tracking-wider">Total Orders</h3>
                   <ShoppingCart className="h-5 w-5 text-blue-600" />
@@ -241,7 +241,7 @@ export default function AnalyticsPage() {
               </div>
 
               {/* Average Order Value */}
-              <div className="bg-white dark:bg-gray-900 rounded-lg border border-brand-primary/10 dark:border-gray-800 p-6">
+              <div className="bg-brand-cream dark:bg-gray-900 rounded-lg border border-brand-primary/10 dark:border-gray-800 p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-sm font-medium text-neutral-600 dark:text-gray-400 uppercase tracking-wider">Avg Order Value</h3>
                   <TrendingUp className="h-5 w-5 text-purple-600" />
@@ -251,7 +251,7 @@ export default function AnalyticsPage() {
               </div>
 
               {/* Total Customers */}
-              <div className="bg-white dark:bg-gray-900 rounded-lg border border-brand-primary/10 dark:border-gray-800 p-6">
+              <div className="bg-brand-cream dark:bg-gray-900 rounded-lg border border-brand-primary/10 dark:border-gray-800 p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-sm font-medium text-neutral-600 dark:text-gray-400 uppercase tracking-wider">Customers</h3>
                   <Users className="h-5 w-5 text-orange-600" />
@@ -263,7 +263,7 @@ export default function AnalyticsPage() {
 
             {/* Order Status */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-8 w-full">
-              <div className="bg-white dark:bg-gray-900 rounded-lg border border-brand-primary/10 dark:border-gray-800 p-6">
+              <div className="bg-brand-cream dark:bg-gray-900 rounded-lg border border-brand-primary/10 dark:border-gray-800 p-6">
                 <h3 className="text-lg font-medium text-brand-dark dark:text-white uppercase tracking-wider mb-6">Order Status</h3>
                 <div className="space-y-4">
                   <div>
@@ -298,7 +298,7 @@ export default function AnalyticsPage() {
               </div>
 
               {/* Top Products */}
-              <div className="bg-white dark:bg-gray-900 rounded-lg border border-brand-primary/10 dark:border-gray-800 p-6">
+              <div className="bg-brand-cream dark:bg-gray-900 rounded-lg border border-brand-primary/10 dark:border-gray-800 p-6">
                 <h3 className="text-lg font-medium text-brand-dark dark:text-white uppercase tracking-wider mb-6">Top Products</h3>
                 <div className="space-y-4">
                   {stats.topProducts && stats.topProducts.length > 0 ? (
@@ -319,7 +319,7 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Revenue Trend */}
-            <div className="bg-white dark:bg-gray-900 rounded-lg border border-brand-primary/10 dark:border-gray-800 p-6">
+            <div className="bg-brand-cream dark:bg-gray-900 rounded-lg border border-brand-primary/10 dark:border-gray-800 p-6">
               <h3 className="text-lg font-medium text-brand-dark dark:text-white uppercase tracking-wider mb-6">Revenue Trend (Last 7 Days)</h3>
               <div className="space-y-4">
                 {stats.revenueByDay && stats.revenueByDay.length > 0 ? (

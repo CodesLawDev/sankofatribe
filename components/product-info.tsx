@@ -13,6 +13,7 @@ import { Ruler, Truck, RotateCcw } from 'lucide-react'
 import { useEffect } from 'react'
 import { useCurrency } from '@/lib/currency-context'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 interface ProductInfoProps {
     product: Product
@@ -113,43 +114,43 @@ export default function ProductInfo({ product }: ProductInfoProps) {
 
             {/* Product Info */}
             <div className="space-y-8 lg:pt-8">
-                <div className="space-y-3">
-                    <h1 className="text-2xl md:text-3xl font-light tracking-wider uppercase">{product.name}</h1>
+                <div className="space-y-3 glass-sm p-4 rounded-lg">
+                    <h1 className="text-2xl md:text-3xl font-light tracking-wider uppercase text-slate-900 dark:text-white">{product.name}</h1>
                         <div className="flex items-center gap-3">
-                    <p className="text-sm text-gray-600">{displayPrice}</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">{displayPrice}</p>
                             {/* Mock rating - would come from reviews */}
                             <StarRating rating={4.5} size="sm" showNumber />
                         </div>
                     
                         {/* Stock Status */}
                         {selectedSizeStock && selectedSizeStock <= 5 && selectedSizeStock > 0 && (
-                            <p className="text-xs text-red-600 font-medium">
+                            <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">
                                 Only {selectedSizeStock} left in size {selectedSize} - order soon!
                             </p>
                         )}
                         {isSizeOutOfStock && (
-                            <p className="text-xs text-red-600 font-medium">
+                            <p className="text-xs text-red-600 dark:text-red-400 font-medium">
                                 Out of stock in size {selectedSize}
                             </p>
                         )}
                 </div>
 
                 {product.description && (
-                    <div className="border-t border-gray-100 pt-6">
-                        <p className="text-sm text-gray-700 leading-relaxed">{product.description}</p>
+                    <div className="glass-sm p-4 rounded-lg border-transparent">
+                        <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{product.description}</p>
                     </div>
                 )}
 
                 {/* Size Selection */}
                 {product.sizes && product.sizes.length > 0 && (
-                    <div className="border-t border-gray-100 pt-6">
+                    <div className="glass-md p-4 rounded-lg">
                             <div className="flex items-center justify-between mb-4">
-                                <label className="text-xs font-medium uppercase tracking-[0.2em]">
+                                <label className="text-xs font-medium uppercase tracking-[0.2em] text-slate-900 dark:text-white">
                                     Select Size
                                 </label>
                                 <button
                                     onClick={() => setSizeGuideOpen(true)}
-                                    className="flex items-center gap-1 text-xs text-brand-primary hover:underline"
+                                    className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 hover:underline"
                                 >
                                     <Ruler className="h-3 w-3" />
                                     Size Guide
@@ -161,17 +162,17 @@ export default function ProductInfo({ product }: ProductInfoProps) {
                                     key={sizeObj.size}
                                     onClick={() => setSelectedSize(sizeObj.size)}
                                     disabled={sizeObj.stock === 0}
-                                    className={`px-6 py-3 border text-xs uppercase tracking-wider transition-all relative ${
+                                    className={`px-6 py-3 glass text-xs uppercase tracking-wider transition-all rounded-lg ${
                                         selectedSize === sizeObj.size
-                                            ? 'bg-black text-white border-black'
+                                            ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white'
                                             : sizeObj.stock === 0
-                                            ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
-                                            : 'bg-white text-black border-gray-300 hover:border-black'
+                                            ? 'glass-sm text-slate-400 dark:text-slate-500 border-transparent cursor-not-allowed opacity-50'
+                                            : 'glass-sm text-slate-900 dark:text-white border-transparent hover:bg-white/40 dark:hover:bg-slate-700/50'
                                     }`}
                                 >
                                     {sizeObj.size}
                                     {sizeObj.stock < 10 && sizeObj.stock > 0 && (
-                                        <span className="text-[10px] text-gray-500 block">({sizeObj.stock} left)</span>
+                                        <span className="text-[10px] text-slate-600 dark:text-slate-400 block">({sizeObj.stock} left)</span>
                                     )}
                                 </button>
                             ))}
@@ -181,8 +182,8 @@ export default function ProductInfo({ product }: ProductInfoProps) {
 
                 {/* Color Selection */}
                 {product.colors && product.colors.length > 0 && (
-                    <div className="border-t border-gray-100 pt-6">
-                        <label className="block text-xs font-medium mb-4 uppercase tracking-[0.2em]">
+                    <div className="glass-md p-4 rounded-lg">
+                        <label className="block text-xs font-medium mb-4 uppercase tracking-[0.2em] text-slate-900 dark:text-white">
                             Select Color
                         </label>
                         <div className="flex flex-wrap gap-2">
@@ -190,10 +191,10 @@ export default function ProductInfo({ product }: ProductInfoProps) {
                                 <button
                                     key={color.name}
                                     onClick={() => setSelectedColor(color.name)}
-                                    className={`px-6 py-3 border text-xs transition-all ${
+                                    className={`px-6 py-3 glass text-xs transition-all rounded-lg ${
                                         selectedColor === color.name
-                                            ? 'bg-black text-white border-black'
-                                            : 'bg-white text-black border-gray-300 hover:border-black'
+                                            ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white'
+                                            : 'glass-sm text-slate-900 dark:text-white border-transparent hover:bg-white/40 dark:hover:bg-slate-700/50'
                                     }`}
                                     style={{
                                         borderLeftWidth: '4px',
@@ -208,22 +209,22 @@ export default function ProductInfo({ product }: ProductInfoProps) {
                 )}
 
                 {/* Quantity */}
-                <div className="border-t border-gray-100 pt-6">
-                    <label className="block text-xs font-medium mb-4 uppercase tracking-[0.2em]">
+                <div className="glass-md p-4 rounded-lg">
+                    <label className="block text-xs font-medium mb-4 uppercase tracking-[0.2em] text-slate-900 dark:text-white">
                         Quantity
                     </label>
                     <div className="flex items-center gap-4">
                         <button
                             onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                            className="w-10 h-10 border border-gray-300 hover:border-black focus:ring-2 focus:ring-brand-primary transition-colors text-sm"
+                            className="w-10 h-10 glass-sm rounded-lg hover:bg-white/30 dark:hover:bg-slate-700/50 focus:ring-2 focus:ring-amber-500 transition-all text-slate-900 dark:text-white text-sm"
                             aria-label="Decrease quantity"
                         >
                             −
                         </button>
-                        <span className="w-12 text-center text-sm">{quantity}</span>
+                        <span className="w-12 text-center text-sm text-slate-900 dark:text-white">{quantity}</span>
                         <button
                             onClick={() => setQuantity(quantity + 1)}
-                            className="w-10 h-10 border border-gray-300 hover:border-black focus:ring-2 focus:ring-brand-primary transition-colors text-sm"
+                            className="w-10 h-10 glass-sm rounded-lg hover:bg-white/30 dark:hover:bg-slate-700/50 focus:ring-2 focus:ring-amber-500 transition-all text-slate-900 dark:text-white text-sm"
                             aria-label="Increase quantity"
                         >
                             +
@@ -237,7 +238,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
                         size="lg"
                         onClick={handleAddToCart}
                         disabled={!product.inStock || isSizeOutOfStock || !selectedSize}
-                        className="w-full"
+                        className="w-full btn-glass-primary rounded-lg"
                     >
                         {!product.inStock ? 'Out of Stock' : isSizeOutOfStock ? `Out of Stock in ${selectedSize}` : 'Add to Bag'}
                     </Button>
@@ -246,47 +247,47 @@ export default function ProductInfo({ product }: ProductInfoProps) {
                         variant="secondary"
                         onClick={handleBuyNow}
                         disabled={!product.inStock || isSizeOutOfStock || !selectedSize}
-                        className="w-full"
+                        className="w-full btn-glass-secondary rounded-lg"
                     >
                         Buy Now
                     </Button>
                 </div>
 
                 {/* Benefits */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-neutral-700">
-                    <div className="flex items-center gap-2">
-                        <Truck className="h-4 w-4" />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                    <div className="glass-sm p-3 rounded-lg flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                        <Truck className="h-4 w-4 flex-shrink-0" />
                         <span>Free shipping over $100</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <RotateCcw className="h-4 w-4" />
+                    <div className="glass-sm p-3 rounded-lg flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                        <RotateCcw className="h-4 w-4 flex-shrink-0" />
                         <span>30-day easy returns</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <Ruler className="h-4 w-4" />
+                    <Link href="/size-guide" className="glass-sm p-3 rounded-lg flex items-center gap-2 text-slate-700 dark:text-slate-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors">
+                        <Ruler className="h-4 w-4 flex-shrink-0" />
                         <span>Size & fit help</span>
-                    </div>
+                    </Link>
                 </div>
 
                 <SizeGuideModal isOpen={sizeGuideOpen} onClose={() => setSizeGuideOpen(false)} />
 
                 {/* Product Details */}
-                <div className="border-t border-gray-100 pt-6 space-y-4 text-xs">
-                    <details className="group">
-                        <summary className="cursor-pointer font-medium uppercase tracking-[0.2em] list-none flex items-center justify-between py-2">
+                <div className="glass-container space-y-0 rounded-lg overflow-hidden">
+                    <details className="group glass-sm border-b border-white/20 dark:border-white/10">
+                        <summary className="cursor-pointer font-medium uppercase tracking-[0.2em] list-none flex items-center justify-between py-4 px-4 text-slate-900 dark:text-white hover:bg-white/10 dark:hover:bg-slate-700/30 transition-colors">
                             <span>Shipping & Returns</span>
                             <span className="group-open:rotate-180 transition-transform">▼</span>
                         </summary>
-                        <p className="mt-3 text-gray-600 leading-relaxed pb-2">
+                        <p className="text-slate-700 dark:text-slate-300 leading-relaxed pb-4 px-4">
                             Free standard shipping on orders over $100. Returns accepted within 30 days of purchase.
                         </p>
                     </details>
-                    <details className="group border-t border-gray-100">
-                        <summary className="cursor-pointer font-medium uppercase tracking-[0.2em] list-none flex items-center justify-between py-2">
+                    <details className="group glass-sm">
+                        <summary className="cursor-pointer font-medium uppercase tracking-[0.2em] list-none flex items-center justify-between py-4 px-4 text-slate-900 dark:text-white hover:bg-white/10 dark:hover:bg-slate-700/30 transition-colors">
                             <span>Product Care</span>
                             <span className="group-open:rotate-180 transition-transform">▼</span>
                         </summary>
-                        <p className="mt-3 text-gray-600 leading-relaxed pb-2">
+                        <p className="text-slate-700 dark:text-slate-300 leading-relaxed pb-4 px-4">
                             Machine wash cold. Tumble dry low. Iron on low heat if needed.
                         </p>
                     </details>

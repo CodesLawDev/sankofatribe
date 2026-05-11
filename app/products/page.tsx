@@ -1,5 +1,11 @@
+import { Metadata } from 'next'
 import { client, Product } from '@/lib/sanity'
 import ProductsWithFilters from '@/components/products-with-filters'
+
+export const metadata: Metadata = {
+    title: 'Shop All Products | SANKOFA TRIBE',
+    description: 'Browse our full collection of premium fashion from SANKOFA TRIBE. Find the perfect style for every occasion.',
+}
 
 async function getAllProducts() {
     const query = `*[_type == "product"] | order(_createdAt desc) {
@@ -50,11 +56,6 @@ async function getCampaignBySlug(slug: string) {
     }`
     const campaign = await client.fetch(query, {}, { next: { revalidate: 300 } })
     return campaign
-}
-
-export const metadata = {
-    title: 'All Products - SANKOFA',
-    description: 'Browse all premium fashion products from SANKOFA',
 }
 
 export default async function ProductsPage({ searchParams }: { searchParams?: Record<string, string> }) {

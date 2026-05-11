@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken, getPrisma, hashPassword } from '@/lib/auth-utils'
+import { generateTemporaryPassword } from '@/lib/passwordUtils'
 import { cookies } from 'next/headers'
 
 export const dynamic = 'force-dynamic'
@@ -63,6 +64,9 @@ export async function GET(request: NextRequest) {
         email: true,
         firstName: true,
         lastName: true,
+        phone: true,
+        role: true,
+        permissions: true,
         status: true,
         registeredAt: true,
         lastLogin: true,
@@ -117,19 +121,37 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
+    const prisma = getPrisma()
+    const actingUser = await prisma.user.findUnique({
+      where: { id: payload.userId },
+      select: { role: true, permissions: true },
+    })
+
+    if (!actingUser) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+    }
+
+    const canManageUsers =
+      actingUser.role === 'SUPERADMIN' ||
+      (actingUser.role === 'ADMIN' && actingUser.permissions.includes('manage_users'))
+
+    if (!canManageUsers) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+    }
+
     const body = await request.json()
-    const { email, firstName, lastName, password } = body
+    const { email, firstName, lastName, password, phone } = body
+    const normalizedPhone = typeof phone === 'string' ? phone.trim() : ''
 
     // Validation
-    if (!email || !firstName || !lastName || !password) {
+    if (!email || !firstName || !lastName || !normalizedPhone) {
       return NextResponse.json(
-        { error: 'Email, firstName, lastName, and password are required' },
+        { error: 'Email, firstName, lastName, and phone are required' },
         { status: 400 }
       )
     }
 
     // Check if user already exists
-    const prisma = getPrisma()
     const existing = await prisma.user.findUnique({
       where: { email: email.toLowerCase() },
     })
@@ -141,8 +163,22 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const existingPhone = await prisma.user.findFirst({
+      where: { phone: normalizedPhone },
+    })
+
+    if (existingPhone) {
+      return NextResponse.json(
+        { error: 'Phone number already in use' },
+        { status: 400 }
+      )
+    }
+
+    const hasProvidedPassword = typeof password === 'string' && password.trim().length > 0
+    const passwordToUse = hasProvidedPassword ? password.trim() : generateTemporaryPassword()
+
     // Hash password
-    const passwordHash = await hashPassword(password)
+    const passwordHash = await hashPassword(passwordToUse)
 
     // Create user
     const user = await prisma.user.create({
@@ -150,6 +186,7 @@ export async function POST(request: NextRequest) {
         email: email.toLowerCase(),
         firstName,
         lastName,
+        phone: normalizedPhone,
         passwordHash,
         role: 'ADMIN',
         status: 'ACTIVE',
@@ -168,6 +205,7 @@ export async function POST(request: NextRequest) {
         success: true,
         message: 'Staff user created',
         user,
+        temporaryPassword: hasProvidedPassword ? undefined : passwordToUse,
       },
       { status: 201 }
     )

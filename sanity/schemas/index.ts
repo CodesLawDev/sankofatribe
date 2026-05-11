@@ -8,8 +8,6 @@ import { navigation } from './navigation'
 import { footerSettings } from './footerSettings'
 import { announcement } from './announcement'
 import { order } from './order'
-import { user } from './user'
-import { customer } from './customer'
 import smsLog from './smsLog'
 import { payment } from './payment'
 import { promoCode } from './promoCode'
@@ -33,8 +31,6 @@ export const schemaTypes = [
     announcement,
     order,
     payment,
-    user,
-    customer,
     smsLog,
     promoCode,
     campaign,

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { serverClient } from '@/lib/sanity-server'
-import { hashPassword } from '@/lib/passwordUtils'
+import { resetPasswordWithToken } from '@/lib/password-reset'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,37 +20,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (password.length < 6) {
+    if (password.length < 8) {
       return NextResponse.json(
-        { error: 'Password must be at least 6 characters' },
+        { error: 'Password must be at least 8 characters' },
         { status: 400 }
       )
     }
-
-    // Find user with this token
-    const user = await serverClient.fetch<any>(
-      `*[_type == "user" && resetToken == $token][0]`,
-      { token }
-    )
-
-    if (!user) {
-      return NextResponse.json({ error: 'Invalid or expired token' }, { status: 404 })
+    const result = await resetPasswordWithToken({ token, password })
+    if (!result.success) {
+      return NextResponse.json(
+        { error: result.error || 'Invalid or expired token' },
+        { status: 400 }
+      )
     }
-
-    // Check if token has expired
-    if (!user.resetTokenExpiry || new Date(user.resetTokenExpiry) < new Date()) {
-      return NextResponse.json({ error: 'Token has expired' }, { status: 400 })
-    }
-
-    // Hash the new password
-    const { hash } = hashPassword(password)
-
-    // Update user: set new password hash and clear reset token
-    await serverClient
-      .patch(user._id)
-      .set({ passwordHash: hash })
-      .unset(['resetToken', 'resetTokenExpiry', 'temporaryPassword'])
-      .commit()
 
     return NextResponse.json({
       success: true,

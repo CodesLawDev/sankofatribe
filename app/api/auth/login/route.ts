@@ -6,6 +6,7 @@ import { createRateLimiter } from '@/lib/rate-limit';
 export const dynamic = 'force-dynamic'
 
 const loginLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 10 })
+const SESSION_MAX_AGE = 5 * 60 // 5 minutes of inactivity
 
 export async function POST(request: NextRequest) {
     try {
@@ -43,7 +44,7 @@ export async function POST(request: NextRequest) {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
-            maxAge: 7 * 24 * 60 * 60, // 7 days
+            maxAge: SESSION_MAX_AGE,
             path: '/',
         });
 

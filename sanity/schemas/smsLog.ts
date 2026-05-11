@@ -25,9 +25,9 @@ export default {
     {
       name: 'sentBy',
       title: 'Sent By',
-      type: 'reference',
-      to: [{ type: 'user' }],
-      description: 'Admin user who initiated the SMS',
+      type: 'string',
+      readOnly: true,
+      description: 'Admin user identifier (email or id) who initiated the SMS',
     },
     {
       name: 'sentAt',

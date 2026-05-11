@@ -7,6 +7,11 @@ export type UserPermission =
   | 'manage_products'
   | 'view_customers'
   | 'manage_customers'
+  | 'view_tickets'
+  | 'manage_tickets'
+  | 'verify_tickets'
+  | 'refund_tickets'
+  | 'export_tickets'
   | 'view_settings'
   | 'manage_settings'
   | 'view_analytics'
@@ -39,6 +44,11 @@ export const ALL_PERMISSIONS: UserPermission[] = [
   'manage_products',
   'view_customers',
   'manage_customers',
+  'view_tickets',
+  'manage_tickets',
+  'verify_tickets',
+  'refund_tickets',
+  'export_tickets',
   'view_settings',
   'manage_settings',
   'view_analytics',
