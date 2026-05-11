@@ -17,7 +17,7 @@ export default function WhatsappButton() {
         return () => clearTimeout(timer)
     }, [])
 
-    if (whatsappNumber.length < 8) {
+    if (whatsappNumber.length < 10) {
         return null
     }
 
