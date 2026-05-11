@@ -1,6 +1,6 @@
 'use client'
 
-import { Star, Quote } from 'lucide-react'
+import { Quote } from 'lucide-react'
 import { motion } from 'framer-motion'
 import StarRating from './star-rating'
 
