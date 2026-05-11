@@ -6,8 +6,7 @@ import { MessageCircle } from 'lucide-react'
 
 export default function WhatsappButton() {
     const [isVisible, setIsVisible] = useState(false)
-    // Replace with the actual WhatsApp number including country code, e.g., '233XXXXXXXXX'
-    const whatsappNumber = '233000000000' 
+    const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.replace(/\D/g, '')
     const message = 'Hello! I have a question about Sankofa Tribe.'
 
     useEffect(() => {
@@ -17,6 +16,10 @@ export default function WhatsappButton() {
         }, 1000)
         return () => clearTimeout(timer)
     }, [])
+
+    if (!whatsappNumber) {
+        return null
+    }
 
     return (
         <AnimatePresence>

@@ -57,6 +57,7 @@ PAYSTACK_SECRET_KEY=your_paystack_secret_key
 
 # Site URL
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_WHATSAPP_NUMBER=233XXXXXXXXX
 ```
 
 ### 4. Run the Development Server
