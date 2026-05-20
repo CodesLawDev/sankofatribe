@@ -6,6 +6,7 @@ import { Providers } from './providers'
 import AnalyticsTracker from '@/components/analytics-tracker'
 import PullToRefresh from '@/components/pull-to-refresh'
 import WhatsappButton from '@/components/whatsapp-button'
+import NewsletterPopup from '@/components/newsletter-popup'
 import { fetchLayoutData } from '@/lib/layout-data'
 
 export const viewport: Viewport = {
@@ -79,6 +80,7 @@ export default async function RootLayout({
                     <AnalyticsTracker />
                     <PullToRefresh />
                     <WhatsappButton />
+                    <NewsletterPopup />
                     <Header initialNavItems={layoutData.navItems} initialAnnouncement={layoutData.announcement} />
                     <main className="min-h-screen">{children}</main>
                     <Footer initialData={layoutData.footerData} />

@@ -143,6 +143,9 @@ model Order {
   items                 OrderItem[]
   payments              Payment[]
   
+  // Automations
+  followUpEmailSent     Boolean     @default(false)
+  
   // Metadata
   notes                 String?     @db.Text
   createdAt             DateTime    @default(now())
@@ -453,5 +456,24 @@ model ProductRecord {
   @@index([sanityId])
   @@index([slug])
   @@index([featured])
+}
+
+// Abandoned Cart tracking for automated emails
+model AbandonedCart {
+  id            String    @id @default(cuid())
+  email         String    @db.VarChar(255)
+  cartData      Json      // Store the cart items
+  totalValue    Decimal   @default(0) @db.Decimal(10, 2)
+  
+  // Status
+  recovered     Boolean   @default(false) // True if they came back and bought it
+  emailSent     Boolean   @default(false) // True if the cron job already sent the email
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([email])
+  @@index([emailSent])
+  @@index([updatedAt])
 }
 

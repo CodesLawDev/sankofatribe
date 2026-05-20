@@ -32,7 +32,7 @@ export async function POST(
       currency = 'GHS',
       tierPrice,
       tierQuantity,
-      provider = 'paystack',
+      provider = 'hubtel',
     }: {
       tierId: string;
       ticketCount: number;
@@ -44,7 +44,7 @@ export async function POST(
       currency: string;
       tierPrice?: number;
       tierQuantity?: number;
-      provider?: 'paystack' | 'hubtel';
+      provider?: 'hubtel';
     } = body;
 
     // Validate input
@@ -188,90 +188,33 @@ export async function POST(
       });
     }
 
-    // For paid tickets, initiate payment with selected provider
+    // Initiate payment via Hubtel
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
-    if (provider === 'hubtel') {
-      // ---- Hubtel ----
-      if (!hubtelService.isConfigured) {
-        return NextResponse.json(
-          { error: 'Hubtel payment is not configured' },
-          { status: 500 }
-        );
-      }
-
-      const eventQuery = `*[_type == "event" && _id == $eventId][0] { title, "slug": slug.current }`;
-      const event = await serverClient.fetch(eventQuery, { eventId });
-      const eventTitle = event?.title || 'Event';
-
-      const result = await hubtelService.initializeCheckout({
-        amount: totalAmount,
-        description: `SankofaTribe Tickets: ${ticketCount}x ${tierId} for ${eventTitle}`,
-        clientReference: order.id,
-        returnUrl: `${siteUrl}/api/events/payment-callback?provider=hubtel&clientReference=${order.id}&eventSlug=${event?.slug || ''}`,
-        callbackUrl: `${siteUrl}/api/events/payment-callback`,
-      });
-
-      return NextResponse.json({
-        orderId: order.id,
-        paymentUrl: result.checkoutUrl,
-        reference: order.id,
-        provider: 'hubtel',
-      });
-    }
-
-    // ---- Paystack (default) ----
-    const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
-    if (!paystackSecretKey) {
+    if (!hubtelService.isConfigured) {
       return NextResponse.json(
-        { error: 'Paystack payment is not configured' },
+        { error: 'Hubtel payment is not configured' },
         { status: 500 }
       );
     }
 
-    const paystackResponse = await fetch('https://api.paystack.co/transaction/initialize', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${paystackSecretKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email: buyerEmail,
-        amount: Math.round(totalAmount * 100),
-        currency,
-        reference: order.id,
-        callback_url: `${siteUrl}/api/events/payment-callback`,
-        metadata: {
-          orderId: order.id,
-          eventId,
-          tierId: tier.id,
-          ticketCount,
-          buyerName,
-          buyerPhone,
-          attendees: JSON.stringify(attendees),
-        },
-      }),
-    });
+    const eventQuery = `*[_type == "event" && _id == $eventId][0] { title, "slug": slug.current }`;
+    const event = await serverClient.fetch(eventQuery, { eventId });
+    const eventTitle = event?.title || 'Event';
 
-    const paystackData = await paystackResponse.json();
-
-    if (!paystackData.status) {
-      return NextResponse.json(
-        { error: 'Failed to initiate payment' },
-        { status: 500 }
-      );
-    }
-
-    // Update order with payment reference
-    await prisma.eventTicketOrder.update({
-      where: { id: order.id },
-      data: { paymentReference: paystackData.data.reference },
+    const hubtelResult = await hubtelService.initializeCheckout({
+      amount: totalAmount,
+      description: `SankofaTribe Tickets: ${ticketCount}x ${tierId} for ${eventTitle}`,
+      clientReference: order.id,
+      returnUrl: `${siteUrl}/api/events/payment-callback?provider=hubtel&clientReference=${order.id}&eventSlug=${event?.slug || ''}`,
+      callbackUrl: `${siteUrl}/api/events/payment-callback`,
     });
 
     return NextResponse.json({
       orderId: order.id,
-      paymentUrl: paystackData.data.authorization_url,
-      reference: paystackData.data.reference,
+      paymentUrl: hubtelResult.checkoutUrl,
+      reference: order.id,
+      provider: 'hubtel',
     });
   } catch (error) {
     console.error('Ticket purchase error:', error);

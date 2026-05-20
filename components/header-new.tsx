@@ -6,6 +6,7 @@ import { ShoppingBag, Search, Menu, X, Heart, User, LogOut, Settings } from 'luc
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import SearchModal from './search-modal'
+import Image from 'next/image'
 import { client } from '@/lib/sanity'
 import type { NavItem as NavItemType, AnnouncementData as AnnouncementType } from '@/lib/layout-data'
 
@@ -154,10 +155,20 @@ export default function Header({ initialNavItems, initialAnnouncement }: HeaderP
                             {/* Logo */}
                             <Link 
                                 href="/" 
-                                className="flex-shrink-0 font-bold tracking-tight text-sm sm:text-base md:text-lg whitespace-nowrap"
+                                className="flex-shrink-0 flex items-center"
                                 onClick={closeMobileMenu}
+                                aria-label="Sankofa Tribe Home"
                             >
-                                SANKOFA
+                                <div className="relative h-10 w-10 sm:h-12 sm:w-12">
+                                    <Image 
+                                        src="/logo.png" 
+                                        alt="Sankofa Tribe Logo" 
+                                        fill
+                                        sizes="(max-width: 640px) 40px, 48px"
+                                        className="object-contain"
+                                        priority
+                                    />
+                                </div>
                             </Link>
 
                             {/* Desktop Navigation - Center */}
