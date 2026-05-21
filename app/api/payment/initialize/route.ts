@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import hubtelService from '@/lib/hubtel'
-import paymentService from '@/lib/payment'
-import { resolveProvider, type PaymentProvider } from '@/lib/payment-gateways'
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,6 +12,7 @@ export async function POST(request: NextRequest) {
       customerEmail = 'guest@sankofatribe.com',
     } = body
 
+    // Validate common fields
     if (!amount || amount <= 0) {
       return NextResponse.json(
         { success: false, error: 'A positive amount is required.' },

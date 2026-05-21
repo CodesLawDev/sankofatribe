@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { serverClient } from '@/lib/sanity-server'
 
-export const dynamic = 'force-dynamic'
-
 const SETTINGS_QUERY = `*[_type == "siteSettings"][0]{adminPhone, senderId}`
 const PUBLIC_SETTINGS_QUERY = `*[_type == "siteSettings"][0]{senderId}`
 

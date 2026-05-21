@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { client } from '@/lib/sanity'
 
-export const dynamic = 'force-dynamic'
-
 const PRODUCTS_PER_PAGE = 24
 
 const PRODUCT_FIELDS = `{

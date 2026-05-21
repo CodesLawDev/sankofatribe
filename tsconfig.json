@@ -37,12 +37,6 @@
     "exclude": [
         "node_modules",
         "for-referencing",
-        "jest.config.ts",
-        "**/__tests__/**",
-        "**/*.test.ts",
-        "**/*.test.tsx",
-        "**/*.spec.ts",
-        "**/*.spec.tsx",
         "**/*.old.tsx",
         "**/*.old.ts"
     ]

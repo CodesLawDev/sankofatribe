@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
-const FLASHSMS_API_URL = 'https://bms.codeslaw.dev/api/v1'
+const BMS_API_URL = 'https://bms.codeslaw.dev/api/v1'
 
 export async function POST(request: NextRequest) {
     try {
@@ -17,18 +17,18 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'No message provided' }, { status: 400 })
         }
 
-        // Get FlashSMS API credentials
-        const smsApiKey = process.env.FLASHSMS_API_KEY || process.env.BMS_API_KEY
-        const smsSenderId = process.env.FLASHSMS_SENDER_ID || process.env.BMS_SENDER_ID || 'Sankofa'
+        // Get Codeslaw BMS API credentials
+        const smsApiKey = process.env.BMS_API_KEY
+        const smsSenderId = process.env.BMS_SENDER_ID || 'Sankofa'
 
         if (!smsApiKey) {
             return NextResponse.json(
-                { error: 'SMS service not configured. Please add FLASHSMS_API_KEY to environment variables.' },
+                { error: 'SMS service not configured. Please add BMS_API_KEY to environment variables.' },
                 { status: 500 }
             )
         }
 
-        // Format phone numbers for FlashSMS API (accepts 0XXXXXXXXX or 233XXXXXXXXX format)
+        // Format phone numbers for BMS API (accepts 0XXXXXXXXX or 233XXXXXXXXX format)
         const formattedPhones = phones.map((phone: string) => {
             let cleaned = phone.replace(/\s+/g, '').replace(/[^0-9+]/g, '')
             // Remove + prefix if present
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
             if (cleaned.startsWith('233')) {
                 return cleaned
             }
-            // If starts with 0, keep as is (FlashSMS accepts this format)
+            // If starts with 0, keep as is (BMS accepts this format)
             if (cleaned.startsWith('0')) {
                 return cleaned
             }
@@ -50,8 +50,8 @@ export async function POST(request: NextRequest) {
             return cleaned
         })
 
-        // Send SMS using FlashSMS API
-        const response = await fetch(`${FLASHSMS_API_URL}/sms/send`, {
+        // Send SMS using Codeslaw BMS API
+        const response = await fetch(`${BMS_API_URL}/sms/send`, {
             method: 'POST',
             headers: {
                 Authorization: `Bearer ${smsApiKey}`,
@@ -67,11 +67,11 @@ export async function POST(request: NextRequest) {
         const data = await response.json()
 
         if (!response.ok || !data.success) {
-            console.error('FlashSMS API error:', data)
+            console.error('BMS API error:', data)
             return NextResponse.json({ error: data.error || 'Failed to send SMS' }, { status: response.status })
         }
 
-        // FlashSMS returns success response
+        // BMS returns success response
         return NextResponse.json({
             success: true,
             sent: data.data?.recipientsSent || formattedPhones.length,

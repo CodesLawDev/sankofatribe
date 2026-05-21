@@ -361,15 +361,6 @@ export default async function HomePage() {
             {/* Final Callout Section (last part of page) */}
             <RewardsCallout />
 
-            <div className="border-t border-neutral-100 bg-white px-4 py-6 text-center">
-                <Link
-                    href="/admin/login"
-                    className="text-xs font-medium uppercase tracking-wide text-neutral-400 transition-colors hover:text-black"
-                >
-                    Admin sign in
-                </Link>
-            </div>
-
             {/* Removed extra grid/benefits sections per request */}
 
             {/* Popup Modals for Events & Campaigns */}

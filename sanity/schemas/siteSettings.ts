@@ -104,41 +104,6 @@ export const siteSettings = defineType({
             ],
         } as any),
         defineField({
-            name: 'paymentGateways',
-            title: 'Payment Gateways',
-            type: 'object',
-            description: 'Enable or disable each payment gateway. Toggle off to stop new payments via that provider. In-flight payment verification is unaffected.',
-            fields: [
-                defineField({
-                    name: 'hubtelEnabled',
-                    title: 'Hubtel Enabled',
-                    type: 'boolean',
-                    initialValue: true,
-                    description: 'Accept new payments via Hubtel (Mobile Money)',
-                }),
-                defineField({
-                    name: 'paystackEnabled',
-                    title: 'Paystack Enabled',
-                    type: 'boolean',
-                    initialValue: false,
-                    description: 'Accept new payments via Paystack (Card, Mobile Money, Bank)',
-                }),
-                defineField({
-                    name: 'defaultGateway',
-                    title: 'Default Gateway',
-                    type: 'string',
-                    options: {
-                        list: [
-                            { title: 'Hubtel', value: 'hubtel' },
-                            { title: 'Paystack', value: 'paystack' },
-                        ],
-                    },
-                    initialValue: 'hubtel',
-                    description: 'Which gateway to use when both are enabled',
-                }),
-            ],
-        } as any),
-        defineField({
             name: 'geoLocation',
             title: 'Geo Location Settings',
             type: 'object',

@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPrisma } from '@/lib/auth-utils'
 import { sendBrevoEmail } from '@/lib/brevo'
 
-export const dynamic = 'force-dynamic'
-
 const prisma = getPrisma()
 
 /**
