@@ -4,7 +4,7 @@ import { cookies } from 'next/headers'
 
 export const dynamic = 'force-dynamic'
 
-const BMS_API_URL = 'https://bms.codeslaw.dev/api/v1'
+const FLASHSMS_API_URL = 'https://bms.codeslaw.dev/api/v1'
 
 export async function GET(request: NextRequest) {
     try {
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
         }
 
-        const smsApiKey = process.env.BMS_API_KEY
+        const smsApiKey = process.env.FLASHSMS_API_KEY || process.env.BMS_API_KEY
 
         if (!smsApiKey) {
             return NextResponse.json(
@@ -35,8 +35,8 @@ export async function GET(request: NextRequest) {
             )
         }
 
-        // Fetch SMS balance from BMS API
-        const response = await fetch(`${BMS_API_URL}/balance`, {
+        // Fetch SMS balance from FlashSMS API
+        const response = await fetch(`${FLASHSMS_API_URL}/balance`, {
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${smsApiKey}`,
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
         const data = await response.json()
 
         if (!response.ok) {
-            console.error('BMS balance API error:', data)
+            console.error('FlashSMS balance API error:', data)
             // Return a default error response with a fallback message
             return NextResponse.json({
                 balance: 0,
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
             })
         }
 
-        // Extract balance from BMS response structure: {data: {balance: number, ...}}
+        // Extract balance from FlashSMS response structure: {data: {balance: number, ...}}
         const balance = data.data?.balance || 0
         const currency = data.data?.currency || 'GHS'
 

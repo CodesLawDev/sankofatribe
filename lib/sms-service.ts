@@ -1,5 +1,5 @@
 /**
- * SMS Service using existing BMS provider
+ * SMS Service using FlashSMS provider
  * Handles sending SMS notifications for analytics and reports
  */
 
@@ -10,7 +10,7 @@ interface SMSResult {
 }
 
 /**
- * Send SMS using existing BMS API endpoint
+ * Send SMS using existing FlashSMS API endpoint
  */
 export async function sendSMS(
   to: string,
@@ -35,7 +35,7 @@ export async function sendSMS(
 
     if (!response.ok) {
       const error = await response.json()
-      console.error('BMS SMS API error:', error)
+      console.error('FlashSMS API error:', error)
       return {
         success: false,
         error: error.error || 'Failed to send SMS',
@@ -82,7 +82,7 @@ export async function sendBulkSMS(
 
     if (!response.ok) {
       const error = await response.json()
-      console.error('BMS bulk SMS error:', error)
+      console.error('FlashSMS bulk SMS error:', error)
       return {
         success: 0,
         failed: recipients.length,

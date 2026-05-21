@@ -18,8 +18,8 @@ Write-Host ""
 
 # Check each required variable
 $requiredVars = @(
-    @{Name="BMS_API_KEY"; Description="BMS API Key (existing)"; Example="your_bms_api_key"},
-    @{Name="BMS_SENDER_ID"; Description="SMS Sender ID"; Example="Sankofa"},
+    @{Name="FLASHSMS_API_KEY"; Description="FlashSMS API Key"; Example="your_flashsms_api_key"},
+    @{Name="FLASHSMS_SENDER_ID"; Description="SMS Sender ID"; Example="Sankofa"},
     @{Name="CRON_SECRET"; Description="Random secret for cron job (32+ chars)"; Example=""},
     @{Name="NEXT_PUBLIC_BASE_URL"; Description="Production URL"; Example="https://sankofatribe.com"}
 )
@@ -49,8 +49,8 @@ foreach ($var in $requiredVars) {
 
 Write-Host ""
 Write-Host "🔗 Useful Links:" -ForegroundColor Cyan
-Write-Host "  • BMS Dashboard: https://bms.codeslaw.dev" -ForegroundColor Blue
-Write-Host "  • Your SMS Logs: BMS Admin Panel" -ForegroundColor Blue
+Write-Host "  • FlashSMS Dashboard: https://bms.codeslaw.dev" -ForegroundColor Blue
+Write-Host "  • Your SMS Logs: FlashSMS Admin Panel" -ForegroundColor Blue
 Write-Host ""
 
 # Generate random CRON_SECRET if needed
