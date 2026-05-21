@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getPrisma } from '@/lib/auth-utils';
 import { serverClient } from '@/lib/sanity-server';
 import { nanoid } from 'nanoid';
-import paymentService, { generateReference } from '@/lib/payment';
+import paymentService from '@/lib/payment';
 import hubtelService from '@/lib/hubtel';
+import { resolveProvider, type PaymentProvider } from '@/lib/payment-gateways';
 
 const prisma = getPrisma();
 
@@ -32,7 +33,7 @@ export async function POST(
       currency = 'GHS',
       tierPrice,
       tierQuantity,
-      provider = 'hubtel',
+      provider: requestedProvider,
     }: {
       tierId: string;
       ticketCount: number;
@@ -44,7 +45,7 @@ export async function POST(
       currency: string;
       tierPrice?: number;
       tierQuantity?: number;
-      provider?: 'hubtel';
+      provider?: PaymentProvider;
     } = body;
 
     // Validate input
@@ -131,9 +132,22 @@ export async function POST(
       );
     }
 
+    // Resolve which gateway to use based on admin toggle settings
+    const isFree = totalAmount === 0;
+    let provider: PaymentProvider = 'hubtel';
+    if (!isFree) {
+      try {
+        provider = await resolveProvider(requestedProvider);
+      } catch (err) {
+        return NextResponse.json(
+          { error: err instanceof Error ? err.message : 'No payment gateway available' },
+          { status: 503 }
+        );
+      }
+    }
+
     // Create order
     const orderId = `ORD-${nanoid(10)}`;
-    const isFree = totalAmount === 0;
 
     const order = await prisma.eventTicketOrder.create({
       data: {
@@ -188,33 +202,46 @@ export async function POST(
       });
     }
 
-    // Initiate payment via Hubtel
+    // Initiate payment via the resolved gateway
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-
-    if (!hubtelService.isConfigured) {
-      return NextResponse.json(
-        { error: 'Hubtel payment is not configured' },
-        { status: 500 }
-      );
-    }
 
     const eventQuery = `*[_type == "event" && _id == $eventId][0] { title, "slug": slug.current }`;
     const event = await serverClient.fetch(eventQuery, { eventId });
     const eventTitle = event?.title || 'Event';
 
-    const hubtelResult = await hubtelService.initializeCheckout({
+    if (provider === 'hubtel') {
+      const hubtelResult = await hubtelService.initializeCheckout({
+        amount: totalAmount,
+        description: `SankofaTribe Tickets: ${ticketCount}x ${tierId} for ${eventTitle}`,
+        clientReference: order.id,
+        returnUrl: `${siteUrl}/api/events/payment-callback?provider=hubtel&clientReference=${order.id}&eventSlug=${event?.slug || ''}`,
+        callbackUrl: `${siteUrl}/api/events/payment-callback`,
+      });
+
+      return NextResponse.json({
+        orderId: order.id,
+        paymentUrl: hubtelResult.checkoutUrl,
+        reference: order.id,
+        provider: 'hubtel',
+      });
+    }
+
+    // Paystack
+    const paystackResult = await paymentService.initializePayment({
+      email: buyerEmail,
       amount: totalAmount,
-      description: `SankofaTribe Tickets: ${ticketCount}x ${tierId} for ${eventTitle}`,
-      clientReference: order.id,
-      returnUrl: `${siteUrl}/api/events/payment-callback?provider=hubtel&clientReference=${order.id}&eventSlug=${event?.slug || ''}`,
-      callbackUrl: `${siteUrl}/api/events/payment-callback`,
+      orderId: order.id,
+      customerName: buyerName,
+      customerPhone: buyerPhone,
+      items: [{ name: `${tierId} — ${eventTitle}`, quantity: ticketCount, price: totalAmount / ticketCount }],
+      callbackUrl: `${siteUrl}/api/events/payment-callback?provider=paystack&clientReference=${order.id}&eventSlug=${event?.slug || ''}`,
     });
 
     return NextResponse.json({
       orderId: order.id,
-      paymentUrl: hubtelResult.checkoutUrl,
-      reference: order.id,
-      provider: 'hubtel',
+      paymentUrl: paystackResult.authorization_url,
+      reference: paystackResult.reference,
+      provider: 'paystack',
     });
   } catch (error) {
     console.error('Ticket purchase error:', error);

@@ -258,7 +258,6 @@ export default function CheckoutPage() {
           orderId,
           customerName: `${form.firstName} ${form.lastName}`,
           customerPhone: form.phone,
-          provider: 'hubtel',
           items: cart.map((i) => ({
             name: i.name,
             quantity: i.quantity,

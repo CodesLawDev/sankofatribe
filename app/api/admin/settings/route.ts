@@ -15,6 +15,11 @@ export async function GET(request: NextRequest) {
           exchangeRate,
           lastUpdated
         },
+        paymentGateways {
+          hubtelEnabled,
+          paystackEnabled,
+          defaultGateway
+        },
         geoLocation {
           ghanaCurrencyCountries,
           defaultCountry
@@ -42,9 +47,31 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
-    const { _id, siteName, description, adminPhone, senderId, currency, geoLocation } = body
+    const { _id, siteName, description, adminPhone, senderId, currency, paymentGateways, geoLocation } = body
 
-    // Update settings in Sanity
+    // Validate: at least one gateway must be enabled
+    if (paymentGateways) {
+      const { hubtelEnabled, paystackEnabled, defaultGateway } = paymentGateways
+      if (!hubtelEnabled && !paystackEnabled) {
+        return NextResponse.json(
+          { error: 'At least one payment gateway must be enabled' },
+          { status: 400 }
+        )
+      }
+      if (defaultGateway === 'hubtel' && !hubtelEnabled) {
+        return NextResponse.json(
+          { error: 'Default gateway "hubtel" cannot be set while Hubtel is disabled' },
+          { status: 400 }
+        )
+      }
+      if (defaultGateway === 'paystack' && !paystackEnabled) {
+        return NextResponse.json(
+          { error: 'Default gateway "paystack" cannot be set while Paystack is disabled' },
+          { status: 400 }
+        )
+      }
+    }
+
     const updated = await serverClient
       .patch(_id)
       .set({
@@ -56,6 +83,7 @@ export async function PUT(request: NextRequest) {
           ...currency,
           lastUpdated: new Date().toISOString(),
         },
+        ...(paymentGateways && { paymentGateways }),
         geoLocation,
       })
       .commit()

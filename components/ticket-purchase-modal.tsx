@@ -147,7 +147,6 @@ export default function TicketPurchaseModal({
           // Provide tier details to allow backend to upsert tier if missing
           tierPrice: selectedTier.price,
           tierQuantity: selectedTier.quantity,
-          provider: 'hubtel',
         }),
       });
 
