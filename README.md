@@ -6,7 +6,7 @@ A high-end fashion e-commerce website built with **Next.js 14** and **Sanity Stu
 
 - **Modern E-Commerce**: Full-featured shopping cart, product variants (size, color), and checkout flow
 - **Headless CMS**: Sanity Studio v3 for easy content management
-- **Payment Integration**: Paystack checkout (primary)
+- **Payment Integration**: Hubtel checkout for shop orders, with Paystack support for ticket/payment verification flows
 - **Premium Design**: Calvin Klein-inspired minimalist aesthetic with smooth animations
 - **Fully Responsive**: Mobile-first design that works on all devices
 - **SEO Optimized**: Server-side rendering with Next.js App Router
@@ -18,7 +18,8 @@ Before you begin, ensure you have:
 
 - Node.js 18+ installed
 - A Sanity account ([create one at sanity.io](https://www.sanity.io))
-- A Paystack account ([create one at paystack.com](https://paystack.com))
+- A Hubtel account for shop checkout
+- A Paystack account for ticket/payment verification flows
 
 ## 🚀 Quick Start
 
@@ -51,9 +52,23 @@ NEXT_PUBLIC_SANITY_PROJECT_ID=your_project_id_here
 NEXT_PUBLIC_SANITY_DATASET=production
 NEXT_PUBLIC_SANITY_API_VERSION=2024-01-01
 
-# Paystack (primary payment)
+# Paystack
 NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY=your_paystack_public_key
 PAYSTACK_SECRET_KEY=your_paystack_secret_key
+
+# Hubtel
+HUBTEL_API_KEY=your_hubtel_api_key
+HUBTEL_ACCOUNT_ID=your_hubtel_account_id
+HUBTEL_MERCHANT_ACCOUNT_NUMBER=your_hubtel_merchant_account_number
+HUBTEL_WEBHOOK_SECRET=your_hubtel_webhook_secret
+
+# Brevo
+BREVO_API_KEY=your_brevo_api_key
+BREVO_LIST_ID=your_brevo_list_id
+
+# FlashSMS
+FLASHSMS_API_KEY=your_flashsms_api_key
+FLASHSMS_SENDER_ID=Sankofa
 
 # Site URL
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
