@@ -12,9 +12,7 @@ interface SiteSettings {
   _id: string
   siteName: string
   description: string
-  activePaymentGateway?: 'hubtel' | 'paystack' | 'both'
   adminPhone: string
-  whatsappNumber?: string
   senderId: string
   currency: {
     defaultCurrency: 'GHS' | 'USD'
@@ -180,20 +178,6 @@ export default function SettingsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">Active Payment Gateway</label>
-                  <select
-                    value={settings.activePaymentGateway || 'both'}
-                    onChange={(e) => setSettings({ ...settings, activePaymentGateway: e.target.value as any })}
-                    className="w-full px-4 py-2 border border-brand-primary/20 rounded bg-white dark:bg-gray-800 text-brand-dark dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
-                  >
-                    <option value="hubtel">Hubtel Only</option>
-                    <option value="paystack">Paystack Only</option>
-                    <option value="both">Both (User Choice)</option>
-                  </select>
-                  <p className="text-xs text-gray-500 mt-1">Controls which payment options are shown to customers at checkout.</p>
-                </div>
-
-                <div>
                   <label className="block text-sm font-medium mb-2">Admin Phone</label>
                   <input
                     type="tel"
@@ -203,18 +187,6 @@ export default function SettingsPage() {
                     className="w-full px-4 py-2 border border-brand-primary/20 rounded bg-white dark:bg-gray-800 text-brand-dark dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
                   />
                   <p className="text-xs text-gray-500 mt-1">Used for SMS alerts</p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">WhatsApp Number</label>
-                  <input
-                    type="tel"
-                    value={settings.whatsappNumber || ''}
-                    onChange={(e) => setSettings({ ...settings, whatsappNumber: e.target.value })}
-                    placeholder="233541234567"
-                    className="w-full px-4 py-2 border border-brand-primary/20 rounded bg-white dark:bg-gray-800 text-brand-dark dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Public WhatsApp number for customer support chat button</p>
                 </div>
 
                 <div>

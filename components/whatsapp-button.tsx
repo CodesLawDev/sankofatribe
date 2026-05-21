@@ -6,25 +6,18 @@ import { MessageCircle } from 'lucide-react'
 
 export default function WhatsappButton() {
     const [isVisible, setIsVisible] = useState(false)
-    const [whatsappNumber, setWhatsappNumber] = useState<string>('')
+    const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.replace(/\D/g, '') ?? ''
     const message = 'Hello! I have a question about Sankofa Tribe.'
 
     useEffect(() => {
-        // Fetch WhatsApp config from Admin settings
-        fetch('/api/settings/public')
-            .then(res => res.json())
-            .then(data => {
-                const number = data.whatsappNumber?.replace(/\D/g, '') || ''
-                if (number.length >= 10) {
-                    setWhatsappNumber(number)
-                    // Show button after a slight delay
-                    setTimeout(() => setIsVisible(true), 1000)
-                }
-            })
-            .catch(err => console.error('Failed to fetch whatsapp config', err))
+        // Show button after a slight delay
+        const timer = setTimeout(() => {
+            setIsVisible(true)
+        }, 1000)
+        return () => clearTimeout(timer)
     }, [])
 
-    if (!whatsappNumber) {
+    if (whatsappNumber.length < 10) {
         return null
     }
 
