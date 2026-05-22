@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
       amount,
       orderId,
       items = [],
-      provider = 'hubtel',
+      provider: requestedProvider,
       customerEmail = 'guest@sankofatribe.com',
     } = body
 
@@ -24,6 +24,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, error: 'Order ID is required.' },
         { status: 400 }
+      )
+    }
+
+    let provider: PaymentProvider
+    try {
+      provider = await resolveProvider('productCheckout', requestedProvider)
+    } catch (err) {
+      return NextResponse.json(
+        { success: false, error: err instanceof Error ? err.message : 'No payment gateway available' },
+        { status: 503 }
       )
     }
 

@@ -11,7 +11,6 @@ interface SiteSettings {
   _id: string
   siteName: string
   description: string
-  activePaymentGateway?: 'hubtel' | 'paystack' | 'both'
   adminPhone: string
   whatsappNumber?: string
   senderId: string
@@ -21,9 +20,14 @@ interface SiteSettings {
     lastUpdated?: string
   }
   paymentGateways?: {
-    hubtelEnabled?: boolean
-    paystackEnabled?: boolean
-    defaultGateway?: 'hubtel' | 'paystack'
+    productCheckout?: {
+      hubtelEnabled?: boolean
+      paystackEnabled?: boolean
+    }
+    ticketing?: {
+      hubtelEnabled?: boolean
+      paystackEnabled?: boolean
+    }
   }
   geoLocation?: {
     ghanaCurrencyCountries?: string[]
@@ -211,20 +215,6 @@ export default function SettingsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">Active Payment Gateway</label>
-                  <select
-                    value={settings.activePaymentGateway || 'both'}
-                    onChange={(e) => setSettings({ ...settings, activePaymentGateway: e.target.value as any })}
-                    className="w-full px-4 py-2 border border-brand-primary/20 rounded bg-white dark:bg-gray-800 text-brand-dark dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
-                  >
-                    <option value="hubtel">Hubtel Only</option>
-                    <option value="paystack">Paystack Only</option>
-                    <option value="both">Both (User Choice)</option>
-                  </select>
-                  <p className="text-xs text-gray-500 mt-1">Controls which payment options are shown to customers at checkout.</p>
-                </div>
-
-                <div>
                   <label className="block text-sm font-medium mb-2">Admin Phone</label>
                   <input
                     type="tel"
@@ -306,8 +296,20 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            {/* Payment Gateways */}
-            <PaymentGatewaysCard settings={settings} setSettings={setSettings} />
+            {/* Payment Gateways: per-surface */}
+            <PaymentGatewaysCard
+              title="Product Checkout Gateways"
+              surface="productCheckout"
+              settings={settings}
+              setSettings={setSettings}
+            />
+
+            <PaymentGatewaysCard
+              title="Ticketing Gateways"
+              surface="ticketing"
+              settings={settings}
+              setSettings={setSettings}
+            />
 
             {/* Geo Location Settings */}
             <div className="bg-brand-cream dark:bg-gray-900 rounded-lg border border-brand-primary/10 dark:border-gray-800 p-6 shadow-sm">
@@ -378,25 +380,30 @@ export default function SettingsPage() {
   )
 }
 
+type GatewaySurface = 'productCheckout' | 'ticketing'
+
 interface PaymentGatewaysCardProps {
+  title: string
+  surface: GatewaySurface
   settings: SiteSettings
   setSettings: (s: SiteSettings) => void
 }
 
-function PaymentGatewaysCard({ settings, setSettings }: PaymentGatewaysCardProps) {
-  const gateways = settings.paymentGateways || {}
-  const hubtelEnabled = gateways.hubtelEnabled ?? true
-  const paystackEnabled = gateways.paystackEnabled ?? false
-  const defaultGateway = gateways.defaultGateway || 'hubtel'
+function PaymentGatewaysCard({ title, surface, settings, setSettings }: PaymentGatewaysCardProps) {
+  const surfaceState = settings.paymentGateways?.[surface] || {}
+  const hubtelEnabled = surfaceState.hubtelEnabled ?? (surface === 'productCheckout')
+  const paystackEnabled = surfaceState.paystackEnabled ?? false
 
-  const update = (patch: Partial<NonNullable<SiteSettings['paymentGateways']>>) => {
+  const update = (patch: { hubtelEnabled?: boolean; paystackEnabled?: boolean }) => {
     setSettings({
       ...settings,
       paymentGateways: {
-        hubtelEnabled,
-        paystackEnabled,
-        defaultGateway,
-        ...patch,
+        ...settings.paymentGateways,
+        [surface]: {
+          hubtelEnabled,
+          paystackEnabled,
+          ...patch,
+        },
       },
     })
   }
@@ -405,14 +412,15 @@ function PaymentGatewaysCard({ settings, setSettings }: PaymentGatewaysCardProps
   const togglePaystack = () => update({ paystackEnabled: !paystackEnabled })
 
   const noneEnabled = !hubtelEnabled && !paystackEnabled
-  const defaultDisabled =
-    (defaultGateway === 'hubtel' && !hubtelEnabled) ||
-    (defaultGateway === 'paystack' && !paystackEnabled)
+  const offCopy =
+    surface === 'ticketing'
+      ? 'Both gateways are off. Ticket purchases will fail until you enable at least one.'
+      : 'Both gateways are off. Product checkout will fail until you enable at least one.'
 
   return (
     <div className="bg-brand-cream dark:bg-gray-900 rounded-lg border border-brand-primary/10 dark:border-gray-800 p-6 shadow-sm">
       <h2 className="text-lg font-medium uppercase tracking-wider mb-6 text-brand-dark dark:text-white">
-        Payment Gateways
+        {title}
       </h2>
 
       <div className="space-y-4">
@@ -430,51 +438,12 @@ function PaymentGatewaysCard({ settings, setSettings }: PaymentGatewaysCardProps
           onToggle={togglePaystack}
         />
 
-        <div className="pt-2 border-t border-brand-primary/10 dark:border-gray-800">
-          <label className="block text-sm font-medium mb-2 mt-3">Default Gateway</label>
-          <p className="text-xs text-gray-500 mb-3">Used when both gateways are enabled</p>
-          <div className="flex gap-3">
-            <label className={`flex items-center gap-2 px-4 py-2 border rounded cursor-pointer ${defaultGateway === 'hubtel' ? 'border-brand-primary bg-brand-primary/5' : 'border-gray-300 dark:border-gray-700'} ${!hubtelEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
-              <input
-                type="radio"
-                name="defaultGateway"
-                checked={defaultGateway === 'hubtel'}
-                disabled={!hubtelEnabled}
-                onChange={() => update({ defaultGateway: 'hubtel' })}
-              />
-              <span className="text-sm">Hubtel</span>
-            </label>
-            <label className={`flex items-center gap-2 px-4 py-2 border rounded cursor-pointer ${defaultGateway === 'paystack' ? 'border-brand-primary bg-brand-primary/5' : 'border-gray-300 dark:border-gray-700'} ${!paystackEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
-              <input
-                type="radio"
-                name="defaultGateway"
-                checked={defaultGateway === 'paystack'}
-                disabled={!paystackEnabled}
-                onChange={() => update({ defaultGateway: 'paystack' })}
-              />
-              <span className="text-sm">Paystack</span>
-            </label>
-          </div>
-        </div>
-
         {noneEnabled && (
           <div className="bg-red-50 border border-red-200 rounded p-3 text-sm text-red-700 flex items-start gap-2">
             <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-            <span>At least one payment gateway must be enabled — saving will fail otherwise.</span>
+            <span>{offCopy}</span>
           </div>
         )}
-
-        {defaultDisabled && !noneEnabled && (
-          <div className="bg-red-50 border border-red-200 rounded p-3 text-sm text-red-700 flex items-start gap-2">
-            <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-            <span>Default gateway &ldquo;{defaultGateway}&rdquo; is disabled. Pick a different default before saving — the app will not fall back to the other gateway.</span>
-          </div>
-        )}
-
-        <div className="bg-blue-50 border border-blue-200 rounded p-3 text-xs text-blue-700">
-          <p className="font-medium mb-1">Note</p>
-          <p>The default gateway is the only one used for new payments. No fallback — if the default is disabled or its API keys aren&apos;t set, checkout will fail until you fix it. Verification of in-flight payments is unaffected.</p>
-        </div>
       </div>
     </div>
   )

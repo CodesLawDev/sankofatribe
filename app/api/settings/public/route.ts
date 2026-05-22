@@ -1,22 +1,39 @@
 import { NextResponse } from 'next/server'
 import { serverClient } from '@/lib/sanity-server'
+import { getGatewayState } from '@/lib/payment-gateways'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
-    const settings = await serverClient.fetch(
-      `*[_type == "siteSettings"][0] { activePaymentGateway, whatsappNumber }`
-    )
+    const [extra, gateways] = await Promise.all([
+      serverClient.fetch<{ whatsappNumber?: string } | null>(
+        `*[_type == "siteSettings"][0] { whatsappNumber }`
+      ),
+      getGatewayState(),
+    ])
 
-    // Default to 'both' if not set
-    const gateway = settings?.activePaymentGateway || 'both'
-    const whatsappNumber = settings?.whatsappNumber || ''
-
-    return NextResponse.json({ gateway, whatsappNumber })
+    return NextResponse.json({
+      whatsappNumber: extra?.whatsappNumber || '',
+      gateways: {
+        productCheckout: {
+          hubtelEnabled: gateways.productCheckout.hubtel.enabled,
+          paystackEnabled: gateways.productCheckout.paystack.enabled,
+        },
+        ticketing: {
+          hubtelEnabled: gateways.ticketing.hubtel.enabled,
+          paystackEnabled: gateways.ticketing.paystack.enabled,
+        },
+      },
+    })
   } catch (error) {
     console.error('Failed to fetch public settings:', error)
-    // Default fallback
-    return NextResponse.json({ gateway: 'both', whatsappNumber: '' })
+    return NextResponse.json({
+      whatsappNumber: '',
+      gateways: {
+        productCheckout: { hubtelEnabled: true, paystackEnabled: false },
+        ticketing: { hubtelEnabled: false, paystackEnabled: false },
+      },
+    })
   }
 }

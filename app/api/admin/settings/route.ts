@@ -8,7 +8,6 @@ export async function GET(request: NextRequest) {
         _id,
         siteName,
         description,
-        activePaymentGateway,
         adminPhone,
         whatsappNumber,
         senderId,
@@ -18,9 +17,14 @@ export async function GET(request: NextRequest) {
           lastUpdated
         },
         paymentGateways {
-          hubtelEnabled,
-          paystackEnabled,
-          defaultGateway
+          productCheckout {
+            hubtelEnabled,
+            paystackEnabled
+          },
+          ticketing {
+            hubtelEnabled,
+            paystackEnabled
+          }
         },
         geoLocation {
           ghanaCurrencyCountries,
@@ -49,14 +53,13 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
-    const { _id, siteName, description, activePaymentGateway, adminPhone, whatsappNumber, senderId, currency, geoLocation } = body
+    const { _id, siteName, description, adminPhone, whatsappNumber, senderId, currency, paymentGateways, geoLocation } = body
 
     const updated = await serverClient
       .patch(_id)
       .set({
         siteName,
         description,
-        activePaymentGateway,
         adminPhone,
         whatsappNumber,
         senderId,
@@ -64,7 +67,18 @@ export async function PUT(request: NextRequest) {
           ...currency,
           lastUpdated: new Date().toISOString(),
         },
-        ...(paymentGateways && { paymentGateways }),
+        ...(paymentGateways && {
+          paymentGateways: {
+            productCheckout: {
+              hubtelEnabled: !!paymentGateways?.productCheckout?.hubtelEnabled,
+              paystackEnabled: !!paymentGateways?.productCheckout?.paystackEnabled,
+            },
+            ticketing: {
+              hubtelEnabled: !!paymentGateways?.ticketing?.hubtelEnabled,
+              paystackEnabled: !!paymentGateways?.ticketing?.paystackEnabled,
+            },
+          },
+        }),
         geoLocation,
       })
       .commit()
