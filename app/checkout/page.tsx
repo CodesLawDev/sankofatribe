@@ -56,6 +56,21 @@ export default function CheckoutPage() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [stockErrors, setStockErrors] = useState<string[]>([])
   const [generalError, setGeneralError] = useState("")
+  const [activeGateway, setActiveGateway] = useState<'hubtel' | 'paystack' | 'both'>('both')
+  const [paymentProvider, setPaymentProvider] = useState<"paystack" | "hubtel">("hubtel")
+
+  // Fetch payment gateway setting
+  useEffect(() => {
+    fetch('/api/settings/public')
+      .then((res) => res.json())
+      .then((data) => {
+        const gateway = data.gateway || 'both'
+        setActiveGateway(gateway)
+        if (gateway === 'paystack') setPaymentProvider('paystack')
+        if (gateway === 'hubtel') setPaymentProvider('hubtel')
+      })
+      .catch((err) => console.error('Failed to load gateway settings', err))
+  }, [])
 
   // Load user profile and addresses if authenticated
   useEffect(() => {
@@ -258,7 +273,7 @@ export default function CheckoutPage() {
           orderId,
           customerName: `${form.firstName} ${form.lastName}`,
           customerPhone: form.phone,
-          provider: 'hubtel',
+          provider: paymentProvider,
           items: cart.map((i) => ({
             name: i.name,
             quantity: i.quantity,
@@ -484,14 +499,56 @@ export default function CheckoutPage() {
               <h2 className="text-xl font-light mb-6 pb-3 border-b border-gray-200 dark:border-gray-800">
                 Payment Method
               </h2>
-              <div className="flex items-center gap-4 p-4 border rounded-lg border-black dark:border-white bg-gray-50 dark:bg-gray-900">
-                <div className="w-4 h-4 rounded-full bg-black dark:bg-white flex-shrink-0" />
-                <div className="flex-1">
-                  <p className="font-medium text-sm">Mobile Money (Hubtel)</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Pay with MTN MoMo, Telecel Cash, or AirtelTigo Money
-                  </p>
-                </div>
+              <div className="space-y-3">
+                {(activeGateway === 'paystack' || activeGateway === 'both') && (
+                  <label
+                    className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-all ${
+                      paymentProvider === "paystack"
+                        ? "border-black dark:border-white bg-gray-50 dark:bg-gray-900"
+                        : "border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="paymentProvider"
+                      value="paystack"
+                      checked={paymentProvider === "paystack"}
+                      onChange={() => setPaymentProvider("paystack")}
+                      className="w-4 h-4 accent-black dark:accent-white"
+                    />
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">Card / Mobile Money</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Pay with Visa, Mastercard, or Mobile Money via Paystack
+                      </p>
+                    </div>
+                  </label>
+                )}
+
+                {(activeGateway === 'hubtel' || activeGateway === 'both') && (
+                  <label
+                    className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-all ${
+                      paymentProvider === "hubtel"
+                        ? "border-black dark:border-white bg-gray-50 dark:bg-gray-900"
+                        : "border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="paymentProvider"
+                      value="hubtel"
+                      checked={paymentProvider === "hubtel"}
+                      onChange={() => setPaymentProvider("hubtel")}
+                      className="w-4 h-4 accent-black dark:accent-white"
+                    />
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">Mobile Money (Hubtel)</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Pay with MTN MoMo, Telecel Cash, or AirtelTigo Money
+                      </p>
+                    </div>
+                  </label>
+                )}
               </div>
             </section>
 

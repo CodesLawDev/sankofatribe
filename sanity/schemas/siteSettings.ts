@@ -22,6 +22,21 @@ export const siteSettings = defineType({
             type: 'text',
             description: 'Used for SEO',
         }),
+        defineField({
+            name: 'activePaymentGateway',
+            title: 'Active Payment Gateway',
+            type: 'string',
+            description: 'Select which payment gateway(s) should be available at checkout',
+            options: {
+                list: [
+                    { title: 'Hubtel Only', value: 'hubtel' },
+                    { title: 'Paystack Only', value: 'paystack' },
+                    { title: 'Both (User Choice)', value: 'both' },
+                ],
+            },
+            initialValue: 'both',
+            validation: (Rule) => Rule.required(),
+        }),
         {
             name: 'mainNavigation',
             title: 'Main Navigation',
@@ -41,6 +56,12 @@ export const siteSettings = defineType({
             title: 'Admin Phone (SMS)',
             type: 'string',
             description: 'Used for order alerts via SMS',
+        }),
+        defineField({
+            name: 'whatsappNumber',
+            title: 'WhatsApp Number',
+            type: 'string',
+            description: 'Public WhatsApp number for customer support chat button (e.g. 233541234567)',
         }),
         defineField({
             name: 'senderId',

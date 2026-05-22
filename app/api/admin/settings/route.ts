@@ -8,7 +8,9 @@ export async function GET(request: NextRequest) {
         _id,
         siteName,
         description,
+        activePaymentGateway,
         adminPhone,
+        whatsappNumber,
         senderId,
         currency {
           defaultCurrency,
@@ -42,7 +44,7 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
-    const { _id, siteName, description, adminPhone, senderId, currency, geoLocation } = body
+    const { _id, siteName, description, activePaymentGateway, adminPhone, whatsappNumber, senderId, currency, geoLocation } = body
 
     // Update settings in Sanity
     const updated = await serverClient
@@ -50,7 +52,9 @@ export async function PUT(request: NextRequest) {
       .set({
         siteName,
         description,
+        activePaymentGateway,
         adminPhone,
+        whatsappNumber,
         senderId,
         currency: {
           ...currency,

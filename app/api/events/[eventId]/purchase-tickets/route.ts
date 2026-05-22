@@ -44,7 +44,7 @@ export async function POST(
       currency: string;
       tierPrice?: number;
       tierQuantity?: number;
-      provider?: 'hubtel';
+      provider?: 'hubtel' | 'paystack';
     } = body;
 
     // Validate input
@@ -188,34 +188,69 @@ export async function POST(
       });
     }
 
-    // Initiate payment via Hubtel
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-
-    if (!hubtelService.isConfigured) {
-      return NextResponse.json(
-        { error: 'Hubtel payment is not configured' },
-        { status: 500 }
-      );
-    }
-
     const eventQuery = `*[_type == "event" && _id == $eventId][0] { title, "slug": slug.current }`;
     const event = await serverClient.fetch(eventQuery, { eventId });
     const eventTitle = event?.title || 'Event';
 
-    const hubtelResult = await hubtelService.initializeCheckout({
-      amount: totalAmount,
-      description: `SankofaTribe Tickets: ${ticketCount}x ${tierId} for ${eventTitle}`,
-      clientReference: order.id,
-      returnUrl: `${siteUrl}/api/events/payment-callback?provider=hubtel&clientReference=${order.id}&eventSlug=${event?.slug || ''}`,
-      callbackUrl: `${siteUrl}/api/events/payment-callback`,
-    });
+    if (provider === 'paystack') {
+      const paystackSecret = process.env.PAYSTACK_SECRET_KEY;
+      if (!paystackSecret) {
+        return NextResponse.json(
+          { error: 'Paystack is not configured' },
+          { status: 500 }
+        );
+      }
 
-    return NextResponse.json({
-      orderId: order.id,
-      paymentUrl: hubtelResult.checkoutUrl,
-      reference: order.id,
-      provider: 'hubtel',
-    });
+      const response = await fetch('https://api.paystack.co/transaction/initialize', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${paystackSecret}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: Math.round(totalAmount * 100),
+          email: buyerEmail,
+          reference: order.id,
+          callback_url: `${siteUrl}/api/events/payment-callback?provider=paystack&clientReference=${order.id}&eventSlug=${event?.slug || ''}`,
+        }),
+      });
+
+      const data = await response.json();
+      if (!data.status) {
+        throw new Error(data.message || 'Failed to initialize Paystack payment');
+      }
+
+      return NextResponse.json({
+        orderId: order.id,
+        paymentUrl: data.data.authorization_url,
+        reference: order.id,
+        provider: 'paystack',
+      });
+    } else {
+      // Hubtel
+      if (!hubtelService.isConfigured) {
+        return NextResponse.json(
+          { error: 'Hubtel payment is not configured' },
+          { status: 500 }
+        );
+      }
+
+      const hubtelResult = await hubtelService.initializeCheckout({
+        amount: totalAmount,
+        description: `SankofaTribe Tickets: ${ticketCount}x ${tierId} for ${eventTitle}`,
+        clientReference: order.id,
+        returnUrl: `${siteUrl}/api/events/payment-callback?provider=hubtel&clientReference=${order.id}&eventSlug=${event?.slug || ''}`,
+        callbackUrl: `${siteUrl}/api/events/payment-callback`,
+      });
+
+      return NextResponse.json({
+        orderId: order.id,
+        paymentUrl: hubtelResult.checkoutUrl,
+        reference: order.id,
+        provider: 'hubtel',
+      });
+    }
   } catch (error) {
     console.error('Ticket purchase error:', error);
     return NextResponse.json(
