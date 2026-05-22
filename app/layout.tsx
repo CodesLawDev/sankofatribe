@@ -29,8 +29,8 @@ export const metadata: Metadata = {
         title: 'SANKOFA TRIBE',
     },
     icons: {
-        icon: '/logo.svg',
-        apple: '/logo.svg',
+        icon: '/logo.png',
+        apple: '/logo.png',
     },
     openGraph: {
         type: 'website',
