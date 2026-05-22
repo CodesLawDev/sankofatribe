@@ -17,6 +17,11 @@ export async function GET(request: NextRequest) {
           exchangeRate,
           lastUpdated
         },
+        paymentGateways {
+          hubtelEnabled,
+          paystackEnabled,
+          defaultGateway
+        },
         geoLocation {
           ghanaCurrencyCountries,
           defaultCountry
@@ -46,7 +51,6 @@ export async function PUT(request: NextRequest) {
     const body = await request.json()
     const { _id, siteName, description, activePaymentGateway, adminPhone, whatsappNumber, senderId, currency, geoLocation } = body
 
-    // Update settings in Sanity
     const updated = await serverClient
       .patch(_id)
       .set({
@@ -60,6 +64,7 @@ export async function PUT(request: NextRequest) {
           ...currency,
           lastUpdated: new Date().toISOString(),
         },
+        ...(paymentGateways && { paymentGateways }),
         geoLocation,
       })
       .commit()

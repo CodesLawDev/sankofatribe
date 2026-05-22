@@ -20,6 +20,11 @@ interface SiteSettings {
     exchangeRate: number
     lastUpdated?: string
   }
+  paymentGateways?: {
+    hubtelEnabled?: boolean
+    paystackEnabled?: boolean
+    defaultGateway?: 'hubtel' | 'paystack'
+  }
   geoLocation?: {
     ghanaCurrencyCountries?: string[]
     defaultCountry?: string
@@ -301,6 +306,9 @@ export default function SettingsPage() {
               </div>
             </div>
 
+            {/* Payment Gateways */}
+            <PaymentGatewaysCard settings={settings} setSettings={setSettings} />
+
             {/* Geo Location Settings */}
             <div className="bg-brand-cream dark:bg-gray-900 rounded-lg border border-brand-primary/10 dark:border-gray-800 p-6 shadow-sm">
               <h2 className="text-lg font-medium uppercase tracking-wider mb-6 text-brand-dark dark:text-white">Geo Location Settings</h2>
@@ -366,6 +374,141 @@ export default function SettingsPage() {
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+interface PaymentGatewaysCardProps {
+  settings: SiteSettings
+  setSettings: (s: SiteSettings) => void
+}
+
+function PaymentGatewaysCard({ settings, setSettings }: PaymentGatewaysCardProps) {
+  const gateways = settings.paymentGateways || {}
+  const hubtelEnabled = gateways.hubtelEnabled ?? true
+  const paystackEnabled = gateways.paystackEnabled ?? false
+  const defaultGateway = gateways.defaultGateway || 'hubtel'
+
+  const update = (patch: Partial<NonNullable<SiteSettings['paymentGateways']>>) => {
+    setSettings({
+      ...settings,
+      paymentGateways: {
+        hubtelEnabled,
+        paystackEnabled,
+        defaultGateway,
+        ...patch,
+      },
+    })
+  }
+
+  const toggleHubtel = () => update({ hubtelEnabled: !hubtelEnabled })
+  const togglePaystack = () => update({ paystackEnabled: !paystackEnabled })
+
+  const noneEnabled = !hubtelEnabled && !paystackEnabled
+  const defaultDisabled =
+    (defaultGateway === 'hubtel' && !hubtelEnabled) ||
+    (defaultGateway === 'paystack' && !paystackEnabled)
+
+  return (
+    <div className="bg-brand-cream dark:bg-gray-900 rounded-lg border border-brand-primary/10 dark:border-gray-800 p-6 shadow-sm">
+      <h2 className="text-lg font-medium uppercase tracking-wider mb-6 text-brand-dark dark:text-white">
+        Payment Gateways
+      </h2>
+
+      <div className="space-y-4">
+        <GatewayToggle
+          name="Hubtel"
+          subtitle="Mobile Money (MTN MoMo, Telecel Cash, AirtelTigo Money)"
+          enabled={hubtelEnabled}
+          onToggle={toggleHubtel}
+        />
+
+        <GatewayToggle
+          name="Paystack"
+          subtitle="Card, Mobile Money, Bank Transfer"
+          enabled={paystackEnabled}
+          onToggle={togglePaystack}
+        />
+
+        <div className="pt-2 border-t border-brand-primary/10 dark:border-gray-800">
+          <label className="block text-sm font-medium mb-2 mt-3">Default Gateway</label>
+          <p className="text-xs text-gray-500 mb-3">Used when both gateways are enabled</p>
+          <div className="flex gap-3">
+            <label className={`flex items-center gap-2 px-4 py-2 border rounded cursor-pointer ${defaultGateway === 'hubtel' ? 'border-brand-primary bg-brand-primary/5' : 'border-gray-300 dark:border-gray-700'} ${!hubtelEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
+              <input
+                type="radio"
+                name="defaultGateway"
+                checked={defaultGateway === 'hubtel'}
+                disabled={!hubtelEnabled}
+                onChange={() => update({ defaultGateway: 'hubtel' })}
+              />
+              <span className="text-sm">Hubtel</span>
+            </label>
+            <label className={`flex items-center gap-2 px-4 py-2 border rounded cursor-pointer ${defaultGateway === 'paystack' ? 'border-brand-primary bg-brand-primary/5' : 'border-gray-300 dark:border-gray-700'} ${!paystackEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
+              <input
+                type="radio"
+                name="defaultGateway"
+                checked={defaultGateway === 'paystack'}
+                disabled={!paystackEnabled}
+                onChange={() => update({ defaultGateway: 'paystack' })}
+              />
+              <span className="text-sm">Paystack</span>
+            </label>
+          </div>
+        </div>
+
+        {noneEnabled && (
+          <div className="bg-red-50 border border-red-200 rounded p-3 text-sm text-red-700 flex items-start gap-2">
+            <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+            <span>At least one payment gateway must be enabled — saving will fail otherwise.</span>
+          </div>
+        )}
+
+        {defaultDisabled && !noneEnabled && (
+          <div className="bg-red-50 border border-red-200 rounded p-3 text-sm text-red-700 flex items-start gap-2">
+            <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+            <span>Default gateway &ldquo;{defaultGateway}&rdquo; is disabled. Pick a different default before saving — the app will not fall back to the other gateway.</span>
+          </div>
+        )}
+
+        <div className="bg-blue-50 border border-blue-200 rounded p-3 text-xs text-blue-700">
+          <p className="font-medium mb-1">Note</p>
+          <p>The default gateway is the only one used for new payments. No fallback — if the default is disabled or its API keys aren&apos;t set, checkout will fail until you fix it. Verification of in-flight payments is unaffected.</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function GatewayToggle({
+  name,
+  subtitle,
+  enabled,
+  onToggle,
+}: {
+  name: string
+  subtitle: string
+  enabled: boolean
+  onToggle: () => void
+}) {
+  return (
+    <div className="flex items-center justify-between p-4 border border-brand-primary/10 dark:border-gray-800 rounded">
+      <div>
+        <p className="text-sm font-medium text-brand-dark dark:text-white">{name}</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">{subtitle}</p>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={enabled}
+        aria-label={`Toggle ${name}`}
+        onClick={onToggle}
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${enabled ? 'bg-brand-primary' : 'bg-gray-300 dark:bg-gray-700'}`}
+      >
+        <span
+          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${enabled ? 'translate-x-6' : 'translate-x-1'}`}
+        />
+      </button>
     </div>
   )
 }
