@@ -65,7 +65,7 @@ const initialStats: DashboardStats = {
 
 const initialSMSBalance: SMSBalance = {
     balance: 0,
-    currency: 'GHS',
+    currency: 'credits',
 }
 
 const pickNumber = (value: any): number => {
@@ -273,7 +273,7 @@ export default function AdminDashboard() {
                             {smsLoading ? '...' : smsBalance.balance.toLocaleString()}
                         </div>
                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                            {smsBalance.currency} balance
+                            SMS credits remaining
                         </p>
                     </CardContent>
                 </Card>

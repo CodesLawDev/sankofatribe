@@ -29,14 +29,18 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
             try {
                 setIsLoading(true)
 
-                // Check if user is authenticated
+                // Check if user is authenticated AND is a customer
+                // Admins/superadmins hit a 403 on /api/customer/* so skip the DB load for them
                 const meResponse = await fetch('/api/auth/me')
-                const isAuth = meResponse.ok
+                let isCustomer = false
+                if (meResponse.ok) {
+                    const meData = await meResponse.json()
+                    isCustomer = meData?.user?.role === 'CUSTOMER'
+                }
 
-                if (isAuth) {
+                if (isCustomer) {
                     setIsAuthenticated(true)
 
-                    // Load from database if authenticated
                     const response = await fetch('/api/customer/wishlist')
                     if (response.ok) {
                         const dbWishlist = await response.json()

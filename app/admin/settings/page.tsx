@@ -5,8 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Save, AlertCircle, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { getAdminSession, clearAdminSession } from '@/lib/adminAuth'
-import { hasPermission } from '@/lib/adminTypes'
+import { hasPermission, type AdminUser } from '@/lib/adminTypes'
 
 interface SiteSettings {
   _id: string
@@ -28,25 +27,50 @@ interface SiteSettings {
 export default function SettingsPage() {
   const router = useRouter()
   const [settings, setSettings] = useState<SiteSettings | null>(null)
+  const [user, setUser] = useState<AdminUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [ghsPerUsd, setGhsPerUsd] = useState<number>(12.5)
 
   useEffect(() => {
-    const session = getAdminSession()
-    if (!session) {
-      router.push('/admin/login')
-      return
+    const init = async () => {
+      try {
+        const meResponse = await fetch('/api/auth/me', { credentials: 'include' })
+        if (!meResponse.ok) {
+          router.push('/admin/login')
+          return
+        }
+        const { user: meUser } = await meResponse.json()
+        if (meUser.role !== 'ADMIN' && meUser.role !== 'SUPERADMIN') {
+          router.push('/admin/login')
+          return
+        }
+
+        const adminUser: AdminUser = {
+          _id: meUser.id,
+          email: meUser.email,
+          firstName: meUser.firstName ?? '',
+          lastName: meUser.lastName ?? '',
+          role: meUser.role,
+          permissions: meUser.permissions ?? [],
+          isActive: meUser.status === 'ACTIVE',
+        }
+
+        if (!hasPermission(adminUser, 'view_settings')) {
+          router.push('/admin')
+          return
+        }
+
+        setUser(adminUser)
+        await fetchSettings()
+      } catch (err) {
+        console.error('Settings init failed:', err)
+        router.push('/admin/login')
+      }
     }
 
-    // Check permissions
-    if (!hasPermission(session.user, 'view_settings')) {
-      router.push('/admin')
-      return
-    }
-
-    fetchSettings()
+    init()
   }, [router])
 
   const fetchSettings = async () => {
@@ -93,7 +117,11 @@ export default function SettingsPage() {
   }
 
   const handleLogout = async () => {
-    clearAdminSession()
+    try {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+    } catch (err) {
+      console.error('Logout error:', err)
+    }
     router.push('/admin/login')
   }
 
@@ -108,8 +136,6 @@ export default function SettingsPage() {
     )
   }
 
-  const session = getAdminSession()
-
   return (
     <div className="min-h-screen bg-brand-cream dark:bg-darkbg">
       {/* Header */}
@@ -123,9 +149,9 @@ export default function SettingsPage() {
             <h1 className="text-2xl font-bold text-brand-dark dark:text-white">Settings</h1>
           </div>
           <div className="flex items-center gap-4">
-            {session && (
+            {user && (
               <span className="text-sm text-neutral-600 dark:text-gray-400">
-                {session.user.firstName} {session.user.lastName}
+                {user.firstName} {user.lastName}
               </span>
             )}
             <Button variant="secondary" size="sm" onClick={handleLogout}>

@@ -6,7 +6,7 @@ import { jwtVerify } from 'jose';
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'your-secret-key-change-in-production'
 );
-const SESSION_MAX_AGE = 5 * 60; // 5 minutes of inactivity
+const SESSION_MAX_AGE = 24 * 60 * 60; // 24 hours of inactivity
 
 function refreshSessionCookie(token: string) {
   const response = NextResponse.next();
