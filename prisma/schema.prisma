@@ -73,6 +73,7 @@ model User {
   orders                Order[]       @relation("UserOrders")
   wishlistItems         WishlistItem[] @relation("UserWishlist")
   loginHistory          LoginHistory[] @relation("UserLoginHistory")
+  reviews               CustomerReview[] @relation("UserReviews")
   
   @@index([email])
   @@index([role])
@@ -477,3 +478,87 @@ model AbandonedCart {
   @@index([updatedAt])
 }
 
+// ─── Customer Review Platform ───────────────────────────────────────────────
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model CustomerReview {
+  id               String        @id @default(cuid())
+
+  // Product reference (Sanity)
+  productId        String        // Sanity product _id
+  productName      String        @db.VarChar(200)
+  productSlug      String?       @db.VarChar(200)
+
+  // Reviewer
+  userId           String?       // Optional — linked User
+  authorName       String        @db.VarChar(100)
+  authorEmail      String?       @db.VarChar(255)
+  instagramHandle  String?       @db.VarChar(50)
+
+  // Review content
+  rating           Int           // 1–5
+  title            String        @db.VarChar(150)
+  comment          String        @db.Text
+
+  // Fit & sizing
+  sizePurchased    String?       @db.VarChar(20)
+  fitExperience    String?       @db.VarChar(30) // "true-to-size" | "runs-small" | "runs-large"
+  recommend        Boolean       @default(true) // Whether user recommends product
+
+  // Moderation
+  status           ReviewStatus  @default(PENDING)
+  isFeatured       Boolean       @default(false)
+  isVerified       Boolean       @default(false) // verified buyer badge
+
+  // Engagement
+  helpfulCount     Int           @default(0)
+
+  // Admin reply
+  adminReply       String?       @db.Text
+  adminRepliedAt   DateTime?
+
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  // Relations
+  user             User?         @relation("UserReviews", fields: [userId], references: [id], onDelete: SetNull)
+  photos           ReviewPhoto[]
+  helpful          ReviewHelpful[]
+
+  @@index([productId])
+  @@index([productSlug])
+  @@index([status])
+  @@index([rating])
+  @@index([isFeatured])
+  @@index([isVerified])
+  @@index([createdAt])
+}
+
+model ReviewPhoto {
+  id         String         @id @default(cuid())
+  reviewId   String
+  review     CustomerReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  url        String         // Cloudinary secure URL
+  publicId   String         // Cloudinary public_id (for deletion)
+  width      Int?           // Image dimensions for layout
+  height     Int?
+  createdAt  DateTime       @default(now())
+
+  @@index([reviewId])
+}
+
+model ReviewHelpful {
+  id        String         @id @default(cuid())
+  reviewId  String
+  review    CustomerReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  sessionId String         // Track by session to prevent duplicate votes
+  createdAt DateTime       @default(now())
+
+  @@unique([reviewId, sessionId])
+  @@index([reviewId])
+}

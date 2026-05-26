@@ -39,6 +39,7 @@ const DEFAULT_NAV: NavItemType[] = [
     { name: 'Kids', href: '/products' },
     { name: 'Sale', href: '/products' },
     { name: 'Events', href: '/events' },
+    { name: 'Reviews', href: '/reviews' },
 ]
 
 export default function Header({ initialNavItems, initialAnnouncement }: HeaderProps = {}) {

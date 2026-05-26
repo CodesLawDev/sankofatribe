@@ -12,7 +12,9 @@ interface LoginFormData {
     rememberMe: boolean
 }
 
-export default function CustomerLoginPage() {
+import { Suspense } from 'react'
+
+function LoginContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const redirectTo = searchParams?.get('redirect_to') || '/account'
@@ -248,6 +250,18 @@ export default function CustomerLoginPage() {
                 </div>
             </div>
         </div>
+    )
+}
+
+export default function CustomerLoginPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <div className="text-gray-600">Loading...</div>
+            </div>
+        }>
+            <LoginContent />
+        </Suspense>
     )
 }
 

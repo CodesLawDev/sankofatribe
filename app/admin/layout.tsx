@@ -16,7 +16,8 @@ import {
     MessageSquare,
     BarChart3,
     UserCog,
-    Ticket
+    Ticket,
+    Star
 } from 'lucide-react'
 import '../globals.css'
 import { Providers } from '../providers'
@@ -74,6 +75,11 @@ const sidebarLinks: SidebarLink[] = [
         href: '/admin/analytics',
         label: 'Analytics',
         icon: <BarChart3 className="w-5 h-5" />,
+    },
+    {
+        href: '/admin/reviews',
+        label: 'Reviews',
+        icon: <Star className="w-5 h-5" />,
     },
     {
         href: '/admin/settings',

@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
-export default function AdminResetRedirect() {
+function AdminResetRedirectContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get('token')
@@ -13,9 +13,17 @@ export default function AdminResetRedirect() {
     router.replace(target)
   }, [router, token])
 
+  return null
+}
+
+export default function AdminResetRedirect() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="text-gray-600">Redirecting to reset password...</div>
-    </div>
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-gray-600">Redirecting to reset password...</div>
+      </div>
+    }>
+      <AdminResetRedirectContent />
+    </Suspense>
   )
 }

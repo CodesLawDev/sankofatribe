@@ -1,1 +1,9 @@
-{}
+{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "has": [{ "type": "host", "value": "reviews.sankofatribe.com" }],
+      "destination": "/reviews/$1"
+    }
+  ]
+}
