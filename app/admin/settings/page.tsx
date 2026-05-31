@@ -2,10 +2,14 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { ArrowLeft, Save, AlertCircle, CheckCircle } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Save, AlertCircle, CheckCircle } from 'lucide-react'
 import { hasPermission, type AdminUser } from '@/lib/adminTypes'
+import AdminPageHeader from '@/components/admin/admin-page-header'
+import AdminSection, { AdminField } from '@/components/admin/admin-section'
+import AdminButton from '@/components/admin/admin-button'
+import AdminAlert from '@/components/admin/admin-alert'
+import { adminInputClass } from '@/lib/admin/utils'
+import { AdminPageSkeleton } from '@/components/admin/admin-skeleton'
 
 interface SiteSettings {
   _id: string
@@ -127,174 +131,71 @@ export default function SettingsPage() {
     }
   }
 
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
-    } catch (err) {
-      console.error('Logout error:', err)
-    }
-    router.push('/admin/login')
-  }
-
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-brand-cream dark:bg-darkbg flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-brand-dark dark:border-white"></div>
-          <p className="mt-4 text-neutral-600 dark:text-gray-400">Loading...</p>
-        </div>
-      </div>
-    )
+    return <AdminPageSkeleton />
   }
 
   return (
-    <div className="min-h-screen bg-brand-cream dark:bg-darkbg">
-      {/* Header */}
-      <div className="bg-brand-cream dark:bg-gray-900 border-b border-brand-primary/10 dark:border-gray-800 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/admin" className="inline-flex items-center gap-2 text-sm text-neutral-600 dark:text-gray-400 hover:text-brand-dark dark:hover:text-white">
-              <ArrowLeft className="h-4 w-4" />
-              Back to Dashboard
-            </Link>
-            <h1 className="text-2xl font-bold text-brand-dark dark:text-white">Settings</h1>
-          </div>
-          <div className="flex items-center gap-4">
-            {user && (
-              <span className="text-sm text-neutral-600 dark:text-gray-400">
-                {user.firstName} {user.lastName}
-              </span>
-            )}
-            <Button variant="secondary" size="sm" onClick={handleLogout}>
-              Logout
-            </Button>
-          </div>
-        </div>
-      </div>
+    <div className="space-y-8">
+      <AdminPageHeader title="Settings" description="Site configuration, payments, and regional preferences." />
 
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        {/* Message */}
-        {message && (
-          <div className={`mb-6 p-4 rounded flex items-center gap-3 ${message.type === 'success' ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
-            {message.type === 'success' ? (
-              <CheckCircle className="h-5 w-5 text-green-600" />
-            ) : (
-              <AlertCircle className="h-5 w-5 text-red-600" />
-            )}
-            <p className={message.type === 'success' ? 'text-green-700' : 'text-red-700'}>
-              {message.text}
-            </p>
-          </div>
-        )}
+      {message && (
+        <AdminAlert variant={message.type === 'success' ? 'success' : 'error'}>
+          <span className="flex items-center gap-2">
+            {message.type === 'success' ? <CheckCircle className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+            {message.text}
+          </span>
+        </AdminAlert>
+      )}
 
-        {settings && (
-          <div className="space-y-6">
-            {/* General Settings */}
-            <div className="bg-brand-cream dark:bg-gray-900 rounded-lg border border-brand-primary/10 dark:border-gray-800 p-6 shadow-sm">
-              <h2 className="text-lg font-medium uppercase tracking-wider mb-6 text-brand-dark dark:text-white">General Settings</h2>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Site Name</label>
-                  <input
-                    type="text"
-                    value={settings.siteName}
-                    onChange={(e) => setSettings({ ...settings, siteName: e.target.value })}
-                    className="w-full px-4 py-2 border border-brand-primary/20 rounded bg-white dark:bg-gray-800 text-brand-dark dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Description</label>
-                  <textarea
-                    value={settings.description || ''}
-                    onChange={(e) => setSettings({ ...settings, description: e.target.value })}
-                    rows={3}
-                    className="w-full px-4 py-2 border border-brand-primary/20 rounded bg-white dark:bg-gray-800 text-brand-dark dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Admin Phone</label>
-                  <input
-                    type="tel"
-                    value={settings.adminPhone}
-                    onChange={(e) => setSettings({ ...settings, adminPhone: e.target.value })}
-                    placeholder="+233XXXXXXXXX"
-                    className="w-full px-4 py-2 border border-brand-primary/20 rounded bg-white dark:bg-gray-800 text-brand-dark dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Used for SMS alerts</p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">WhatsApp Number</label>
-                  <input
-                    type="tel"
-                    value={settings.whatsappNumber || ''}
-                    onChange={(e) => setSettings({ ...settings, whatsappNumber: e.target.value })}
-                    placeholder="233541234567"
-                    className="w-full px-4 py-2 border border-brand-primary/20 rounded bg-white dark:bg-gray-800 text-brand-dark dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Public WhatsApp number for customer support chat button</p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">SMS Sender ID</label>
-                  <input
-                    type="text"
-                    value={settings.senderId}
-                    onChange={(e) => setSettings({ ...settings, senderId: e.target.value })}
-                    placeholder="SANKOFA"
-                    className="w-full px-4 py-2 border border-brand-primary/20 rounded bg-white dark:bg-gray-800 text-brand-dark dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
-                    maxLength={11}
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Max 11 characters</p>
-                </div>
-              </div>
+      {settings && (
+        <div className="space-y-6">
+          <AdminSection title="General">
+            <div className="space-y-4">
+              <AdminField label="Site name">
+                <input type="text" value={settings.siteName} onChange={(e) => setSettings({ ...settings, siteName: e.target.value })} className={adminInputClass} />
+              </AdminField>
+              <AdminField label="Description">
+                <textarea value={settings.description || ''} onChange={(e) => setSettings({ ...settings, description: e.target.value })} rows={3} className={adminInputClass} />
+              </AdminField>
+              <AdminField label="Admin phone" hint="Used for SMS alerts">
+                <input type="tel" value={settings.adminPhone} onChange={(e) => setSettings({ ...settings, adminPhone: e.target.value })} placeholder="+233XXXXXXXXX" className={adminInputClass} />
+              </AdminField>
+              <AdminField label="WhatsApp number" hint="Public support number for the chat button">
+                <input type="tel" value={settings.whatsappNumber || ''} onChange={(e) => setSettings({ ...settings, whatsappNumber: e.target.value })} placeholder="233541234567" className={adminInputClass} />
+              </AdminField>
+              <AdminField label="SMS sender ID" hint="Max 11 characters">
+                <input type="text" value={settings.senderId} onChange={(e) => setSettings({ ...settings, senderId: e.target.value })} placeholder="SANKOFA" maxLength={11} className={adminInputClass} />
+              </AdminField>
             </div>
+          </AdminSection>
 
-            {/* Currency & Exchange Rate */}
-            <div className="bg-brand-cream dark:bg-gray-900 rounded-lg border border-brand-primary/10 dark:border-gray-800 p-6 shadow-sm">
-              <h2 className="text-lg font-medium uppercase tracking-wider mb-6 text-brand-dark dark:text-white">Currency & Exchange Rate</h2>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Exchange Rate (USD to GHS)</label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600">1 USD =</span>
-                    <input
-                      type="number"
-                      step="0.001"
-                      value={ghsPerUsd}
-                      onChange={(e) => {
-                        const inputVal = parseFloat(e.target.value) || 0
-                        setGhsPerUsd(inputVal)
-                        const usdPerGhs = inputVal > 0 ? (1 / inputVal) : 0
-                        setSettings({
-                          ...settings,
-                          currency: {
-                            ...settings.currency,
-                            exchangeRate: parseFloat(usdPerGhs.toFixed(6)),
-                          },
-                        })
-                      }}
-                      className="w-32 px-4 py-2 border border-brand-primary/20 rounded bg-white dark:bg-gray-800 text-brand-dark dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
-                    />
-                    <span className="text-sm text-gray-600">GHS</span>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-2">Stored: 1 GHS = {(settings.currency.exchangeRate || 0).toFixed(6)} USD</p>
+          <AdminSection title="Currency and exchange rate">
+            <div className="space-y-4">
+              <AdminField label="Exchange rate (USD to GHS)" hint={`Stored: 1 GHS = ${(settings.currency.exchangeRate || 0).toFixed(6)} USD`}>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-[var(--admin-text-muted)]">1 USD =</span>
+                  <input
+                    type="number"
+                    step="0.001"
+                    value={ghsPerUsd}
+                    onChange={(e) => {
+                      const inputVal = parseFloat(e.target.value) || 0
+                      setGhsPerUsd(inputVal)
+                      const usdPerGhs = inputVal > 0 ? 1 / inputVal : 0
+                      setSettings({
+                        ...settings,
+                        currency: { ...settings.currency, exchangeRate: parseFloat(usdPerGhs.toFixed(6)) },
+                      })
+                    }}
+                    className={`${adminInputClass} w-32`}
+                  />
+                  <span className="text-sm text-[var(--admin-text-muted)]">GHS</span>
                 </div>
-
-                <div className="bg-blue-50 border border-blue-200 rounded p-4 text-sm text-blue-700">
-                  <p className="font-medium mb-2">Currency System:</p>
-                  <ul className="list-disc list-inside space-y-1 text-xs">
-                    <li>Users in Ghana see GHS (₵)</li>
-                    <li>International users see USD ($)</li>
-                    <li>Conversion based on exchange rate above</li>
-                  </ul>
-                </div>
-              </div>
+              </AdminField>
+              <p className="text-xs text-[var(--admin-text-muted)]">Ghana visitors see GHS. International visitors see USD based on this rate.</p>
             </div>
+          </AdminSection>
 
             {/* Payment Gateways: per-surface */}
             <PaymentGatewaysCard
@@ -311,71 +212,47 @@ export default function SettingsPage() {
               setSettings={setSettings}
             />
 
-            {/* Geo Location Settings */}
-            <div className="bg-brand-cream dark:bg-gray-900 rounded-lg border border-brand-primary/10 dark:border-gray-800 p-6 shadow-sm">
-              <h2 className="text-lg font-medium uppercase tracking-wider mb-6 text-brand-dark dark:text-white">Geo Location Settings</h2>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Default Country Code</label>
-                  <input
-                    type="text"
-                    value={settings.geoLocation?.defaultCountry || 'GH'}
-                    onChange={(e) => setSettings({
-                      ...settings,
-                      geoLocation: {
-                        ...settings.geoLocation,
-                        defaultCountry: e.target.value.toUpperCase(),
-                      },
-                    })}
-                    placeholder="GH"
-                    maxLength={2}
-                    className="w-full px-4 py-2 border border-brand-primary/20 rounded bg-white dark:bg-gray-800 text-brand-dark dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">ISO country code (e.g., GH for Ghana)</p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Countries Using GHS</label>
-                  <textarea
-                    value={(settings.geoLocation?.ghanaCurrencyCountries || []).join(', ')}
-                    onChange={(e) => setSettings({
-                      ...settings,
-                      geoLocation: {
-                        ...settings.geoLocation,
-                        ghanaCurrencyCountries: e.target.value.split(',').map(c => c.trim().toUpperCase()).filter(c => c),
-                      },
-                    })}
-                    rows={3}
-                    placeholder="GH, BJ, TG"
-                    className="w-full px-4 py-2 border border-brand-primary/20 rounded bg-white dark:bg-gray-800 text-brand-dark dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Comma-separated ISO country codes</p>
-                </div>
-              </div>
+          <AdminSection title="Geo location">
+            <div className="space-y-4">
+              <AdminField label="Default country code" hint="ISO code, e.g. GH">
+                <input
+                  type="text"
+                  value={settings.geoLocation?.defaultCountry || 'GH'}
+                  onChange={(e) => setSettings({ ...settings, geoLocation: { ...settings.geoLocation, defaultCountry: e.target.value.toUpperCase() } })}
+                  placeholder="GH"
+                  maxLength={2}
+                  className={adminInputClass}
+                />
+              </AdminField>
+              <AdminField label="Countries using GHS" hint="Comma-separated ISO codes">
+                <textarea
+                  value={(settings.geoLocation?.ghanaCurrencyCountries || []).join(', ')}
+                  onChange={(e) => setSettings({
+                    ...settings,
+                    geoLocation: {
+                      ...settings.geoLocation,
+                      ghanaCurrencyCountries: e.target.value.split(',').map((c) => c.trim().toUpperCase()).filter(Boolean),
+                    },
+                  })}
+                  rows={3}
+                  placeholder="GH, BJ, TG"
+                  className={adminInputClass}
+                />
+              </AdminField>
             </div>
+          </AdminSection>
 
-            {/* Action Buttons */}
-            <div className="flex gap-4">
-              <Button
-                onClick={handleSave}
-                disabled={isSaving}
-                className="flex items-center gap-2 bg-brand-primary text-brand-cream hover:bg-brand-primary/90"
-              >
-                <Save className="h-4 w-4" />
-                {isSaving ? 'Saving...' : 'Save Changes'}
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={() => fetchSettings()}
-                disabled={isSaving}
-              >
-                Reset
-              </Button>
-            </div>
+          <div className="flex gap-3">
+            <AdminButton onClick={handleSave} disabled={isSaving}>
+              <Save className="h-4 w-4" />
+              {isSaving ? 'Saving...' : 'Save changes'}
+            </AdminButton>
+            <AdminButton variant="secondary" onClick={() => fetchSettings()} disabled={isSaving}>
+              Reset
+            </AdminButton>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -418,12 +295,8 @@ function PaymentGatewaysCard({ title, surface, settings, setSettings }: PaymentG
       : 'Both gateways are off. Product checkout will fail until you enable at least one.'
 
   return (
-    <div className="bg-brand-cream dark:bg-gray-900 rounded-lg border border-brand-primary/10 dark:border-gray-800 p-6 shadow-sm">
-      <h2 className="text-lg font-medium uppercase tracking-wider mb-6 text-brand-dark dark:text-white">
-        {title}
-      </h2>
-
-      <div className="space-y-4">
+    <AdminSection title={title}>
+      <div className="space-y-3">
         <GatewayToggle
           name="Hubtel"
           subtitle="Mobile Money (MTN MoMo, Telecel Cash, AirtelTigo Money)"
@@ -439,13 +312,10 @@ function PaymentGatewaysCard({ title, surface, settings, setSettings }: PaymentG
         />
 
         {noneEnabled && (
-          <div className="bg-red-50 border border-red-200 rounded p-3 text-sm text-red-700 flex items-start gap-2">
-            <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-            <span>{offCopy}</span>
-          </div>
+          <AdminAlert variant="error">{offCopy}</AdminAlert>
         )}
       </div>
-    </div>
+    </AdminSection>
   )
 }
 
@@ -461,10 +331,10 @@ function GatewayToggle({
   onToggle: () => void
 }) {
   return (
-    <div className="flex items-center justify-between p-4 border border-brand-primary/10 dark:border-gray-800 rounded">
+    <div className="flex items-center justify-between rounded-xl border border-[var(--admin-border)] p-4">
       <div>
-        <p className="text-sm font-medium text-brand-dark dark:text-white">{name}</p>
-        <p className="text-xs text-gray-500 dark:text-gray-400">{subtitle}</p>
+        <p className="text-sm font-medium text-[var(--admin-text)]">{name}</p>
+        <p className="text-xs text-[var(--admin-text-muted)]">{subtitle}</p>
       </div>
       <button
         type="button"
@@ -472,11 +342,9 @@ function GatewayToggle({
         aria-checked={enabled}
         aria-label={`Toggle ${name}`}
         onClick={onToggle}
-        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${enabled ? 'bg-brand-primary' : 'bg-gray-300 dark:bg-gray-700'}`}
+        className={`admin-press relative inline-flex h-6 w-11 items-center rounded-full transition-[background-color] duration-160 ${enabled ? 'bg-[var(--admin-accent)]' : 'bg-[var(--admin-surface-sunken)]'}`}
       >
-        <span
-          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${enabled ? 'translate-x-6' : 'translate-x-1'}`}
-        />
+        <span className={`inline-block h-4 w-4 rounded-full bg-white transition-transform duration-160 ${enabled ? 'translate-x-6' : 'translate-x-1'}`} />
       </button>
     </div>
   )

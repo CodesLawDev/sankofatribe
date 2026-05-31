@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from 'next-sanity'
-import { PrismaClient } from '@prisma/client'
+import { getPrisma } from '@/lib/auth-utils'
 
-const prisma = new PrismaClient()
+const prisma = getPrisma()
 
 const writeClient = createClient({
     projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,

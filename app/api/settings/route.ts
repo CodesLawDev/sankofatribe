@@ -3,8 +3,8 @@ import { serverClient } from '@/lib/sanity-server'
 
 export const dynamic = 'force-dynamic'
 
-const SETTINGS_QUERY = `*[_type == "siteSettings"][0]{adminPhone, senderId}`
-const PUBLIC_SETTINGS_QUERY = `*[_type == "siteSettings"][0]{senderId}`
+const SETTINGS_QUERY = `*[_type == "siteSettings"][0]{adminPhone, senderId, currency, geoLocation}`
+const PUBLIC_SETTINGS_QUERY = `*[_type == "siteSettings"][0]{senderId, currency, geoLocation}`
 
 // Settings endpoint. Requires internal secret or admin auth.
 // Without auth, only non-sensitive fields are returned.
@@ -23,17 +23,39 @@ export async function GET(req: NextRequest) {
 
             if (!isAdmin) {
                 // Public: strip sensitive fields
-                const settings = await serverClient.fetch<{ senderId?: string }>(PUBLIC_SETTINGS_QUERY)
-                return NextResponse.json({ data: { senderId: settings?.senderId || '' } })
+                const settings = await serverClient.fetch<{
+                    senderId?: string
+                    currency?: { defaultCurrency?: 'GHS' | 'USD'; exchangeRate?: number; lastUpdated?: string }
+                    geoLocation?: { ghanaCurrencyCountries?: string[]; defaultCountry?: string }
+                }>(PUBLIC_SETTINGS_QUERY)
+                return NextResponse.json({
+                    data: {
+                        senderId: settings?.senderId || '',
+                        currency: settings?.currency || null,
+                        geoLocation: settings?.geoLocation || null,
+                    },
+                })
             }
         }
 
         // Internal or admin: return full settings
-        const settings = await serverClient.fetch<{ adminPhone?: string; senderId?: string }>(SETTINGS_QUERY)
+        const settings = await serverClient.fetch<{
+            adminPhone?: string
+            senderId?: string
+            currency?: { defaultCurrency?: 'GHS' | 'USD'; exchangeRate?: number; lastUpdated?: string }
+            geoLocation?: { ghanaCurrencyCountries?: string[]; defaultCountry?: string }
+        }>(SETTINGS_QUERY)
         const adminPhone = settings?.adminPhone || ''
         const senderId = settings?.senderId || ''
 
-        return NextResponse.json({ data: { adminPhone, senderId } })
+        return NextResponse.json({
+            data: {
+                adminPhone,
+                senderId,
+                currency: settings?.currency || null,
+                geoLocation: settings?.geoLocation || null,
+            },
+        })
     } catch (error) {
         console.error('settings endpoint error:', error)
         return NextResponse.json({ error: 'Failed to load settings' }, { status: 500 })

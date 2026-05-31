@@ -1,188 +1,123 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { Eye, Edit, Trash2, Search, Filter, ArrowLeft } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { Eye, Edit } from 'lucide-react'
 import { useAdminAuth } from '@/lib/useAdminAuth'
+import AdminPageHeader from '@/components/admin/admin-page-header'
+import { AdminFilterBar, AdminSearchInput } from '@/components/admin/admin-button'
+import AdminEmptyState from '@/components/admin/admin-empty-state'
+import { AdminDataTable, AdminTableHead, AdminTh, AdminTr, AdminTd } from '@/components/admin/admin-section'
+import { AdminTableSkeleton } from '@/components/admin/admin-skeleton'
+import { adminBadgeClass, adminSelectClass, orderStatusVariant } from '@/lib/admin/utils'
 
 interface Order {
-    id: string
-    orderNumber: string
-    total: number
-    status: string
-    createdAt: string
-    user?: {
-        firstName: string
-        lastName: string
-        email: string
-    }
+  id: string
+  orderNumber: string
+  total: number
+  status: string
+  createdAt: string
+  user?: { firstName: string; lastName: string; email: string }
 }
 
 export default function AdminOrders() {
-    const router = useRouter()
-    const { user, isLoading: authLoading, isMounted } = useAdminAuth()
-    const [orders, setOrders] = useState<Order[]>([])
-    const [isLoading, setIsLoading] = useState(false)
-    const [searchQuery, setSearchQuery] = useState('')
-    const [filterStatus, setFilterStatus] = useState('all')
+  const { user, isLoading: authLoading, isMounted } = useAdminAuth()
+  const [orders, setOrders] = useState<Order[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filterStatus, setFilterStatus] = useState('all')
 
-    useEffect(() => {
-        if (isMounted && user && !authLoading) {
-            fetchOrders()
-        }
-    }, [isMounted, user, authLoading])
+  useEffect(() => {
+    if (isMounted && user && !authLoading) fetchOrders()
+  }, [isMounted, user, authLoading])
 
-    const fetchOrders = async () => {
-        try {
-            setIsLoading(true)
-            const response = await fetch('/api/admin/orders', {
-                credentials: 'include',
-                cache: 'no-store' as any,
-            })
-            if (response.ok) {
-                const result = await response.json()
-                setOrders(result.data || [])
-            }
-        } catch (error) {
-            console.error('Failed to fetch orders:', error)
-        } finally {
-            setIsLoading(false)
-        }
+  const fetchOrders = async () => {
+    try {
+      setIsLoading(true)
+      const response = await fetch('/api/admin/orders', { credentials: 'include', cache: 'no-store' })
+      if (response.ok) {
+        const result = await response.json()
+        setOrders(result.data || [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch orders:', error)
+    } finally {
+      setIsLoading(false)
     }
+  }
 
-    const filteredOrders = orders
-        .filter((order) => {
-            const matchesSearch =
-                order.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                order.user?.email.toLowerCase().includes(searchQuery.toLowerCase())
-            const matchesStatus = filterStatus === 'all' || order.status.toUpperCase() === filterStatus.toUpperCase()
-            return matchesSearch && matchesStatus
-        })
+  const filteredOrders = orders.filter((order) => {
+    const matchesSearch =
+      order.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.user?.email.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesStatus = filterStatus === 'all' || order.status.toUpperCase() === filterStatus.toUpperCase()
+    return matchesSearch && matchesStatus
+  })
 
-    const getStatusColor = (status: string) => {
-        switch (status.toUpperCase()) {
-            case 'PENDING':
-                return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-            case 'PROCESSING':
-                return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-            case 'SHIPPED':
-                return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
-            case 'DELIVERED':
-                return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-            case 'CANCELLED':
-                return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-            default:
-                return 'bg-neutral-100 text-neutral-800 dark:bg-gray-900 dark:text-gray-200'
-        }
-    }
+  return (
+    <>
+      <AdminPageHeader title="Orders" description="Track and manage customer orders." />
 
-    return (
-        <div className="min-h-screen bg-brand-cream dark:bg-darkbg">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Header */}
-                <div className="mb-8 flex items-center gap-4">
-                    <Link href="/admin" className="p-2 hover:bg-brand-primary/5 dark:hover:bg-gray-800 rounded-lg">
-                        <ArrowLeft className="w-5 h-5 text-brand-dark dark:text-gray-400" />
-                    </Link>
-                    <h1 className="text-3xl font-bold text-brand-dark dark:text-white">Orders</h1>
-                </div>
+      <AdminFilterBar>
+        <AdminSearchInput value={searchQuery} onChange={setSearchQuery} placeholder="Search by order ID or email..." />
+        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className={`${adminSelectClass} w-auto min-w-[140px]`}>
+          <option value="all">All status</option>
+          <option value="pending">Pending</option>
+          <option value="processing">Processing</option>
+          <option value="shipped">Shipped</option>
+          <option value="delivered">Delivered</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </AdminFilterBar>
 
-                {/* Filters */}
-                <div className="mb-6 flex gap-3 flex-wrap">
-                    <div className="flex-1 min-w-64 relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="Search orders..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-brand-primary/20 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-brand-dark dark:text-white placeholder-neutral-400 dark:placeholder-gray-500"
-                        />
+      <AdminDataTable>
+        {isLoading ? (
+          <AdminTableSkeleton rows={8} cols={6} />
+        ) : filteredOrders.length === 0 ? (
+          <AdminEmptyState title="No orders found" description="Orders will appear here once customers checkout." />
+        ) : (
+          <table className="min-w-full">
+            <AdminTableHead>
+              <AdminTh>Order</AdminTh>
+              <AdminTh>Customer</AdminTh>
+              <AdminTh>Total</AdminTh>
+              <AdminTh>Status</AdminTh>
+              <AdminTh>Date</AdminTh>
+              <AdminTh>Actions</AdminTh>
+            </AdminTableHead>
+            <tbody>
+              {filteredOrders.map((order) => (
+                <AdminTr key={order.id}>
+                  <AdminTd>
+                    <span className="font-admin-mono font-medium">{order.orderNumber}</span>
+                  </AdminTd>
+                  <AdminTd className="text-[var(--admin-text-muted)]">
+                    {order.user ? `${order.user.firstName} ${order.user.lastName}` : 'Guest'}
+                  </AdminTd>
+                  <AdminTd>
+                    <span className="font-admin-mono">GH₵{Number(order.total).toFixed(2)}</span>
+                  </AdminTd>
+                  <AdminTd>
+                    <span className={adminBadgeClass(orderStatusVariant(order.status))}>{order.status}</span>
+                  </AdminTd>
+                  <AdminTd className="text-[var(--admin-text-muted)]">
+                    {new Date(order.createdAt).toLocaleDateString()}
+                  </AdminTd>
+                  <AdminTd>
+                    <div className="flex gap-1">
+                      <button type="button" className="admin-press rounded-lg p-2 text-[var(--admin-text-muted)]" aria-label="View order">
+                        <Eye className="h-4 w-4" />
+                      </button>
+                      <button type="button" className="admin-press rounded-lg p-2 text-[var(--admin-text-muted)]" aria-label="Edit order">
+                        <Edit className="h-4 w-4" />
+                      </button>
                     </div>
-                    <select
-                        value={filterStatus}
-                        onChange={(e) => setFilterStatus(e.target.value)}
-                        className="px-4 py-2 border border-brand-primary/20 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-brand-dark dark:text-white"
-                    >
-                        <option value="all">All Status</option>
-                        <option value="pending">Pending</option>
-                        <option value="processing">Processing</option>
-                        <option value="shipped">Shipped</option>
-                        <option value="delivered">Delivered</option>
-                        <option value="cancelled">Cancelled</option>
-                    </select>
-                </div>
-
-                {/* Orders Table */}
-                <div className="bg-brand-cream dark:bg-gray-900 rounded-lg shadow-sm border border-brand-primary/10 dark:border-gray-800 overflow-hidden">
-                    {isLoading ? (
-                        <div className="px-6 py-8 text-center text-neutral-500 dark:text-gray-400">
-                            <p>Loading orders...</p>
-                        </div>
-                    ) : filteredOrders.length === 0 ? (
-                        <div className="px-6 py-8 text-center text-neutral-500 dark:text-gray-400">
-                            <p>No orders found.</p>
-                        </div>
-                    ) : (
-                        <table className="min-w-full divide-y divide-brand-primary/10 dark:divide-gray-800">
-                            <thead className="bg-brand-primary/5 dark:bg-gray-800">
-                                <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-gray-400 uppercase tracking-wider">
-                                        Order ID
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-gray-400 uppercase tracking-wider">
-                                        Customer
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-gray-400 uppercase tracking-wider">
-                                        Total
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-gray-400 uppercase tracking-wider">
-                                        Status
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-gray-400 uppercase tracking-wider">
-                                        Date
-                                    </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-neutral-500 dark:text-gray-400 uppercase tracking-wider">
-                                        Actions
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-brand-primary/10 dark:divide-gray-800">
-                                {filteredOrders.map((order) => (
-                                    <tr key={order.id} className="hover:bg-brand-primary/5 dark:hover:bg-gray-800 transition-colors">
-                                        <td className="px-6 py-4 text-sm font-medium text-brand-dark dark:text-white">
-                                            {order.orderNumber}
-                                        </td>
-                                        <td className="px-6 py-4 text-sm text-neutral-600 dark:text-gray-300">
-                                            {order.user ? `${order.user.firstName} ${order.user.lastName}` : 'Unknown'}
-                                        </td>
-                                        <td className="px-6 py-4 text-sm font-medium text-brand-dark dark:text-white">
-                                            GH₵{Number(order.total).toFixed(2)}
-                                        </td>
-                                        <td className="px-6 py-4 text-sm">
-                                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                                                {order.status}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-sm text-neutral-600 dark:text-gray-300">
-                                            {new Date(order.createdAt).toLocaleDateString()}
-                                        </td>
-                                        <td className="px-6 py-4 text-sm flex gap-2">
-                                            <button className="p-1 hover:bg-brand-primary/10 dark:hover:bg-gray-800 rounded">
-                                                <Eye className="w-4 h-4 text-neutral-600 dark:text-gray-400" />
-                                            </button>
-                                            <button className="p-1 hover:bg-brand-primary/10 dark:hover:bg-gray-800 rounded">
-                                                <Edit className="w-4 h-4 text-neutral-600 dark:text-gray-400" />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    )}
-                </div>
-            </div>
-        </div>
-    )
+                  </AdminTd>
+                </AdminTr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </AdminDataTable>
+    </>
+  )
 }

@@ -40,13 +40,10 @@ export async function detectUserCountry(): Promise<string> {
   try {
     // Method 1: IP-based geolocation (most accurate)
     try {
-      const geoResponse = await fetch('https://ip-api.com/json/?fields=countryCode', {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-      })
+      const geoResponse = await fetch('/api/geo/country', { method: 'GET' })
       
       if (geoResponse.ok) {
-        const geoData = await geoResponse.json() as { countryCode?: string }
+        const geoData = await geoResponse.json() as { countryCode?: string | null }
         if (geoData.countryCode) {
           console.log('Location detected via IP:', geoData.countryCode)
           return geoData.countryCode.toUpperCase()

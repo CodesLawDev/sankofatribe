@@ -1,0 +1,147 @@
+@import url('https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap');
+
+.admin-root {
+  --admin-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --admin-ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --admin-surface: #fcf8f3;
+  --admin-surface-raised: #ffffff;
+  --admin-surface-sunken: #f5efe6;
+  --admin-border: rgba(139, 94, 60, 0.12);
+  --admin-border-strong: rgba(139, 94, 60, 0.22);
+  --admin-text: #29241f;
+  --admin-text-muted: #736a5e;
+  --admin-accent: #8b5e3c;
+  --admin-accent-soft: rgba(139, 94, 60, 0.08);
+  --admin-shadow-sm: 0 1px 2px rgba(41, 36, 31, 0.05), 0 1px 1px rgba(41, 36, 31, 0.04);
+  --admin-shadow-md: 0 6px 16px -6px rgba(41, 36, 31, 0.12), 0 2px 4px -2px rgba(41, 36, 31, 0.06);
+  --admin-shadow-lg: 0 16px 40px -12px rgba(41, 36, 31, 0.18), 0 4px 10px -4px rgba(41, 36, 31, 0.08);
+}
+
+.dark .admin-root {
+  --admin-surface: #141210;
+  --admin-surface-raised: #1c1916;
+  --admin-surface-sunken: #0f0e0c;
+  --admin-border: rgba(212, 163, 115, 0.12);
+  --admin-border-strong: rgba(212, 163, 115, 0.22);
+  --admin-text: #f5efe6;
+  --admin-text-muted: #b7ac9a;
+  --admin-accent: #d4a373;
+  --admin-accent-soft: rgba(212, 163, 115, 0.1);
+  --admin-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --admin-shadow-md: 0 6px 16px -6px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+  --admin-shadow-lg: 0 16px 40px -12px rgba(0, 0, 0, 0.6), 0 4px 10px -4px rgba(0, 0, 0, 0.45);
+}
+
+.font-admin-sans {
+  font-family: var(--font-geist-sans), 'Satoshi', system-ui, sans-serif;
+}
+
+.font-admin-display {
+  font-family: 'Satoshi', var(--font-geist-sans), system-ui, sans-serif;
+}
+
+.font-admin-mono {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-press {
+  transition: transform 160ms var(--admin-ease-out), background-color 160ms var(--admin-ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .admin-press:hover {
+    background-color: var(--admin-accent-soft);
+  }
+}
+
+.admin-press:active {
+  transform: scale(0.97);
+}
+
+/* Resting elevation for cards/sections so the UI has real hierarchy. */
+.admin-card {
+  box-shadow: var(--admin-shadow-sm);
+}
+
+/* Clickable surfaces lift toward the user on hover and press down on tap. */
+.admin-interactive {
+  box-shadow: var(--admin-shadow-sm);
+  transition: transform 200ms var(--admin-ease-out), box-shadow 200ms var(--admin-ease-out),
+    border-color 200ms var(--admin-ease-out), background-color 200ms var(--admin-ease-out);
+  will-change: transform;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .admin-interactive:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--admin-shadow-lg);
+    border-color: var(--admin-border-strong);
+  }
+}
+
+.admin-interactive:active {
+  transform: translateY(0) scale(0.985);
+  box-shadow: var(--admin-shadow-sm);
+  transition-duration: 120ms;
+}
+
+/* One-shot reveal for page sections. */
+.admin-reveal {
+  opacity: 0;
+  transform: translateY(10px);
+  animation: admin-fade-up 360ms var(--admin-ease-out) forwards;
+}
+
+.admin-stagger > * {
+  opacity: 0;
+  transform: translateY(8px);
+  animation: admin-fade-up 320ms var(--admin-ease-out) forwards;
+}
+
+.admin-stagger > *:nth-child(1) { animation-delay: 0ms; }
+.admin-stagger > *:nth-child(2) { animation-delay: 40ms; }
+.admin-stagger > *:nth-child(3) { animation-delay: 80ms; }
+.admin-stagger > *:nth-child(4) { animation-delay: 120ms; }
+.admin-stagger > *:nth-child(5) { animation-delay: 160ms; }
+.admin-stagger > *:nth-child(6) { animation-delay: 200ms; }
+
+@keyframes admin-fade-up {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-stagger > *,
+  .admin-reveal {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+
+  .admin-interactive:hover {
+    transform: none;
+  }
+
+  .admin-drawer {
+    transition: none !important;
+  }
+}
+
+.admin-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--admin-surface-sunken) 0%,
+    var(--admin-surface-raised) 50%,
+    var(--admin-surface-sunken) 100%
+  );
+  background-size: 200% 100%;
+  animation: admin-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes admin-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
