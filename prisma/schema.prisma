@@ -562,3 +562,22 @@ model ReviewHelpful {
   @@unique([reviewId, sessionId])
   @@index([reviewId])
 }
+
+// Tracks each successful promo-code redemption so per-customer usage limits
+// (usageLimitPerCustomer in Sanity) can be enforced. Keyed by normalized email
+// so the rule holds for guests too, not just logged-in accounts.
+model PromoRedemption {
+  id          String   @id @default(cuid())
+  code        String   @db.VarChar(40)   // uppercased promo code
+  email       String   @db.VarChar(255)  // normalized (lowercased, trimmed)
+  userId      String?
+  orderId     String?  @db.VarChar(100)  // Sanity order id (e.g. ORD-...)
+  orderNumber String?  @db.VarChar(100)
+  discount    Decimal  @default(0) @db.Decimal(10, 2)
+  createdAt   DateTime @default(now())
+
+  // Idempotency: a given order can only redeem a given code once.
+  @@unique([code, orderId])
+  @@index([code, email])
+  @@index([email])
+}

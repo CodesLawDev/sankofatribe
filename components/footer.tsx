@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { Instagram, Facebook, Twitter, Youtube } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { client } from '@/lib/sanity'
 import type { FooterData as FooterDataType } from '@/lib/layout-data'
 
@@ -25,6 +25,11 @@ interface FooterData {
         youtube?: string
         tiktok?: string
     }
+    newsletter?: {
+        heading: string
+        description: string
+        buttonText: string
+    }
     bottomSection: Array<{
         title: string
         description: string
@@ -33,8 +38,91 @@ interface FooterData {
     legalLinks: FooterLink[]
     showSections?: boolean
     showSocialLinks?: boolean
+    showNewsletter?: boolean
     showBottomSection?: boolean
     showLegalLinks?: boolean
+}
+
+function FooterNewsletter({
+    heading,
+    description,
+    buttonText,
+}: {
+    heading: string
+    description: string
+    buttonText: string
+}) {
+    const [email, setEmail] = useState('')
+    const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+    const [message, setMessage] = useState('')
+
+    const handleSubmit = async (e: FormEvent) => {
+        e.preventDefault()
+        const trimmed = email.trim()
+        if (!trimmed) return
+        setStatus('loading')
+        setMessage('')
+        try {
+            const res = await fetch('/api/newsletter/subscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: trimmed, source: 'footer' }),
+            })
+            const data = await res.json()
+            if (res.ok && data.success) {
+                setStatus('success')
+                setMessage("You're in! Check your inbox for your 10% code.")
+                setEmail('')
+            } else {
+                setStatus('error')
+                setMessage(data.error || 'Something went wrong. Please try again.')
+            }
+        } catch {
+            setStatus('error')
+            setMessage('Something went wrong. Please try again.')
+        }
+    }
+
+    return (
+        <div className="border-y border-gray-800 py-12">
+            <div className="max-w-md">
+                <h3 className="text-sm font-bold mb-4">{heading}</h3>
+                <p className="text-xs text-gray-400 mb-4">{description}</p>
+                <form className="flex gap-2" onSubmit={handleSubmit}>
+                    <label htmlFor="newsletter-email" className="sr-only">
+                        Email address
+                    </label>
+                    <input
+                        type="email"
+                        id="newsletter-email"
+                        name="email"
+                        required
+                        aria-required="true"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        disabled={status === 'loading'}
+                        placeholder="Enter your email"
+                        className="flex-1 px-3 py-2 text-xs bg-gray-900 text-white border border-gray-700 focus:outline-none focus:border-white transition-colors disabled:opacity-60"
+                    />
+                    <button
+                        type="submit"
+                        disabled={status === 'loading'}
+                        className="bg-white text-black px-4 py-2 text-xs font-bold hover:bg-gray-200 transition-colors focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black disabled:opacity-60"
+                    >
+                        {status === 'loading' ? 'Signing up…' : buttonText}
+                    </button>
+                </form>
+                {message && (
+                    <p
+                        className={`mt-3 text-xs ${status === 'success' ? 'text-green-400' : 'text-red-400'}`}
+                        role="status"
+                    >
+                        {message}
+                    </p>
+                )}
+            </div>
+        </div>
+    )
 }
 
 interface FooterProps {
@@ -114,6 +202,11 @@ export default function Footer({ initialData }: FooterProps = {}) {
             youtube: 'https://youtube.com',
             tiktok: 'https://tiktok.com',
         },
+        newsletter: {
+            heading: 'Email Sign Up',
+            description: 'Get 10% off your first order, plus early access to new drops and exclusive offers.',
+            buttonText: 'Sign Up',
+        },
         bottomSection: [
             { title: 'Find a Store', description: 'Locate our retail locations near you' },
             { title: 'Sustainability', description: 'Learn about our environmental commitment' },
@@ -127,9 +220,11 @@ export default function Footer({ initialData }: FooterProps = {}) {
 
     const showSections = footerData?.showSections ?? true
     const showSocialLinks = footerData?.showSocialLinks ?? true
+    const showNewsletter = footerData?.showNewsletter ?? true
     const showBottomSection = footerData?.showBottomSection ?? true
     const showLegalLinks = footerData?.showLegalLinks ?? true
 
+    const newsletter = footerData?.newsletter ?? defaultData.newsletter!
     const sections = footerData?.sections ?? defaultData.sections
     const socialLinks = {
         ...defaultData.socialLinks,
@@ -197,7 +292,13 @@ export default function Footer({ initialData }: FooterProps = {}) {
                     </div>
                 )}
 
-                
+                {showNewsletter && (
+                    <FooterNewsletter
+                        heading={newsletter.heading}
+                        description={newsletter.description}
+                        buttonText={newsletter.buttonText}
+                    />
+                )}
 
                 {/* Bottom Section */}
                 {showBottomSection && bottomSection && bottomSection.length > 0 && (

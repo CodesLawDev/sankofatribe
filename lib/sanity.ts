@@ -114,6 +114,8 @@ export interface PromoCode {
     applicableProducts?: Product[]
     applicableCategories?: Category[]
     firstTimeCustomerOnly?: boolean
+    subscribersOnly?: boolean
+    singleItemOnly?: boolean
 }
 
 export interface Campaign {

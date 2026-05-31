@@ -151,6 +151,20 @@ export const promoCode = defineType({
             description: 'Restrict to customers with no previous orders',
             initialValue: false,
         }),
+        defineField({
+            name: 'subscribersOnly',
+            title: 'Newsletter Subscribers Only',
+            type: 'boolean',
+            description: 'Restrict to emails that are active newsletter subscribers (e.g. the welcome code)',
+            initialValue: false,
+        }),
+        defineField({
+            name: 'singleItemOnly',
+            title: 'Apply To A Single Item Only',
+            type: 'boolean',
+            description: 'When on, the discount applies to one item only (the most expensive unit), not the whole cart',
+            initialValue: false,
+        }),
     ],
     preview: {
         select: {

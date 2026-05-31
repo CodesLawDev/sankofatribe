@@ -5,14 +5,20 @@ import { subscribeToBrevo, sendBrevoEmail } from '@/lib/brevo'
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json()
-        const { email, firstName, lastName, phone, source = 'website' } = body
+        const { email: rawEmail, firstName, lastName, phone, source = 'website' } = body
 
-        if (!email) {
+        if (!rawEmail || typeof rawEmail !== 'string' || !rawEmail.trim()) {
             return NextResponse.json(
                 { error: 'Email is required' },
                 { status: 400 }
             )
         }
+
+        // Store a canonical, lowercased email so subscriber lookups (e.g. the
+        // SANKOFA007 subscribers-only gate) match regardless of how the user
+        // typed it. Lowercasing is always deliverable; we deliberately do NOT
+        // strip +tags here to avoid changing the real destination mailbox.
+        const email = rawEmail.trim().toLowerCase()
 
         const prisma = getPrisma()
 
