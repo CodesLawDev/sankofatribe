@@ -39,6 +39,11 @@ export interface FooterData {
     twitter?: string
     youtube?: string
   }
+  newsletter?: {
+    heading: string
+    description: string
+    buttonText: string
+  }
   bottomSection: Array<{
     title: string
     description: string
@@ -47,6 +52,7 @@ export interface FooterData {
   legalLinks: FooterLink[]
   showSections?: boolean
   showSocialLinks?: boolean
+  showNewsletter?: boolean
   showBottomSection?: boolean
   showLegalLinks?: boolean
 }
@@ -86,8 +92,8 @@ export async function fetchLayoutData(): Promise<LayoutData> {
       client
         .fetch<FooterData | null>(
           `*[_type == "footerSettings"][0]{
-            _id, title, showSections, showSocialLinks, showBottomSection,
-            showLegalLinks, sections, socialLinks, bottomSection,
+            _id, title, showSections, showSocialLinks, showNewsletter, showBottomSection,
+            showLegalLinks, sections, socialLinks, newsletter, bottomSection,
             copyrightText, legalLinks
           }`,
           {},

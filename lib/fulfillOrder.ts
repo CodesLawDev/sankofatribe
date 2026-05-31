@@ -114,11 +114,16 @@ export async function fulfillOrder(opts: FulfillOrderOpts): Promise<FulfillResul
   // above already makes this whole function idempotent per order.
   if (order.promoCode) {
     const code = String(order.promoCode).toUpperCase()
-    const email = order.customer?.email ? normalizeEmail(order.customer.email) : ''
+    const rawEmail = order.customer?.email || ''
+    // Lenient key (lowercase) matches how subscribers/Brevo contacts are stored;
+    // normalized key (+tags & Gmail dots stripped) is only for the abuse-limit
+    // record, kept consistent with the per-customer count in lib/promo.ts.
+    const lowerEmail = rawEmail.trim().toLowerCase()
+    const normalizedEmail = rawEmail ? normalizeEmail(rawEmail) : ''
 
     // Per-customer redemption record (DB). Unique on [code, orderId] guards
     // against any accidental double-processing.
-    if (email) {
+    if (lowerEmail) {
       try {
         const prisma = getPrisma()
         await prisma.promoRedemption.upsert({
@@ -126,7 +131,7 @@ export async function fulfillOrder(opts: FulfillOrderOpts): Promise<FulfillResul
           update: {},
           create: {
             code,
-            email,
+            email: normalizedEmail,
             orderId: opts.orderId,
             orderNumber: order.orderId || opts.orderId,
             discount: order.discount || 0,
@@ -136,8 +141,9 @@ export async function fulfillOrder(opts: FulfillOrderOpts): Promise<FulfillResul
         console.error('[fulfillOrder] promo redemption record failed:', redErr)
       }
 
-      // Best-effort marketing write-back; never blocks fulfilment.
-      markPromoRedeemedInBrevo(email, code).catch((e) =>
+      // Best-effort marketing write-back. Use the lenient (lowercased) email so
+      // the Brevo contact lookup matches the address used at subscription time.
+      markPromoRedeemedInBrevo(lowerEmail, code).catch((e) =>
         console.error('[fulfillOrder] Brevo promo write-back failed:', e)
       )
     }

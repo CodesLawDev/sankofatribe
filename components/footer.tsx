@@ -145,10 +145,12 @@ export default function Footer({ initialData }: FooterProps = {}) {
                     title,
                     showSections,
                     showSocialLinks,
+                    showNewsletter,
                     showBottomSection,
                     showLegalLinks,
                     sections,
                     socialLinks,
+                    newsletter,
                     bottomSection,
                     copyrightText,
                     legalLinks
