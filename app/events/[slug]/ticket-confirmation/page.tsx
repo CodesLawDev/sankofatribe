@@ -27,7 +27,9 @@ interface TicketData {
   };
 }
 
-export default function TicketConfirmationPage() {
+import { Suspense } from 'react';
+
+function TicketConfirmationContent() {
   const searchParams = useSearchParams();
   const reference = searchParams.get('reference');
   const provider = searchParams.get('provider') || 'paystack';
@@ -295,5 +297,20 @@ export default function TicketConfirmationPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function TicketConfirmationPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-brand-cream flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-brand-primary mx-auto mb-4"></div>
+          <p className="text-neutral-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <TicketConfirmationContent />
+    </Suspense>
   );
 }

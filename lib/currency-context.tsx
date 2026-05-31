@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react'
 import { detectUserCountry, getUserCurrency, convertGHSToUSD, formatPrice } from '@/lib/currency'
 
 interface CurrencyContextType {
@@ -22,19 +22,23 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   const [exchangeRate, setExchangeRate] = useState(0.082)
   const [userCountry, setUserCountry] = useState('GH')
   const [isLoading, setIsLoading] = useState(true)
+  const initializedRef = useRef(false)
 
   // Initialize currency on mount
   useEffect(() => {
+    if (initializedRef.current) return
+    initializedRef.current = true
+
     const initCurrency = async () => {
       try {
         // Always fetch exchange rate from settings first
         let rate = 0.082 // hardcoded fallback only
         try {
-          const response = await fetch('/api/admin/settings')
+          const response = await fetch('/api/settings', { credentials: 'include' })
           if (response.ok) {
-            const settings = await response.json()
-            if (settings.currency?.exchangeRate) {
-              rate = settings.currency.exchangeRate
+            const payload = await response.json()
+            if (payload?.data?.currency?.exchangeRate) {
+              rate = payload.data.currency.exchangeRate
               console.log('Exchange rate loaded from settings:', rate)
             }
           }

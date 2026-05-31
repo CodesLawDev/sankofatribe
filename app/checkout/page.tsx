@@ -56,18 +56,21 @@ export default function CheckoutPage() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [stockErrors, setStockErrors] = useState<string[]>([])
   const [generalError, setGeneralError] = useState("")
-  const [activeGateway, setActiveGateway] = useState<'hubtel' | 'paystack' | 'both'>('both')
+  const [hubtelEnabled, setHubtelEnabled] = useState(true)
+  const [paystackEnabled, setPaystackEnabled] = useState(false)
   const [paymentProvider, setPaymentProvider] = useState<"paystack" | "hubtel">("hubtel")
 
-  // Fetch payment gateway setting
+  // Fetch payment gateway setting for product checkout
   useEffect(() => {
     fetch('/api/settings/public')
       .then((res) => res.json())
       .then((data) => {
-        const gateway = data.gateway || 'both'
-        setActiveGateway(gateway)
-        if (gateway === 'paystack') setPaymentProvider('paystack')
-        if (gateway === 'hubtel') setPaymentProvider('hubtel')
+        const surface = data?.gateways?.productCheckout || { hubtelEnabled: true, paystackEnabled: false }
+        setHubtelEnabled(!!surface.hubtelEnabled)
+        setPaystackEnabled(!!surface.paystackEnabled)
+        // Pick the first available as initial selection
+        if (surface.hubtelEnabled) setPaymentProvider('hubtel')
+        else if (surface.paystackEnabled) setPaymentProvider('paystack')
       })
       .catch((err) => console.error('Failed to load gateway settings', err))
   }, [])
@@ -500,7 +503,7 @@ export default function CheckoutPage() {
                 Payment Method
               </h2>
               <div className="space-y-3">
-                {(activeGateway === 'paystack' || activeGateway === 'both') && (
+                {paystackEnabled && (
                   <label
                     className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-all ${
                       paymentProvider === "paystack"
@@ -525,7 +528,7 @@ export default function CheckoutPage() {
                   </label>
                 )}
 
-                {(activeGateway === 'hubtel' || activeGateway === 'both') && (
+                {hubtelEnabled && (
                   <label
                     className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-all ${
                       paymentProvider === "hubtel"

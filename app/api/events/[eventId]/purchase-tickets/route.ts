@@ -137,7 +137,7 @@ export async function POST(
     let provider: PaymentProvider = 'hubtel';
     if (!isFree) {
       try {
-        provider = await resolveProvider(requestedProvider);
+        provider = await resolveProvider('ticketing', requestedProvider);
       } catch (err) {
         return NextResponse.json(
           { error: err instanceof Error ? err.message : 'No payment gateway available' },

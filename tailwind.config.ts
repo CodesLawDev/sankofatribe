@@ -81,7 +81,9 @@ const config: Config = {
     			display: [
     				'Playfair Display',
     				'serif'
-    			]
+    			],
+    			'geist-sans': ['var(--font-geist-sans)', 'Satoshi', 'system-ui', 'sans-serif'],
+    			'geist-mono': ['var(--font-geist-mono)', 'ui-monospace', 'monospace']
     		},
     		animation: {
     			'fade-in': 'fadeIn 0.5s ease-in-out',

@@ -2,13 +2,17 @@ import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import * as jwt from 'jose';
 
-let prismaInstance: PrismaClient | null = null;
+// Store the client on globalThis so it survives Next.js dev hot-reloads.
+// Without this, each hot reload re-evaluates the module and instantiates a new
+// PrismaClient (each with its own connection pool), quickly exhausting the
+// database connection limit ("Timed out fetching a new connection from the pool").
+const globalForPrisma = globalThis as unknown as { __prisma?: PrismaClient };
 
 export function getPrisma(): PrismaClient {
-  if (!prismaInstance) {
-    prismaInstance = new PrismaClient();
+  if (!globalForPrisma.__prisma) {
+    globalForPrisma.__prisma = new PrismaClient();
   }
-  return prismaInstance;
+  return globalForPrisma.__prisma;
 }
 
 const JWT_SECRET = (() => {

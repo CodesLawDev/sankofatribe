@@ -5,6 +5,7 @@ import TicketVerifier from '@/components/admin/ticket-verifier'
 import AttendeeList from '@/components/admin/attendee-list'
 import OrdersTable from '@/components/admin/orders-table'
 import TicketsTabs from '@/components/admin/tickets-tabs'
+import AdminPageHeader from '@/components/admin/admin-page-header'
 
 const prisma = getPrisma()
 
@@ -395,19 +396,14 @@ export default async function AdminTicketsPage({ searchParams }: { searchParams?
   )
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-4">
-      <div className="max-w-7xl mx-auto space-y-8">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-2xl font-bold text-gray-900">Admin • Ticketing</h1>
-          <p className="text-gray-600">Monitor events, revenue, orders, and check-ins.</p>
-        </div>
+    <>
+      <AdminPageHeader title="Event ticketing" description="Monitor events, revenue, orders, and check-ins." />
 
-        <TicketsTabs
+      <TicketsTabs
           overviewContent={overviewContent}
           ordersContent={ordersContent}
           attendeesContent={attendeesContent}
         />
-      </div>
-    </div>
+    </>
   )
 }

@@ -40,7 +40,9 @@ const TABS = [
   { id: 'preferences' as const, label: 'Preferences', icon: Settings },
 ]
 
-export default function AccountPage() {
+import { Suspense } from 'react'
+
+function AccountContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const tabFromUrl = searchParams.get('tab') as TabId | null
@@ -229,5 +231,20 @@ export default function AccountPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function AccountPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader className="w-8 h-8 text-brand-primary animate-spin mx-auto mb-2" />
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <AccountContent />
+    </Suspense>
   )
 }

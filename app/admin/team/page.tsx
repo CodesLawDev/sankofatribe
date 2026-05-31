@@ -1,11 +1,16 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { AlertCircle, ArrowLeft, CheckCircle, Eye, EyeOff, Plus, Trash2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { AlertCircle, CheckCircle, Eye, EyeOff, Plus, Trash2 } from 'lucide-react'
 import { useAdminAuth } from '@/lib/useAdminAuth'
+import AdminPageHeader from '@/components/admin/admin-page-header'
+import AdminSection from '@/components/admin/admin-section'
+import AdminButton from '@/components/admin/admin-button'
+import AdminAlert from '@/components/admin/admin-alert'
+import AdminEmptyState from '@/components/admin/admin-empty-state'
+import { AdminDataTable, AdminTableHead, AdminTh, AdminTr, AdminTd } from '@/components/admin/admin-section'
+import { AdminPageSkeleton } from '@/components/admin/admin-skeleton'
+import { adminBadgeClass, adminInputClass } from '@/lib/admin/utils'
 
 interface AdminUser {
   id: string
@@ -62,7 +67,6 @@ const INITIAL_FORM: CreateUserForm = {
 }
 
 export default function AdminUsersPage() {
-  const router = useRouter()
   const { user, isLoading: authLoading, isMounted } = useAdminAuth()
   const [users, setUsers] = useState<AdminUser[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -248,51 +252,32 @@ export default function AdminUsersPage() {
   }
 
   if (authLoading || !isMounted || !user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-brand-cream dark:bg-darkbg">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-brand-dark dark:border-white"></div>
-          <p className="mt-4 text-neutral-600 dark:text-gray-400">Loading users...</p>
-        </div>
-      </div>
-    )
+    return <AdminPageSkeleton />
   }
 
   return (
-    <div className="min-h-screen bg-brand-cream dark:bg-darkbg">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <Link href="/admin" className="inline-flex items-center gap-2 text-sm text-neutral-600 hover:text-brand-dark dark:text-gray-400 dark:hover:text-white mb-4">
-            <ArrowLeft className="h-4 w-4" />
-            Back to Dashboard
-          </Link>
-          <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-brand-dark dark:text-white">User Management</h1>
-            <Button
-              onClick={() => setShowForm(!showForm)}
-              className="flex items-center gap-2"
-              disabled={!canManageUsers}
-            >
+    <div className="space-y-8">
+      <AdminPageHeader
+        title="Team"
+        description="Manage admin accounts and permissions."
+        actions={
+          canManageUsers ? (
+            <AdminButton onClick={() => setShowForm(!showForm)}>
               <Plus className="h-4 w-4" />
-              Add User
-            </Button>
-          </div>
-        </div>
+              Add user
+            </AdminButton>
+          ) : undefined
+        }
+      />
 
-        {message && (
-          <div
-            className={`mb-6 p-4 rounded flex items-center gap-3 ${
-              message.type === 'success' ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
-            }`}
-          >
-            {message.type === 'success' ? (
-              <CheckCircle className="h-5 w-5 text-green-600" />
-            ) : (
-              <AlertCircle className="h-5 w-5 text-red-600" />
-            )}
-            <p className={message.type === 'success' ? 'text-green-700' : 'text-red-700'}>{message.text}</p>
-          </div>
-        )}
+      {message && (
+        <AdminAlert variant={message.type === 'success' ? 'success' : 'error'}>
+          <span className="flex items-center gap-2">
+            {message.type === 'success' ? <CheckCircle className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+            {message.text}
+          </span>
+        </AdminAlert>
+      )}
 
         {generatedPassword && (
           <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded">
@@ -312,24 +297,13 @@ export default function AdminUsersPage() {
         )}
 
         {showForm && (
-          <div className="bg-brand-cream dark:bg-gray-900 rounded-lg border border-brand-primary/10 dark:border-gray-800 p-6 mb-8 shadow-sm">
-            <h2 className="text-lg font-medium uppercase tracking-wider mb-6">Create New User</h2>
-
+          <AdminSection title="Create new user">
             <form onSubmit={handleCreateUser} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Email *</label>
-                  <input
-                    type="email"
-                    placeholder="user@example.com"
-                    value={form.email}
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
-                    disabled={isCreating}
-                    className="w-full px-4 py-2 border border-brand-primary/20 rounded focus:outline-none focus:border-brand-primary disabled:bg-neutral-100 disabled:cursor-not-allowed"
-                    required
-                    autoComplete="email"
-                  />
-                </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <label className="flex flex-col gap-2 text-sm">
+                  <span className="font-medium">Email *</span>
+                  <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} disabled={isCreating} className={adminInputClass} required />
+                </label>
 
                 <div>
                   <label className="block text-sm font-medium mb-2">First Name *</label>
@@ -418,23 +392,12 @@ export default function AdminUsersPage() {
                 </div>
               )}
 
-              <div className="flex gap-4">
-                <Button type="submit" disabled={isCreating}>
-                  {isCreating ? 'Creating...' : 'Create User'}
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => {
-                    setShowForm(false)
-                    setForm({ ...INITIAL_FORM })
-                  }}
-                >
-                  Cancel
-                </Button>
+              <div className="flex gap-3">
+                <AdminButton type="submit" disabled={isCreating}>{isCreating ? 'Creating...' : 'Create user'}</AdminButton>
+                <AdminButton type="button" variant="secondary" onClick={() => { setShowForm(false); setForm({ ...INITIAL_FORM }) }}>Cancel</AdminButton>
               </div>
             </form>
-          </div>
+          </AdminSection>
         )}
 
         {editingUser && editForm && (
@@ -564,114 +527,58 @@ export default function AdminUsersPage() {
                 </div>
               )}
 
-              <div className="flex gap-4">
-                <Button type="submit" disabled={isUpdating}>
-                  {isUpdating ? 'Saving...' : 'Save Changes'}
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => {
-                    setEditingUser(null)
-                    setEditForm(null)
-                  }}
-                >
-                  Cancel
-                </Button>
+              <div className="flex gap-3">
+                <AdminButton type="submit" disabled={isUpdating}>{isUpdating ? 'Saving...' : 'Save changes'}</AdminButton>
+                <AdminButton type="button" variant="secondary" onClick={() => { setEditingUser(null); setEditForm(null) }}>Cancel</AdminButton>
               </div>
             </form>
           </div>
         )}
 
-        <div className="bg-brand-cream dark:bg-gray-900 rounded-lg border border-brand-primary/10 dark:border-gray-800 overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-brand-primary/5 border-b border-brand-primary/10">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-600 uppercase tracking-wider">Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-600 uppercase tracking-wider">Email</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-600 uppercase tracking-wider">Role</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-600 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-600 uppercase tracking-wider">Last Login</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-neutral-600 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-brand-primary/10">
-                {users.map((user) => (
-                  <tr key={user.id} className="hover:bg-brand-primary/5 transition-colors">
-                    <td className="px-6 py-4 text-sm">
-                      {user.firstName} {user.lastName}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-neutral-600">{user.email}</td>
-                    <td className="px-6 py-4 text-sm">
-                      <span
-                        className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                          user.role === 'SUPERADMIN' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
-                        }`}
-                      >
-                        {user.role === 'SUPERADMIN' ? 'Super Admin' : 'Admin'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm">
-                      <span
-                        className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                          user.status === 'ACTIVE'
-                            ? 'bg-green-100 text-green-800'
-                            : user.status === 'INACTIVE'
-                            ? 'bg-neutral-100 text-neutral-800'
-                            : user.status === 'SUSPENDED'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}
-                      >
-                        {user.status === 'ACTIVE'
-                          ? 'Active'
-                          : user.status === 'INACTIVE'
-                          ? 'Inactive'
-                          : user.status === 'SUSPENDED'
-                          ? 'Suspended'
-                          : 'Deleted'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-neutral-600">
-                      {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never'}
-                    </td>
-                    <td className="px-6 py-4 text-sm">
-                      <div className="flex items-center gap-3">
-                        {canManageUsers && (
-                          <>
-                            <button
-                              onClick={() => startEdit(user)}
-                              className="text-brand-primary hover:text-brand-primary/80 transition-colors text-sm"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => resetUserPassword(user.id, true)}
-                              className="text-brand-primary hover:text-brand-primary/80 transition-colors text-sm"
-                            >
-                              Reset Password
-                            </button>
-                            <button className="text-red-600 hover:text-red-800 transition-colors">
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </>
-                        )}
+        <AdminDataTable>
+          {users.length === 0 ? (
+            <AdminEmptyState title="No team members yet" description="Create your first admin user to get started." />
+          ) : (
+          <table className="w-full">
+            <AdminTableHead>
+              <AdminTh>Name</AdminTh>
+              <AdminTh>Email</AdminTh>
+              <AdminTh>Role</AdminTh>
+              <AdminTh>Status</AdminTh>
+              <AdminTh>Last login</AdminTh>
+              <AdminTh>Actions</AdminTh>
+            </AdminTableHead>
+            <tbody>
+              {users.map((u) => (
+                <AdminTr key={u.id}>
+                  <AdminTd>{u.firstName} {u.lastName}</AdminTd>
+                  <AdminTd className="text-[var(--admin-text-muted)]">{u.email}</AdminTd>
+                  <AdminTd>
+                    <span className={adminBadgeClass(u.role === 'SUPERADMIN' ? 'accent' : 'neutral')}>
+                      {u.role === 'SUPERADMIN' ? 'Super Admin' : 'Admin'}
+                    </span>
+                  </AdminTd>
+                  <AdminTd>
+                    <span className={adminBadgeClass(u.status === 'ACTIVE' ? 'success' : u.status === 'SUSPENDED' ? 'warning' : 'neutral')}>
+                      {u.status}
+                    </span>
+                  </AdminTd>
+                  <AdminTd className="text-[var(--admin-text-muted)]">{u.lastLogin ? new Date(u.lastLogin).toLocaleDateString() : 'Never'}</AdminTd>
+                  <AdminTd>
+                    {canManageUsers && (
+                      <div className="flex items-center gap-2">
+                        <button type="button" onClick={() => startEdit(u)} className="admin-press text-xs font-medium text-[var(--admin-accent)]">Edit</button>
+                        <button type="button" onClick={() => resetUserPassword(u.id, true)} className="admin-press text-xs font-medium text-[var(--admin-accent)]">Reset</button>
+                        <button type="button" className="admin-press text-red-600"><Trash2 className="h-4 w-4" /></button>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {users.length === 0 && (
-            <div className="px-6 py-12 text-center text-neutral-600">
-              <p>No users yet. Create your first admin user.</p>
-            </div>
+                    )}
+                  </AdminTd>
+                </AdminTr>
+              ))}
+            </tbody>
+          </table>
           )}
-        </div>
-      </div>
+        </AdminDataTable>
     </div>
   )
 }

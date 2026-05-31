@@ -48,19 +48,21 @@ export default function TicketPurchaseModal({
   const [buyerInfo, setBuyerInfo] = useState({ name: '', email: '', phone: '' });
   const [isProcessing, setIsProcessing] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [activeGateway, setActiveGateway] = useState<'hubtel' | 'paystack' | 'both'>('both');
+  const [hubtelEnabled, setHubtelEnabled] = useState(false);
+  const [paystackEnabled, setPaystackEnabled] = useState(false);
   const [paymentProvider, setPaymentProvider] = useState<'paystack' | 'hubtel'>('hubtel');
 
-  // Fetch payment gateway setting when modal opens
+  // Fetch payment gateway setting for ticketing when modal opens
   useEffect(() => {
     if (isOpen) {
       fetch('/api/settings/public')
         .then((res) => res.json())
         .then((data) => {
-          const gateway = data.gateway || 'both'
-          setActiveGateway(gateway)
-          if (gateway === 'paystack') setPaymentProvider('paystack')
-          if (gateway === 'hubtel') setPaymentProvider('hubtel')
+          const surface = data?.gateways?.ticketing || { hubtelEnabled: false, paystackEnabled: false }
+          setHubtelEnabled(!!surface.hubtelEnabled)
+          setPaystackEnabled(!!surface.paystackEnabled)
+          if (surface.hubtelEnabled) setPaymentProvider('hubtel')
+          else if (surface.paystackEnabled) setPaymentProvider('paystack')
         })
         .catch((err) => console.error('Failed to load gateway settings', err))
     }
@@ -382,7 +384,7 @@ export default function TicketPurchaseModal({
                 Payment Method
               </h3>
               <div className="space-y-2">
-                {(activeGateway === 'paystack' || activeGateway === 'both') && (
+                {paystackEnabled && (
                   <label
                     className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition ${
                       paymentProvider === 'paystack'
@@ -406,7 +408,7 @@ export default function TicketPurchaseModal({
                   </label>
                 )}
 
-                {(activeGateway === 'hubtel' || activeGateway === 'both') && (
+                {hubtelEnabled && (
                   <label
                     className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition ${
                       paymentProvider === 'hubtel'

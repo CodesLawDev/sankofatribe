@@ -37,8 +37,8 @@ interface VerificationResult {
 }
 
 async function sendSMS(phone: string, message: string): Promise<boolean> {
-  const apiKey = process.env.FLASHSMS_API_KEY || process.env.BMS_API_KEY;
-  const senderId = process.env.FLASHSMS_SENDER_ID || process.env.BMS_SENDER_ID || 'SankofaTrib';
+  const apiKey = process.env.FLASHSMS_API_KEY;
+  const senderId = process.env.FLASHSMS_SENDER_ID || 'SankofaTrib';
 
   if (!apiKey) {
     console.log('  SMS: FlashSMS API key not configured, skipping');
@@ -46,7 +46,7 @@ async function sendSMS(phone: string, message: string): Promise<boolean> {
   }
 
   try {
-    const response = await fetch('https://bms.codeslaw.dev/api/sms/send', {
+    const response = await fetch('https://app.flashsms.africa/api/v1/sms/send', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,

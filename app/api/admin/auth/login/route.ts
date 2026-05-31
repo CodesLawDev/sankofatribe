@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 const adminLoginLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 5 })
-const SESSION_MAX_AGE = 5 * 60 // 5 minutes of inactivity
+const SESSION_MAX_AGE = 24 * 60 * 60 // 24 hours of inactivity
 
 export async function POST(request: NextRequest) {
   try {

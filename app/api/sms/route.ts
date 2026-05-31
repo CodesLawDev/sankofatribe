@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { serverClient } from '@/lib/sanity-server'
 
-const FLASHSMS_BASE_URL = 'https://bms.codeslaw.dev/api/v1'
+const FLASHSMS_BASE_URL = 'https://app.flashsms.africa/api/v1'
 const SETTINGS_QUERY = `*[_type == "siteSettings"][0]{adminPhone, senderId}`
 
 type SmsType = 'payment_confirmation' | 'new_order_alert' | 'shipping_notification' | 'delivery_notification' | 'cancellation_notification' | 'low_stock_alert' | 'promotion' | 'order_confirmation' | 'generic'
@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        const apiKey = process.env.FLASHSMS_API_KEY || process.env.BMS_API_KEY
+        const apiKey = process.env.FLASHSMS_API_KEY
         if (!apiKey) {
             return NextResponse.json({ success: false, error: 'Missing FLASHSMS_API_KEY env var' }, { status: 500 })
         }
@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
         }
 
         const message = buildMessage(type, data)
-        const senderId = process.env.FLASHSMS_SENDER_ID || process.env.BMS_SENDER_ID || data.senderId || settings.senderId || 'Sankofa'
+        const senderId = process.env.FLASHSMS_SENDER_ID || data.senderId || settings.senderId || 'Sankofa'
 
         const response = await fetch(`${FLASHSMS_BASE_URL}/sms/send`, {
             method: 'POST',

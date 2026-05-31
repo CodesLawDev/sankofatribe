@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import { Product } from './sanity'
 
 interface WishlistContextType {
@@ -22,21 +22,26 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     const [isLoading, setIsLoading] = useState(false)
     const [isAuthenticated, setIsAuthenticated] = useState(false)
     const [wishlistIds, setWishlistIds] = useState<Set<string>>(new Set())
+    const initializedRef = useRef(false)
 
     // Check authentication and load wishlist
     useEffect(() => {
+        if (initializedRef.current) return
+        initializedRef.current = true
+
         const initializeWishlist = async () => {
             try {
                 setIsLoading(true)
 
-                // Check if user is authenticated
-                const meResponse = await fetch('/api/auth/me')
-                const isAuth = meResponse.ok
+                // Check if user is authenticated AND is a customer
+                // Admins/superadmins hit a 403 on /api/customer/* so skip the DB load for them
+                const statusResponse = await fetch('/api/auth/status', { credentials: 'include' })
+                const statusData = statusResponse.ok ? await statusResponse.json() : null
+                const isCustomer = statusData?.authenticated && statusData?.user?.role === 'CUSTOMER'
 
-                if (isAuth) {
+                if (isCustomer) {
                     setIsAuthenticated(true)
 
-                    // Load from database if authenticated
                     const response = await fetch('/api/customer/wishlist')
                     if (response.ok) {
                         const dbWishlist = await response.json()

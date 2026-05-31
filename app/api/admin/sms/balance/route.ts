@@ -4,7 +4,7 @@ import { cookies } from 'next/headers'
 
 export const dynamic = 'force-dynamic'
 
-const FLASHSMS_API_URL = 'https://bms.codeslaw.dev/api/v1'
+const FLASHSMS_API_URL = 'https://app.flashsms.africa/api/v1'
 
 export async function GET(request: NextRequest) {
     try {
@@ -26,16 +26,16 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
         }
 
-        const smsApiKey = process.env.FLASHSMS_API_KEY || process.env.BMS_API_KEY
+        const smsApiKey = process.env.FLASHSMS_API_KEY
 
         if (!smsApiKey) {
-            return NextResponse.json(
-                { error: 'SMS service not configured' },
-                { status: 500 }
-            )
+            return NextResponse.json({
+                balance: 0,
+                currency: 'credits',
+                error: 'SMS service not configured',
+            })
         }
 
-        // Fetch SMS balance from FlashSMS API
         const response = await fetch(`${FLASHSMS_API_URL}/balance`, {
             method: 'GET',
             headers: {
@@ -51,14 +51,13 @@ export async function GET(request: NextRequest) {
             // Return a default error response with a fallback message
             return NextResponse.json({
                 balance: 0,
-                currency: 'GHS',
+                currency: 'credits',
                 error: data.error || 'Unable to fetch SMS balance',
             })
         }
 
-        // Extract balance from FlashSMS response structure: {data: {balance: number, ...}}
         const balance = data.data?.balance || 0
-        const currency = data.data?.currency || 'GHS'
+        const currency = data.data?.currency || 'credits'
 
         return NextResponse.json({
             balance,

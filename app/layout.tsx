@@ -7,6 +7,7 @@ import AnalyticsTracker from '@/components/analytics-tracker'
 import PullToRefresh from '@/components/pull-to-refresh'
 import WhatsappButton from '@/components/whatsapp-button'
 import NewsletterPopup from '@/components/newsletter-popup'
+import StorefrontChrome from '@/components/storefront-chrome'
 import { fetchLayoutData } from '@/lib/layout-data'
 
 export const viewport: Viewport = {
@@ -29,8 +30,14 @@ export const metadata: Metadata = {
         title: 'SANKOFA TRIBE',
     },
     icons: {
-        icon: '/logo.svg',
-        apple: '/logo.svg',
+        icon: '/logo.png',
+        apple: '/logo.png',
+    },
+    // Prevent in-browser translators (Google Translate, etc.) from mutating the
+    // DOM React owns, which causes "NotFoundError: Failed to execute
+    // 'removeChild'/'insertBefore'" crashes during client-side route transitions.
+    other: {
+        google: 'notranslate',
     },
     openGraph: {
         type: 'website',
@@ -61,7 +68,7 @@ export default async function RootLayout({
     const layoutData = await fetchLayoutData()
 
     return (
-        <html lang="en" suppressHydrationWarning>
+        <html lang="en" translate="no" suppressHydrationWarning>
             <body className="bg-white text-black">
                 <script
                     type="application/ld+json"
@@ -78,12 +85,16 @@ export default async function RootLayout({
                 />
                 <Providers>
                     <AnalyticsTracker />
-                    <PullToRefresh />
-                    <WhatsappButton />
-                    <NewsletterPopup />
-                    <Header initialNavItems={layoutData.navItems} initialAnnouncement={layoutData.announcement} />
+                    <StorefrontChrome>
+                        <PullToRefresh />
+                        <WhatsappButton />
+                        <NewsletterPopup />
+                        <Header initialNavItems={layoutData.navItems} initialAnnouncement={layoutData.announcement} />
+                    </StorefrontChrome>
                     <main className="min-h-screen">{children}</main>
-                    <Footer initialData={layoutData.footerData} />
+                    <StorefrontChrome>
+                        <Footer initialData={layoutData.footerData} />
+                    </StorefrontChrome>
                 </Providers>
             </body>
         </html>

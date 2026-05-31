@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
-const FLASHSMS_API_URL = 'https://bms.codeslaw.dev/api/v1'
+const FLASHSMS_API_URL = 'https://app.flashsms.africa/api/v1'
 
 export async function POST(request: NextRequest) {
     try {
@@ -17,9 +17,8 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'No message provided' }, { status: 400 })
         }
 
-        // Get FlashSMS API credentials
-        const smsApiKey = process.env.FLASHSMS_API_KEY || process.env.BMS_API_KEY
-        const smsSenderId = process.env.FLASHSMS_SENDER_ID || process.env.BMS_SENDER_ID || 'Sankofa'
+        const smsApiKey = process.env.FLASHSMS_API_KEY
+        const smsSenderId = process.env.FLASHSMS_SENDER_ID || 'Sankofa'
 
         if (!smsApiKey) {
             return NextResponse.json(
@@ -28,7 +27,7 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        // Format phone numbers for FlashSMS API (accepts 0XXXXXXXXX or 233XXXXXXXXX format)
+        // Format phone numbers (accepts 0XXXXXXXXX or 233XXXXXXXXX format)
         const formattedPhones = phones.map((phone: string) => {
             let cleaned = phone.replace(/\s+/g, '').replace(/[^0-9+]/g, '')
             // Remove + prefix if present
@@ -39,7 +38,7 @@ export async function POST(request: NextRequest) {
             if (cleaned.startsWith('233')) {
                 return cleaned
             }
-            // If starts with 0, keep as is (FlashSMS accepts this format)
+            // If starts with 0, keep as is
             if (cleaned.startsWith('0')) {
                 return cleaned
             }
@@ -50,7 +49,6 @@ export async function POST(request: NextRequest) {
             return cleaned
         })
 
-        // Send SMS using FlashSMS API
         const response = await fetch(`${FLASHSMS_API_URL}/sms/send`, {
             method: 'POST',
             headers: {
@@ -71,7 +69,6 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: data.error || 'Failed to send SMS' }, { status: response.status })
         }
 
-        // FlashSMS returns success response
         return NextResponse.json({
             success: true,
             sent: data.data?.recipientsSent || formattedPhones.length,

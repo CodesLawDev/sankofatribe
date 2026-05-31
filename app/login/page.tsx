@@ -1,7 +1,7 @@
 /* eslint-disable react/no-unescaped-entities */
 'use client'
 
-import { useState, FormEvent, useEffect } from 'react'
+import { useState, FormEvent, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { AlertCircle, CheckCircle } from 'lucide-react'
@@ -12,7 +12,9 @@ interface LoginFormData {
     rememberMe: boolean
 }
 
-export default function CustomerLoginPage() {
+import { Suspense } from 'react'
+
+function LoginContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const redirectTo = searchParams?.get('redirect_to') || '/account'
@@ -26,6 +28,7 @@ export default function CustomerLoginPage() {
     const [error, setError] = useState<string | null>(null)
     const [isLoading, setIsLoading] = useState(false)
     const [success, setSuccess] = useState(false)
+    const sessionCheckedRef = useRef(false)
 
     useEffect(() => {
         setIsHydrated(true)
@@ -43,13 +46,16 @@ export default function CustomerLoginPage() {
 
     useEffect(() => {
         if (!isHydrated) return
+        if (sessionCheckedRef.current) return
+        sessionCheckedRef.current = true
 
         // Check if already logged in
         const checkSession = async () => {
             try {
-                const response = await fetch('/api/auth/me')
+                const response = await fetch('/api/auth/status', { credentials: 'include' })
                 if (response.ok) {
                     const data = await response.json()
+                    if (!data?.authenticated) return
                     if (data.user.role === 'ADMIN' || data.user.role === 'SUPERADMIN') {
                         router.push('/admin')
                     } else {
@@ -248,6 +254,18 @@ export default function CustomerLoginPage() {
                 </div>
             </div>
         </div>
+    )
+}
+
+export default function CustomerLoginPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <div className="text-gray-600">Loading...</div>
+            </div>
+        }>
+            <LoginContent />
+        </Suspense>
     )
 }
 

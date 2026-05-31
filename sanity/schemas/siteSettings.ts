@@ -22,21 +22,6 @@ export const siteSettings = defineType({
             type: 'text',
             description: 'Used for SEO',
         }),
-        defineField({
-            name: 'activePaymentGateway',
-            title: 'Active Payment Gateway',
-            type: 'string',
-            description: 'Select which payment gateway(s) should be available at checkout',
-            options: {
-                list: [
-                    { title: 'Hubtel Only', value: 'hubtel' },
-                    { title: 'Paystack Only', value: 'paystack' },
-                    { title: 'Both (User Choice)', value: 'both' },
-                ],
-            },
-            initialValue: 'both',
-            validation: (Rule) => Rule.required(),
-        }),
         {
             name: 'mainNavigation',
             title: 'Main Navigation',
@@ -107,34 +92,45 @@ export const siteSettings = defineType({
             name: 'paymentGateways',
             title: 'Payment Gateways',
             type: 'object',
-            description: 'Enable or disable each payment gateway. Toggle off to stop new payments via that provider. In-flight payment verification is unaffected.',
+            description: 'Enable each gateway per surface. In-flight payment verification is unaffected by toggling these off.',
             fields: [
                 defineField({
-                    name: 'hubtelEnabled',
-                    title: 'Hubtel Enabled',
-                    type: 'boolean',
-                    initialValue: true,
-                    description: 'Accept new payments via Hubtel (Mobile Money)',
+                    name: 'productCheckout',
+                    title: 'Product Checkout',
+                    type: 'object',
+                    fields: [
+                        defineField({
+                            name: 'hubtelEnabled',
+                            title: 'Hubtel Enabled',
+                            type: 'boolean',
+                            initialValue: true,
+                        }),
+                        defineField({
+                            name: 'paystackEnabled',
+                            title: 'Paystack Enabled',
+                            type: 'boolean',
+                            initialValue: false,
+                        }),
+                    ],
                 }),
                 defineField({
-                    name: 'paystackEnabled',
-                    title: 'Paystack Enabled',
-                    type: 'boolean',
-                    initialValue: false,
-                    description: 'Accept new payments via Paystack (Card, Mobile Money, Bank)',
-                }),
-                defineField({
-                    name: 'defaultGateway',
-                    title: 'Default Gateway',
-                    type: 'string',
-                    options: {
-                        list: [
-                            { title: 'Hubtel', value: 'hubtel' },
-                            { title: 'Paystack', value: 'paystack' },
-                        ],
-                    },
-                    initialValue: 'hubtel',
-                    description: 'Which gateway to use when both are enabled',
+                    name: 'ticketing',
+                    title: 'Ticketing',
+                    type: 'object',
+                    fields: [
+                        defineField({
+                            name: 'hubtelEnabled',
+                            title: 'Hubtel Enabled',
+                            type: 'boolean',
+                            initialValue: false,
+                        }),
+                        defineField({
+                            name: 'paystackEnabled',
+                            title: 'Paystack Enabled',
+                            type: 'boolean',
+                            initialValue: false,
+                        }),
+                    ],
                 }),
             ],
         } as any),

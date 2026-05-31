@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useCart } from '@/lib/cart-context'
 import { ShoppingBag, Search, Menu, X, Heart, User, LogOut, Settings } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import SearchModal from './search-modal'
 import Image from 'next/image'
@@ -39,6 +39,7 @@ const DEFAULT_NAV: NavItemType[] = [
     { name: 'Kids', href: '/products' },
     { name: 'Sale', href: '/products' },
     { name: 'Events', href: '/events' },
+    { name: 'Reviews', href: '/reviews' },
 ]
 
 export default function Header({ initialNavItems, initialAnnouncement }: HeaderProps = {}) {
@@ -51,6 +52,7 @@ export default function Header({ initialNavItems, initialAnnouncement }: HeaderP
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
     const [showUserMenu, setShowUserMenu] = useState(false)
     const [isLoggingOut, setIsLoggingOut] = useState(false)
+    const authCheckedRef = useRef(false)
 
     useEffect(() => {
         // Only fetch client-side if server data was not provided
@@ -85,12 +87,20 @@ export default function Header({ initialNavItems, initialAnnouncement }: HeaderP
     }, [initialNavItems, initialAnnouncement])
 
     useEffect(() => {
+        if (authCheckedRef.current) return
+        authCheckedRef.current = true
+
         async function checkUserAuth() {
             try {
-                const response = await fetch('/api/auth/me')
-                if (response.ok) {
-                    const data = await response.json()
-                    setUserProfile(data.user)
+                const response = await fetch('/api/auth/status', { credentials: 'include' })
+                if (!response.ok) return
+                const data = await response.json()
+                if (data?.authenticated) {
+                    const meResponse = await fetch('/api/auth/me', { credentials: 'include' })
+                    if (meResponse.ok) {
+                        const meData = await meResponse.json()
+                        setUserProfile(meData.user)
+                    }
                 }
             } catch (error) {
                 // Not authenticated - silent fail
