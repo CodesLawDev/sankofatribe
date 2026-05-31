@@ -170,7 +170,8 @@ export default function CheckoutPage() {
           code: promoCode,
           cartTotal,
           products: cart.map((i) => i.id),
-          isFirstTimeCustomer: false,
+          items: cart.map((i) => ({ price: i.price, quantity: i.quantity })),
+          customerEmail: form.email,
         }),
       })
       const data = await res.json()

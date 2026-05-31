@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { serverClient, assertSanityToken, validateOrderStock } from '@/lib/sanity-server'
 import { nanoid } from 'nanoid'
+import { cookies } from 'next/headers'
 import { syncOrderToDb } from '@/lib/sync-to-db'
 import { findOrCreateCustomer } from '@/lib/customer-service'
+import { validateAndPricePromo } from '@/lib/promo'
+import { verifyToken } from '@/lib/auth-utils'
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,7 +17,8 @@ export async function POST(req: NextRequest) {
       shippingAddress,
       items,
       promoCode,
-      promoDiscount = 0,
+      // NOTE: promoDiscount from the client is intentionally ignored. The
+      // discount is always recomputed server-side to prevent free-order abuse.
       provider = 'paystack',
     } = body || {}
 
@@ -68,7 +72,34 @@ export async function POST(req: NextRequest) {
       return { ...item, price: unitPrice }
     })
 
-    const discount = Math.max(0, Math.min(promoDiscount, computedSubtotal)) // clamp discount
+    // ---- Promo: recompute & enforce server-side (never trust the client) ----
+
+    let discount = 0
+    let appliedPromoCode: string | undefined
+    if (promoCode && typeof promoCode === 'string' && promoCode.trim()) {
+      const token = cookies().get('auth-token')?.value
+      const session = token ? await verifyToken(token).catch(() => null) : null
+
+      const promoResult = await validateAndPricePromo({
+        code: promoCode,
+        subtotal: computedSubtotal,
+        productIds,
+        items: verifiedItems.map((i: any) => ({ price: i.price, quantity: i.quantity })),
+        email: session?.email || customer.email,
+        userId: session?.userId || null,
+      })
+
+      if (!promoResult.valid) {
+        return NextResponse.json(
+          { success: false, error: promoResult.message || 'Promo code is not valid.' },
+          { status: 400 }
+        )
+      }
+
+      discount = Math.max(0, Math.min(promoResult.discountAmount || 0, computedSubtotal))
+      appliedPromoCode = promoResult.code
+    }
+
     const computedTotal = Math.round((computedSubtotal - discount) * 100) / 100
 
     // ---- Stock check --------------------------------------------------------
@@ -134,7 +165,7 @@ export async function POST(req: NextRequest) {
       items: verifiedItems,
       subtotal: computedSubtotal,
       discount,
-      promoCode: promoCode || undefined,
+      promoCode: appliedPromoCode,
       shippingCost: 0,
       tax: 0,
       total: computedTotal,
@@ -162,7 +193,7 @@ export async function POST(req: NextRequest) {
       shippingCost: 0,
       tax: 0,
       total: computedTotal,
-      promoCode: promoCode || undefined,
+      promoCode: appliedPromoCode,
       metadata: { provider },
     }).catch((e) => console.error('[orders/create] DB sync failed:', e))
 

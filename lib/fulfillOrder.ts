@@ -1,5 +1,8 @@
 import { serverClient, assertSanityToken, decrementStock } from '@/lib/sanity-server'
 import { syncOrderUpdateToDb, syncPaymentToDb } from '@/lib/sync-to-db'
+import { getPrisma } from '@/lib/auth-utils'
+import { normalizeEmail } from '@/lib/promo'
+import { markPromoRedeemedInBrevo } from '@/lib/brevo'
 
 // =============================================================================
 // Shared order fulfilment logic
@@ -105,11 +108,44 @@ export async function fulfillOrder(opts: FulfillOrderOpts): Promise<FulfillResul
     }
   }
 
-  // Increment promo code usage (post-payment, not pre-payment)
+  // Promo redemption (post-payment, not pre-payment). Records a per-customer
+  // redemption so usage limits can be enforced, bumps the global counter, and
+  // syncs the redemption flag back to Brevo. The paymentStatus === 'paid' guard
+  // above already makes this whole function idempotent per order.
   if (order.promoCode) {
+    const code = String(order.promoCode).toUpperCase()
+    const email = order.customer?.email ? normalizeEmail(order.customer.email) : ''
+
+    // Per-customer redemption record (DB). Unique on [code, orderId] guards
+    // against any accidental double-processing.
+    if (email) {
+      try {
+        const prisma = getPrisma()
+        await prisma.promoRedemption.upsert({
+          where: { code_orderId: { code, orderId: opts.orderId } },
+          update: {},
+          create: {
+            code,
+            email,
+            orderId: opts.orderId,
+            orderNumber: order.orderId || opts.orderId,
+            discount: order.discount || 0,
+          },
+        })
+      } catch (redErr) {
+        console.error('[fulfillOrder] promo redemption record failed:', redErr)
+      }
+
+      // Best-effort marketing write-back; never blocks fulfilment.
+      markPromoRedeemedInBrevo(email, code).catch((e) =>
+        console.error('[fulfillOrder] Brevo promo write-back failed:', e)
+      )
+    }
+
+    // Global usage counter in Sanity.
     try {
       const promoQuery = `*[_type == "promoCode" && code == $code][0]{ _id, timesUsed }`
-      const promo = await serverClient.fetch(promoQuery, { code: order.promoCode.toUpperCase() })
+      const promo = await serverClient.fetch(promoQuery, { code })
       if (promo) {
         await serverClient
           .patch(promo._id)

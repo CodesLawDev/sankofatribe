@@ -85,6 +85,59 @@ export async function getBrevoContact(email: string) {
     }
 }
 
+// Ensure a contact attribute exists in Brevo (idempotent). Brevo rejects
+// updates that reference an unknown attribute, so we create it first.
+async function ensureBrevoAttribute(name: string, type: 'text' | 'boolean' | 'date') {
+    try {
+        const res = await fetch(
+            `https://api.brevo.com/v3/contacts/attributes/normal/${encodeURIComponent(name)}`,
+            { method: 'POST', headers: getAuthHeader(), body: JSON.stringify({ type }) }
+        )
+        // 201 = created, 400 with "already exists" = fine
+        if (!res.ok && res.status !== 400) {
+            console.warn(`Brevo: could not ensure attribute ${name}:`, res.statusText)
+        }
+    } catch (e) {
+        console.warn(`Brevo: ensureAttribute(${name}) failed:`, e)
+    }
+}
+
+/**
+ * Stamp a contact as having redeemed a promo code so marketing segments reflect
+ * it. Best-effort: never throws, so it can't break order fulfilment.
+ */
+export async function markPromoRedeemedInBrevo(email: string, code: string) {
+    if (!BREVO_API_KEY) return false
+    try {
+        await Promise.all([
+            ensureBrevoAttribute('WELCOME_CODE_USED', 'boolean'),
+            ensureBrevoAttribute('LAST_PROMO_CODE', 'text'),
+            ensureBrevoAttribute('LAST_PROMO_USED_AT', 'date'),
+        ])
+
+        const res = await fetch(`https://api.brevo.com/v3/contacts/${encodeURIComponent(email)}`, {
+            method: 'PUT',
+            headers: getAuthHeader(),
+            body: JSON.stringify({
+                attributes: {
+                    WELCOME_CODE_USED: true,
+                    LAST_PROMO_CODE: code.toUpperCase(),
+                    LAST_PROMO_USED_AT: new Date().toISOString().split('T')[0],
+                },
+            }),
+        })
+
+        if (!res.ok && res.status !== 404) {
+            console.warn('Brevo: promo write-back failed:', res.statusText)
+            return false
+        }
+        return res.ok
+    } catch (e) {
+        console.error('Brevo: markPromoRedeemed error:', e)
+        return false
+    }
+}
+
 export async function sendBrevoEmail({
     to,
     subject,
