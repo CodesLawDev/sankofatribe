@@ -2,30 +2,41 @@ import { NextRequest, NextResponse } from 'next/server'
 import hubtelService from '@/lib/hubtel'
 import paymentService from '@/lib/payment'
 import { resolveProvider, type PaymentProvider } from '@/lib/payment-gateways'
+import { serverClient, assertSanityToken } from '@/lib/sanity-server'
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const {
-      amount,
-      orderId,
-      items = [],
-      provider: requestedProvider,
-      customerEmail = 'guest@sankofatribe.com',
-    } = body
+    // NOTE: any client-sent `amount` is intentionally ignored. The charge is
+    // always the server-computed order total, otherwise a customer could pay
+    // GH₵1 for any order.
+    const { orderId, provider: requestedProvider } = body
 
-    if (!amount || amount <= 0) {
-      return NextResponse.json(
-        { success: false, error: 'A positive amount is required.' },
-        { status: 400 }
-      )
-    }
-    if (!orderId) {
+    if (!orderId || typeof orderId !== 'string') {
       return NextResponse.json(
         { success: false, error: 'Order ID is required.' },
         { status: 400 }
       )
     }
+
+    assertSanityToken()
+    const order = await serverClient.getDocument(orderId)
+    if (!order || order._type !== 'order') {
+      return NextResponse.json({ success: false, error: 'Order not found.' }, { status: 404 })
+    }
+    if (order.paymentStatus === 'paid') {
+      return NextResponse.json({ success: false, error: 'Order is already paid.' }, { status: 409 })
+    }
+
+    const amount = Number(order.total)
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return NextResponse.json(
+        { success: false, error: 'Order total is invalid.' },
+        { status: 400 }
+      )
+    }
+    const customerEmail: string = order.customer?.email || 'guest@sankofatribe.com'
+    const items: Array<{ name?: string }> = order.items || []
 
     let provider: PaymentProvider
     try {
@@ -54,8 +65,10 @@ export async function POST(request: NextRequest) {
         },
         body: JSON.stringify({
           amount: Math.round(amount * 100), // convert to pesewas/kobo
+          currency: 'GHS',
           email: customerEmail,
           reference: orderId,
+          metadata: { orderId },
           callback_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/checkout/verify`,
         }),
       })
@@ -80,7 +93,7 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      const itemNames = items.map((i: any) => i.name).join(', ')
+      const itemNames = items.map((i) => i.name).filter(Boolean).join(', ')
       const result = await hubtelService.initializeCheckout({
         amount,
         description: `SankofaTribe Order ${orderId} — ${itemNames || 'Products'}`,

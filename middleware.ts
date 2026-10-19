@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 
-// Keep fallback consistent with auth-utils to avoid token verification mismatches
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'your-secret-key-change-in-production'
-);
+// No fallback secret: if JWT_SECRET is missing, every protected request is denied
+// (an empty key makes jwtVerify throw) rather than accepting tokens signed with a
+// publicly known default.
+const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || '');
 const SESSION_MAX_AGE = 24 * 60 * 60; // 24 hours of inactivity
 
 function refreshSessionCookie(token: string) {
@@ -33,8 +33,7 @@ export async function middleware(request: NextRequest) {
     pathname === '/api/admin/auth/login' ||
     pathname === '/api/admin/auth/forgot-password' ||
     pathname === '/api/admin/auth/reset-password' ||
-    pathname === '/api/admin/auth/validate-reset-token' ||
-    pathname === '/api/admin/users/init'
+    pathname === '/api/admin/auth/validate-reset-token'
   ) {
     return NextResponse.next();
   }

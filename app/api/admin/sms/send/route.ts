@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/auth-utils'
 
 export const dynamic = 'force-dynamic'
 
 const FLASHSMS_API_URL = 'https://app.flashsms.africa/api/v1'
 
 export async function POST(request: NextRequest) {
+    const auth = await requireAdmin()
+    if (auth instanceof NextResponse) return auth
+
     try {
         const { phones, message } = await request.json()
 

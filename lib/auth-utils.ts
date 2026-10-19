@@ -1,6 +1,8 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import * as jwt from 'jose';
+import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 
 // Store the client on globalThis so it survives Next.js dev hot-reloads.
 // Without this, each hot reload re-evaluates the module and instantiates a new
@@ -170,6 +172,28 @@ export async function loginUser(email: string, password: string) {
   });
 
   return user;
+}
+
+/**
+ * Route-level admin guard. Middleware is not a sufficient security boundary
+ * (it can be bypassed on vulnerable Next.js versions), so every admin route
+ * handler must call this itself.
+ *
+ * Usage: const auth = await requireAdmin(); if (auth instanceof NextResponse) return auth
+ */
+export async function requireAdmin(): Promise<AuthPayload | NextResponse> {
+  const token = cookies().get('auth-token')?.value
+  if (!token) {
+    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+  }
+  const payload = await verifyToken(token)
+  if (!payload) {
+    return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+  }
+  if (payload.role !== 'ADMIN' && payload.role !== 'SUPERADMIN') {
+    return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+  }
+  return payload
 }
 
 // Do not export a Prisma instance to avoid initializing during import/build

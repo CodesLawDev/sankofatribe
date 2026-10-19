@@ -31,10 +31,62 @@ export interface FulfillResult {
 export async function fulfillOrder(opts: FulfillOrderOpts): Promise<FulfillResult> {
   assertSanityToken()
 
-  // Idempotency check
-  const order = await serverClient.getDocument(opts.orderId)
-  if (!order) return { alreadyProcessed: false, error: 'Order not found' }
-  if (order.paymentStatus === 'paid') return { alreadyProcessed: true }
+  // ---- Atomic claim -------------------------------------------------------
+  // The webhook and the verify page can race. Mark the order paid with an
+  // ifRevisionId guard so exactly one caller wins; everything below (payment
+  // record, stock, promo, SMS) then runs once per order.
+  let order: any = null
+  for (let attempt = 0; attempt < 3; attempt++) {
+    order = await serverClient.getDocument(opts.orderId)
+    if (!order) return { alreadyProcessed: false, error: 'Order not found' }
+    if (order.paymentStatus === 'paid') return { alreadyProcessed: true }
+
+    // Never fulfil an underpaid order (amount comes from the provider, total
+    // from our own order record).
+    // Providers sometimes send amounts as strings
+    const paid = Number(opts.amount)
+    const expected = Number(order.total) || 0
+    if (!(paid + 0.01 >= expected)) {
+      console.error(
+        `[fulfillOrder] amount mismatch for ${opts.orderId}: paid ${opts.amount}, expected ${expected} (ref ${opts.reference})`
+      )
+      await serverClient
+        .patch(opts.orderId)
+        .set({
+          'metadata.amountMismatch': {
+            paid: opts.amount,
+            expected,
+            reference: opts.reference,
+            provider: opts.provider,
+            at: new Date().toISOString(),
+          },
+        })
+        .commit()
+        .catch(() => {})
+      return { alreadyProcessed: false, error: `Amount paid (${opts.amount}) is less than order total (${expected})` }
+    }
+
+    try {
+      await serverClient
+        .patch(opts.orderId)
+        .ifRevisionId(order._rev)
+        .set({
+          paymentStatus: 'paid',
+          status: 'processing',
+          paymentReference: opts.reference,
+          paymentProvider: opts.provider,
+          'metadata.paymentMethod': opts.channel,
+          'metadata.provider': opts.provider,
+          'metadata.paidAt': opts.paidAt || new Date().toISOString(),
+        })
+        .commit()
+      break
+    } catch (err: any) {
+      // 409 = someone else modified the order first; re-read and re-check
+      if (err?.statusCode === 409 && attempt < 2) continue
+      throw err
+    }
+  }
 
   // Payment record
   await serverClient.create({
@@ -51,20 +103,6 @@ export async function fulfillOrder(opts: FulfillOrderOpts): Promise<FulfillResul
     paidAt: opts.paidAt || new Date().toISOString(),
     verifiedAt: new Date().toISOString(),
   })
-
-  // Update order
-  await serverClient
-    .patch(opts.orderId)
-    .set({
-      paymentStatus: 'paid',
-      status: 'processing',
-      paymentReference: opts.reference,
-      paymentProvider: opts.provider,
-      'metadata.paymentMethod': opts.channel,
-      'metadata.provider': opts.provider,
-      'metadata.paidAt': opts.paidAt || new Date().toISOString(),
-    })
-    .commit()
 
   // ---- Sync to Postgres (non-blocking) -----------------------------------
   const paidAtStr = opts.paidAt || new Date().toISOString()

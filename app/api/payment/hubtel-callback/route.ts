@@ -16,19 +16,11 @@ export async function POST(request: NextRequest) {
 
     console.log('[hubtel-callback] received:', JSON.stringify(body, null, 2))
 
-    // ---- Webhook signature verification ----
-    const authHeader = request.headers.get('authorization')
-    if (!hubtelService.verifyWebhookSignature(body, authHeader)) {
-      console.error('[hubtel-callback] webhook signature verification failed')
-      return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 })
-    }
-
+    // ---- Trust model ----
+    // Hubtel callbacks are not reliably signed, so the body is treated only as
+    // a hint about WHICH order to check. Payment status and amount always come
+    // from Hubtel's status API, so a forged callback cannot fulfil an order.
     const parsed = hubtelService.parseCallback(body)
-
-    if (!parsed.success) {
-      console.log('[hubtel-callback] payment not successful:', parsed.status)
-      return NextResponse.json({ success: false, message: 'Payment not successful' })
-    }
 
     const orderId = parsed.clientReference
     if (!orderId) {
@@ -36,16 +28,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'No order reference' })
     }
 
+    const status = await hubtelService.checkStatus(orderId)
+    if (!status.success) {
+      console.log('[hubtel-callback] status API reports not paid:', orderId, status.status)
+      return NextResponse.json({ success: false, message: 'Payment not successful' })
+    }
+
     // Use shared fulfillment logic (idempotent — safe to call from both
     // the webhook and the verify endpoint)
     try {
       const result = await fulfillOrder({
         orderId,
-        reference: parsed.transactionId || orderId,
-        amount: parsed.amount,
-        channel: `hubtel_${parsed.paymentMethod}`,
+        reference: status.transactionId || parsed.transactionId || orderId,
+        amount: status.amount,
+        channel: `hubtel_${status.paymentMethod || parsed.paymentMethod}`,
         provider: 'hubtel',
-        customerPhone: parsed.customerPhone,
+        customerPhone: status.customerPhone || parsed.customerPhone,
         paidAt: new Date().toISOString(),
       })
 
