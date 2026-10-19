@@ -25,7 +25,9 @@ async function verifyPaystack(reference: string) {
     )
   }
 
-  const orderId: string = result.metadata?.orderId || ''
+  // /api/payment/initialize uses the orderId as the Paystack reference, so
+  // fall back to it for transactions created without metadata.orderId.
+  const orderId: string = result.metadata?.orderId || result.reference || ''
 
   try {
     const fulfillResult = await fulfillOrder({
@@ -39,6 +41,14 @@ async function verifyPaystack(reference: string) {
       customerName: result.metadata?.customerName,
       paidAt: result.paidAt,
     })
+
+    if (fulfillResult.error) {
+      console.error('[payment/verify] Paystack fulfillment rejected:', orderId, fulfillResult.error)
+      return NextResponse.json(
+        { success: false, error: 'We could not confirm this order. Please contact support.', orderId, reference: result.reference },
+        { status: 400 }
+      )
+    }
 
     return NextResponse.json({
       success: true,
@@ -105,6 +115,14 @@ async function verifyHubtel(clientReference: string) {
       customerPhone: result.customerPhone,
       paidAt: new Date().toISOString(),
     })
+
+    if (fulfillResult.error) {
+      console.error('[payment/verify] Hubtel fulfillment rejected:', clientReference, fulfillResult.error)
+      return NextResponse.json(
+        { success: false, error: 'We could not confirm this order. Please contact support.', orderId: clientReference, provider: 'hubtel' },
+        { status: 400 }
+      )
+    }
 
     return NextResponse.json({
       success: true,

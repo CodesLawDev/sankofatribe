@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/auth-utils'
 import { serverClient } from '@/lib/sanity-server'
 import { getAdminSession } from '@/lib/adminAuth'
 import { hasPermission } from '@/lib/adminTypes'
@@ -7,6 +8,9 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 export async function GET(request: NextRequest) {
+  const auth = await requireAdmin()
+  if (auth instanceof NextResponse) return auth
+
   try {
     const session = getAdminSession()
     if (!session || !hasPermission(session.user, 'view_analytics')) {

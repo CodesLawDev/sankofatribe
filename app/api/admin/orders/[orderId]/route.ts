@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/auth-utils'
 import { serverClient, assertSanityToken } from '@/lib/sanity-server'
 
 export const dynamic = 'force-dynamic'
@@ -8,6 +9,9 @@ export async function GET(
     _request: NextRequest,
     { params }: { params: { orderId: string } }
 ) {
+    const auth = await requireAdmin()
+    if (auth instanceof NextResponse) return auth
+
     try {
         const order = await serverClient.getDocument(params.orderId)
 
@@ -36,6 +40,9 @@ export async function PATCH(
     request: NextRequest,
     { params }: { params: { orderId: string } }
 ) {
+    const auth = await requireAdmin()
+    if (auth instanceof NextResponse) return auth
+
     try {
         assertSanityToken()
 

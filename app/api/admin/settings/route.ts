@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/auth-utils'
 import { serverClient } from '@/lib/sanity-server'
 
 export async function GET(request: NextRequest) {
+  const auth = await requireAdmin()
+  if (auth instanceof NextResponse) return auth
+
   try {
     const settings = await serverClient.fetch(
       `*[_type == "siteSettings"][0] {
@@ -51,6 +55,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  const auth = await requireAdmin()
+  if (auth instanceof NextResponse) return auth
+
   try {
     const body = await request.json()
     const { _id, siteName, description, adminPhone, whatsappNumber, senderId, currency, paymentGateways, geoLocation } = body

@@ -265,11 +265,11 @@ class HubtelService {
    * Returns true when the request should be trusted.
    */
   verifyWebhookSignature(body: any, authorizationHeader?: string | null): boolean {
-    // If no webhook secret is configured, log a warning but allow through
-    // (operator has not opted-in to signature verification yet)
+    // Fail closed. NOTE: callback handlers must not rely on this alone; Hubtel
+    // does not reliably sign callbacks, so they re-check via checkStatus().
     if (!this.webhookSecret) {
-      console.warn('[hubtel] HUBTEL_WEBHOOK_SECRET not set — webhook signature verification skipped')
-      return true
+      console.error('[hubtel] HUBTEL_WEBHOOK_SECRET not set — rejecting webhook')
+      return false
     }
 
     // Hubtel sends Basic auth using accountId:apiKey or a custom header using

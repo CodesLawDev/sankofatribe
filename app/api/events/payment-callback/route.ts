@@ -291,16 +291,11 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     console.log('[events/payment-callback] Hubtel webhook:', JSON.stringify(body, null, 2));
 
-    // ---- Webhook signature verification ----
-    const authHeader = request.headers.get('authorization');
-    if (!hubtelService.verifyWebhookSignature(body, authHeader)) {
-      console.error('[events/payment-callback] webhook signature verification failed');
-      return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
-    }
-
+    // Hubtel callbacks are not reliably signed: the body only tells us which
+    // order to check. Paid status and amount come from Hubtel's status API.
     const parsed = hubtelService.parseCallback(body);
-    if (!parsed.success || !parsed.clientReference) {
-      return NextResponse.json({ success: false, message: 'Payment not successful or missing reference' });
+    if (!parsed.clientReference) {
+      return NextResponse.json({ success: false, message: 'Missing reference' });
     }
 
     const orderId = parsed.clientReference;
@@ -316,6 +311,15 @@ export async function POST(request: NextRequest) {
 
     if (order.tickets.length > 0) {
       return NextResponse.json({ success: true, alreadyProcessed: true });
+    }
+
+    const status = await hubtelService.checkStatus(orderId);
+    if (!status.success) {
+      return NextResponse.json({ success: false, message: 'Payment not successful' });
+    }
+    if (Number(status.amount) + 0.01 < Number(order.totalAmount)) {
+      console.error('[events/payment-callback] underpayment:', orderId, status.amount, String(order.totalAmount));
+      return NextResponse.json({ success: false, message: 'Amount mismatch' });
     }
 
     // Attendees are stored in the DB at purchase time — read them

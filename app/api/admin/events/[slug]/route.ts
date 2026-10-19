@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getPrisma } from '@/lib/auth-utils'
+import { getPrisma, requireAdmin } from '@/lib/auth-utils'
 import { serverClient } from '@/lib/sanity-server'
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { slug: string } }
 ) {
+  const auth = await requireAdmin()
+  if (auth instanceof NextResponse) return auth
+
   try {
     const prisma = getPrisma()
 

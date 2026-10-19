@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPrisma } from '@/lib/auth-utils';
+import { getPrisma, requireAdmin } from '@/lib/auth-utils';
 
 const prisma = getPrisma();
 
@@ -11,6 +11,9 @@ export async function POST(
   request: NextRequest,
   { params }: { params: { orderId: string } }
 ) {
+  const auth = await requireAdmin();
+  if (auth instanceof NextResponse) return auth;
+
   try {
     const { orderId } = params;
     const body = await request.json().catch(() => ({}));

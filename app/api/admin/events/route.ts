@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getPrisma } from '@/lib/auth-utils'
+import { getPrisma, requireAdmin } from '@/lib/auth-utils'
 import { serverClient } from '@/lib/sanity-server'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
+  const auth = await requireAdmin()
+  if (auth instanceof NextResponse) return auth
+
   try {
     const prisma = getPrisma()
 

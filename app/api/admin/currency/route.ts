@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/auth-utils'
 import { serverClient } from '@/lib/sanity-server'
 
 export const dynamic = 'force-dynamic'
@@ -9,6 +10,9 @@ export const dynamic = 'force-dynamic'
  * Body: { exchangeRate: number }
  */
 export async function PUT(request: NextRequest) {
+  const auth = await requireAdmin()
+  if (auth instanceof NextResponse) return auth
+
   try {
     const { exchangeRate } = await request.json()
 
@@ -60,6 +64,9 @@ export async function PUT(request: NextRequest) {
  * Fetch current exchange rate for admin (protected by middleware)
  */
 export async function GET() {
+  const auth = await requireAdmin()
+  if (auth instanceof NextResponse) return auth
+
   try {
     const settings = await serverClient.fetch<any>(
       `*[_type == "siteSettings"][0].currency`
